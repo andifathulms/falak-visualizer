@@ -12,6 +12,10 @@ venv/
 /backend/staticfiles/
 /backend/media/
 
+# Skyfield ephemeris (test-only dependency, downloaded on first run of
+# test_conjunction_skyfield_crosscheck.py - see requirements-dev.txt)
+/backend/*.bsp
+
 # Node / Next.js
 node_modules/
 .next/
@@ -29,3 +33,6 @@ npm-debug.log*
 # Editors
 .vscode/
 .idea/
+
+# Local agent/tooling state (not project source)
+.claude/
