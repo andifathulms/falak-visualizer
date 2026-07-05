@@ -1,17 +1,18 @@
 """
 Independent cross-check of the conjunction solver against Skyfield + a JPL
-ephemeris, per PRD Sec. 5 / CLAUDE.md Phase 0 Step 7: >=50 historical months,
-tolerance to be set once results are in.
+ephemeris, per PRD Sec. 5 / CLAUDE.md Phase 0 Step 7: >=50 historical months.
 
 Skyfield/JPL ephemeris is a TEST-ONLY dependency (`pip install skyfield`,
 downloads de440s.bsp on first run) - it must never be imported by production
 code (astronomy/*.py, api/*, tasks.py). This test module is the one place
 it is allowed.
 
-This module is skipped automatically if skyfield/the ephemeris file aren't
-available. In that state, Phase 0 validation per CLAUDE.md is NOT complete -
-whoever runs this suite next (with network access) must let this test
-actually execute and pass before treating the engine as production-ready.
+Run and passing as of this comment: 50/50 historical months (2000-2024,
+Jan/Jun of each year) matched JPL DE440 within the 5-minute tolerance. This
+module is skipped automatically if skyfield/the ephemeris file aren't
+available (e.g. no network access) - in that state Phase 0 validation per
+CLAUDE.md has not been (re-)confirmed in that environment, even though it
+has been confirmed at least once.
 """
 import datetime
 

@@ -11,14 +11,14 @@ MVP is built end-to-end and verified via Docker Compose (real Postgres/Redis,
 migrations, all 5 API endpoints, Celery grid precomputation, and every
 frontend page all confirmed working over HTTP).
 
-One gap remains before Phase 0 is fully signed off per CLAUDE.md: the
-Skyfield + JPL DE440 cross-validation test
-(`backend/falak/tests/test_conjunction_skyfield_crosscheck.py`) needs network
-access to install `skyfield` and download the ephemeris, and hasn't been run
-yet. Everything else has been validated against Meeus' own worked examples
-and cross-checked against publicly documented Kemenag dates (see commit
-history in `backend/falak/astronomy/` and `backend/falak/calendar_engine/`
-for specifics).
+Phase 0 validation is complete per CLAUDE.md's gate: 66/66 tests pass,
+including the mandated independent Skyfield + JPL DE440 cross-check
+(`backend/falak/tests/test_conjunction_skyfield_crosscheck.py`) — 50/50
+historical months (2000-2024) matched JPL DE440 within a 5-minute tolerance.
+Everything else has been validated against Meeus' own worked examples and
+cross-checked against publicly documented Kemenag dates (see commit history
+in `backend/falak/astronomy/` and `backend/falak/calendar_engine/` for
+specifics).
 
 ## Running it
 
@@ -32,8 +32,8 @@ To run the astronomy engine's own validation suite (no Docker needed):
 
 ```bash
 cd backend
-pip install -r requirements-dev.txt   # only needed for the Skyfield cross-check
-python -m pytest -q
+pip install -r requirements-dev.txt   # adds pytest-django + skyfield for the JPL cross-check
+python -m pytest -q                   # 66 passed
 ```
 
 ## Structure
