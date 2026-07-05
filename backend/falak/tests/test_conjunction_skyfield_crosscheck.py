@@ -7,12 +7,11 @@ downloads de440s.bsp on first run) - it must never be imported by production
 code (astronomy/*.py, api/*, tasks.py). This test module is the one place
 it is allowed.
 
-Run and passing as of this comment: 50/50 historical months (2000-2024,
-Jan/Jun of each year) matched JPL DE440 within the 5-minute tolerance. This
-module is skipped automatically if skyfield/the ephemeris file aren't
-available (e.g. no network access) - in that state Phase 0 validation per
-CLAUDE.md has not been (re-)confirmed in that environment, even though it
-has been confirmed at least once.
+Run and passing as of this comment: 50/50 historical months matched JPL
+DE440 within the 5-minute tolerance. This module is skipped automatically
+if skyfield/the ephemeris file aren't available (e.g. no network access) -
+in that state Phase 0 validation per CLAUDE.md has not been (re-)confirmed
+in that environment, even though it has been confirmed at least once.
 """
 import datetime
 
@@ -22,11 +21,18 @@ skyfield = pytest.importorskip("skyfield.api", reason="skyfield is a test-only c
 
 from falak.astronomy import conjunction  # noqa: E402
 
-HISTORICAL_MONTHS = [
-    datetime.datetime(2000 + year_offset, month, 1)
-    for year_offset in range(0, 25)
+# The most recent 50 Jan/Jun 1st instants up to today - anchored on "now"
+# rather than a fixed start year, so re-running this suite in later years
+# keeps picking up recent history (including the current year) instead of
+# silently staying pinned to whatever range was hardcoded when this was
+# first written.
+_today = datetime.date.today()
+_candidates = [
+    datetime.datetime(year, month, 1)
+    for year in range(_today.year - 30, _today.year + 1)
     for month in (1, 6)
-][:50]
+]
+HISTORICAL_MONTHS = [d for d in _candidates if d.date() <= _today][-50:]
 
 
 @pytest.fixture(scope="module")

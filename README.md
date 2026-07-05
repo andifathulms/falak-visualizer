@@ -14,7 +14,8 @@ frontend page all confirmed working over HTTP).
 Phase 0 validation is complete per CLAUDE.md's gate: 66/66 tests pass,
 including the mandated independent Skyfield + JPL DE440 cross-check
 (`backend/falak/tests/test_conjunction_skyfield_crosscheck.py`) — 50/50
-historical months (2000-2024) matched JPL DE440 within a 5-minute tolerance.
+historical months (rolling window ending on the current year, e.g.
+2002-2026 as of this run) matched JPL DE440 within a 5-minute tolerance.
 Everything else has been validated against Meeus' own worked examples and
 cross-checked against publicly documented Kemenag dates (see commit history
 in `backend/falak/astronomy/` and `backend/falak/calendar_engine/` for
