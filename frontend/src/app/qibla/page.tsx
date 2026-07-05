@@ -1,32 +1,91 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Compass as CompassIcon, MapPin, Search } from "lucide-react";
+import { ErrorBanner } from "@/components/ErrorBanner";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Field, inputClasses } from "@/components/ui/Field";
 import { ApiError, fetchQibla, QiblaResult } from "@/lib/api";
 
-function CompassSvg({ bearingDeg }: { bearingDeg: number }) {
-  const size = 220;
+function CompassDial({ bearingDeg }: { bearingDeg: number }) {
+  const size = 240;
   const center = size / 2;
-  const radius = size / 2 - 12;
-  const rad = (bearingDeg * Math.PI) / 180;
-  const tipX = center + radius * Math.sin(rad);
-  const tipY = center - radius * Math.cos(rad);
+  const radius = size / 2 - 16;
+
+  const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Qibla bearing ${bearingDeg.toFixed(1)} degrees`}>
-      <circle cx={center} cy={center} r={radius} className="fill-none stroke-neutral-300 dark:stroke-neutral-700" strokeWidth={2} />
+      <defs>
+        <radialGradient id="dial-face" cx="50%" cy="35%" r="70%">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="needle-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#e8c164" />
+          <stop offset="100%" stopColor="#4fb3a6" />
+        </linearGradient>
+      </defs>
+
+      <circle cx={center} cy={center} r={radius} fill="url(#dial-face)" className="text-neutral-500" />
+      <circle cx={center} cy={center} r={radius} className="fill-none stroke-neutral-300 dark:stroke-night-600" strokeWidth={1.5} />
+
+      {ticks.map((deg) => {
+        const isCardinal = deg % 90 === 0;
+        const len = isCardinal ? 10 : deg % 30 === 0 ? 7 : 4;
+        const rad = (deg * Math.PI) / 180;
+        const x1 = center + (radius - len) * Math.sin(rad);
+        const y1 = center - (radius - len) * Math.cos(rad);
+        const x2 = center + radius * Math.sin(rad);
+        const y2 = center - radius * Math.cos(rad);
+        return (
+          <line
+            key={deg}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            className={isCardinal ? "stroke-neutral-400 dark:stroke-neutral-500" : "stroke-neutral-300 dark:stroke-night-600"}
+            strokeWidth={isCardinal ? 1.5 : 1}
+          />
+        );
+      })}
+
       {["N", "E", "S", "W"].map((label, i) => {
         const angle = (i * 90 * Math.PI) / 180;
-        const x = center + (radius + 14) * Math.sin(angle);
-        const y = center - (radius + 14) * Math.cos(angle) + 4;
+        const x = center + (radius - 22) * Math.sin(angle);
+        const y = center - (radius - 22) * Math.cos(angle) + 4;
         return (
-          <text key={label} x={x} y={y} textAnchor="middle" className="fill-neutral-500 text-xs dark:fill-neutral-400">
+          <text
+            key={label}
+            x={x}
+            y={y}
+            textAnchor="middle"
+            className={label === "N" ? "fill-gold-500 text-sm font-semibold" : "fill-neutral-500 text-xs dark:fill-neutral-400"}
+          >
             {label}
           </text>
         );
       })}
-      <line x1={center} y1={center} x2={tipX} y2={tipY} className="stroke-green-600 dark:stroke-green-400" strokeWidth={3} strokeLinecap="round" />
-      <circle cx={tipX} cy={tipY} r={5} className="fill-green-600 dark:fill-green-400" />
-      <circle cx={center} cy={center} r={3} className="fill-neutral-900 dark:fill-neutral-100" />
+
+      <motion.g
+        initial={{ rotate: 0 }}
+        animate={{ rotate: bearingDeg }}
+        transition={{ type: "spring", stiffness: 60, damping: 12 }}
+        style={{ transformOrigin: `${center}px ${center}px` }}
+      >
+        <line x1={center} y1={center} x2={center} y2={center - radius + 20} stroke="url(#needle-gradient)" strokeWidth={3.5} strokeLinecap="round" />
+        <polygon
+          points={`${center - 6},${center - radius + 30} ${center + 6},${center - radius + 30} ${center},${center - radius + 14}`}
+          fill="url(#needle-gradient)"
+        />
+        <circle cx={center} cy={center - radius + 20} r={3} className="fill-moon-500" />
+      </motion.g>
+
+      <circle cx={center} cy={center} r={4} className="fill-neutral-900 dark:fill-neutral-100" />
     </svg>
   );
 }
@@ -55,65 +114,61 @@ export default function QiblaPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Qibla Direction</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Great-circle bearing and distance to the Kaaba (21.4225°N, 39.8262°E) from any coordinate.
-        </p>
-      </div>
+      <PageHeader
+        icon={CompassIcon}
+        title="Qibla Direction"
+        description="Great-circle bearing and distance to the Kaaba (21.4225°N, 39.8262°E) from any coordinate."
+      />
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-200 p-4 sm:grid-cols-3 dark:border-neutral-800">
-        <label className="text-sm">
-          Latitude
-          <input
-            type="number"
-            step="0.0001"
-            value={lat}
-            onChange={(e) => setLat(Number(e.target.value))}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </label>
-        <label className="text-sm">
-          Longitude
-          <input
-            type="number"
-            step="0.0001"
-            value={lon}
-            onChange={(e) => setLon(Number(e.target.value))}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </label>
-        <div className="flex items-end">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-          >
+      <Card className="p-5">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
+          <Field label="Latitude">
+            <input
+              type="number"
+              step="0.0001"
+              value={lat}
+              onChange={(e) => setLat(Number(e.target.value))}
+              className={inputClasses}
+            />
+          </Field>
+          <Field label="Longitude">
+            <input
+              type="number"
+              step="0.0001"
+              value={lon}
+              onChange={(e) => setLon(Number(e.target.value))}
+              className={inputClasses}
+            />
+          </Field>
+          <Button type="submit" loading={loading} className="w-full">
+            {!loading && <Search className="size-4" />}
             {loading ? "Computing…" : "Compute"}
-          </button>
-        </div>
-      </form>
+          </Button>
+        </form>
+      </Card>
 
-      {error && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner message={error} />}
 
       {result && (
-        <div className="flex flex-col items-center gap-4 rounded-lg border border-neutral-200 p-6 sm:flex-row sm:justify-around dark:border-neutral-800">
-          <CompassSvg bearingDeg={result.bearing_deg} />
-          <dl className="space-y-2 text-sm">
-            <div>
-              <dt className="text-neutral-500 dark:text-neutral-400">Bearing (from true north)</dt>
-              <dd className="text-lg font-mono">{result.bearing_deg.toFixed(2)}°</dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500 dark:text-neutral-400">Distance to Mecca</dt>
-              <dd className="text-lg font-mono">{result.distance_km.toFixed(1)} km</dd>
-            </div>
-          </dl>
-        </div>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <Card className="flex flex-col items-center gap-6 p-6 sm:flex-row sm:justify-around">
+            <CompassDial bearingDeg={result.bearing_deg} />
+            <dl className="space-y-4 text-sm">
+              <div>
+                <dt className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+                  <CompassIcon className="size-3.5" /> Bearing (from true north)
+                </dt>
+                <dd className="text-2xl font-semibold font-mono">{result.bearing_deg.toFixed(2)}°</dd>
+              </div>
+              <div>
+                <dt className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+                  <MapPin className="size-3.5" /> Distance to Mecca
+                </dt>
+                <dd className="text-2xl font-semibold font-mono">{result.distance_km.toFixed(1)} km</dd>
+              </div>
+            </dl>
+          </Card>
+        </motion.div>
       )}
     </div>
   );

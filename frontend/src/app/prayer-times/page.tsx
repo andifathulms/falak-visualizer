@@ -1,12 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Sun, Sunrise, Sunset, Moon, MoonStar, CloudSun, Search } from "lucide-react";
+import { ErrorBanner } from "@/components/ErrorBanner";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Field, inputClasses } from "@/components/ui/Field";
 import { ApiError, fetchPrayerTimes, PrayerTimesResult } from "@/lib/api";
 
 function formatTime(iso: string | null) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 }
+
+const PRAYERS = [
+  { key: "fajr" as const, label: "Fajr", icon: MoonStar },
+  { key: "sunrise" as const, label: "Sunrise", icon: Sunrise },
+  { key: "dhuhr" as const, label: "Dhuhr", icon: Sun },
+  { key: "asr" as const, label: "Asr", icon: CloudSun },
+  { key: "maghrib" as const, label: "Maghrib", icon: Sunset },
+  { key: "isha" as const, label: "Isha", icon: Moon },
+];
 
 export default function PrayerTimesPage() {
   const [date, setDate] = useState("2024-03-10");
@@ -33,85 +49,62 @@ export default function PrayerTimesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Prayer Times</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          Kemenag RI convention (fajr 20°, isha 18°, Shafi&apos;i shadow-length asr) — computed from solar
-          position for any coordinate and date. Times are shown in UTC; convert to local time using your
-          timezone offset.
-        </p>
-      </div>
+      <PageHeader
+        icon={Sun}
+        title="Prayer Times"
+        description="Kemenag RI convention (fajr 20°, isha 18°, Shafi'i shadow-length asr) — computed from solar position for any coordinate and date. Times shown in UTC."
+      />
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 rounded-lg border border-neutral-200 p-4 sm:grid-cols-4 dark:border-neutral-800">
-        <label className="text-sm">
-          Date
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </label>
-        <label className="text-sm">
-          Latitude
-          <input
-            type="number"
-            step="0.0001"
-            value={lat}
-            onChange={(e) => setLat(Number(e.target.value))}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </label>
-        <label className="text-sm">
-          Longitude
-          <input
-            type="number"
-            step="0.0001"
-            value={lon}
-            onChange={(e) => setLon(Number(e.target.value))}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </label>
-        <div className="flex items-end">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-          >
+      <Card className="p-5">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-4">
+          <Field label="Date">
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClasses} />
+          </Field>
+          <Field label="Latitude">
+            <input
+              type="number"
+              step="0.0001"
+              value={lat}
+              onChange={(e) => setLat(Number(e.target.value))}
+              className={inputClasses}
+            />
+          </Field>
+          <Field label="Longitude">
+            <input
+              type="number"
+              step="0.0001"
+              value={lon}
+              onChange={(e) => setLon(Number(e.target.value))}
+              className={inputClasses}
+            />
+          </Field>
+          <Button type="submit" loading={loading} className="w-full">
+            {!loading && <Search className="size-4" />}
             {loading ? "Computing…" : "Compute"}
-          </button>
-        </div>
-      </form>
+          </Button>
+        </form>
+      </Card>
 
-      {error && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner message={error} />}
 
       {result && (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
-          <table className="w-full text-sm">
-            <thead className="bg-neutral-50 text-left dark:bg-neutral-900">
-              <tr>
-                {["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"].map((label) => (
-                  <th key={label} className="px-4 py-2">
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="font-mono">
-                <td className="px-4 py-2">{formatTime(result.fajr)}</td>
-                <td className="px-4 py-2">{formatTime(result.sunrise)}</td>
-                <td className="px-4 py-2">{formatTime(result.dhuhr)}</td>
-                <td className="px-4 py-2">{formatTime(result.asr)}</td>
-                <td className="px-4 py-2">{formatTime(result.maghrib)}</td>
-                <td className="px-4 py-2">{formatTime(result.isha)}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {PRAYERS.map((p, i) => (
+            <motion.div
+              key={p.key}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
+            >
+              <Card className="flex flex-col items-center gap-2 p-4 text-center transition-transform hover:-translate-y-0.5">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-gold-600 dark:text-gold-400">
+                  <p.icon className="size-5" strokeWidth={1.8} />
+                </div>
+                <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{p.label}</div>
+                <div className="font-mono text-lg font-semibold">{formatTime(result[p.key])}</div>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
