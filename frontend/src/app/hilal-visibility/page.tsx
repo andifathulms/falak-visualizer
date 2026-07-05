@@ -10,7 +10,9 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Field, inputClasses } from "@/components/ui/Field";
+import { LocationPicker } from "@/components/LocationPicker";
 import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
+import { DEFAULT_CITY } from "@/lib/locations";
 
 function isVisible(verdict: boolean | string) {
   return verdict === true || verdict === "visible" || verdict === "visible_optical_aid";
@@ -36,8 +38,8 @@ const CRITERIA = [
 
 export default function HilalVisibilityPage() {
   const [date, setDate] = useState("2024-04-09");
-  const [lat, setLat] = useState(-6.2);
-  const [lon, setLon] = useState(106.8);
+  const [lat, setLat] = useState(DEFAULT_CITY.lat);
+  const [lon, setLon] = useState(DEFAULT_CITY.lon);
   const [obs, setObs] = useState<HilalObservation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -90,24 +92,7 @@ export default function HilalVisibilityPage() {
           <Field label="Date (evening)">
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClasses} />
           </Field>
-          <Field label="Latitude">
-            <input
-              type="number"
-              step="0.0001"
-              value={lat}
-              onChange={(e) => setLat(Number(e.target.value))}
-              className={inputClasses}
-            />
-          </Field>
-          <Field label="Longitude">
-            <input
-              type="number"
-              step="0.0001"
-              value={lon}
-              onChange={(e) => setLon(Number(e.target.value))}
-              className={inputClasses}
-            />
-          </Field>
+          <LocationPicker lat={lat} lon={lon} onChange={(newLat, newLon) => { setLat(newLat); setLon(newLon); }} />
           <Button type="submit" loading={loading} className="w-full">
             {!loading && <Search className="size-4" />}
             {loading ? "Computing…" : "Compute"}
