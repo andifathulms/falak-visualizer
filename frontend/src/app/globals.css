@@ -3,25 +3,92 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f7fb;
+  --foreground: #12131a;
+  --card: #ffffff;
+  --card-border: #e5e5ee;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #05070d;
+    --foreground: #eceef5;
+    --card: #0e1425;
+    --card-border: #1b2440;
   }
+}
+
+* {
+  border-color: var(--card-border);
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+
+  .glass-card {
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(10px);
+  }
+
+  .bg-shimmer {
+    background-image: linear-gradient(
+      110deg,
+      transparent 40%,
+      color-mix(in srgb, var(--foreground) 8%, transparent) 50%,
+      transparent 60%
+    );
+    background-size: 200% 100%;
+  }
+}
+
+/* Decorative starfield used behind hero sections (dark mode only) */
+.starfield {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .starfield {
+    opacity: 1;
+  }
+}
+
+.starfield::before,
+.starfield::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+  background-size: 220px 220px;
+}
+
+.starfield::before {
+  background-image: radial-gradient(1.4px 1.4px at 20px 30px, rgba(232, 193, 100, 0.9), transparent),
+    radial-gradient(1px 1px at 90px 60px, rgba(236, 238, 245, 0.7), transparent),
+    radial-gradient(1.2px 1.2px at 150px 120px, rgba(125, 211, 200, 0.8), transparent),
+    radial-gradient(1px 1px at 60px 170px, rgba(236, 238, 245, 0.6), transparent);
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+.starfield::after {
+  background-position: 40px 80px;
+  background-image: radial-gradient(1px 1px at 110px 20px, rgba(236, 238, 245, 0.5), transparent),
+    radial-gradient(1.3px 1.3px at 180px 90px, rgba(217, 168, 62, 0.7), transparent),
+    radial-gradient(1px 1px at 30px 140px, rgba(236, 238, 245, 0.6), transparent);
+  animation: twinkle 5s ease-in-out infinite reverse;
+}
+
+::selection {
+  background: rgba(217, 168, 62, 0.35);
 }

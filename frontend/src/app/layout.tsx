@@ -28,10 +28,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} relative min-h-screen bg-night-sky antialiased`}
       >
+        <div className="starfield" />
         <NavBar />
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <main className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+        <footer className="relative mx-auto max-w-6xl px-4 pb-10 pt-4 text-center text-xs text-neutral-400 dark:text-neutral-600 sm:px-6">
+          Falak is a hisab (calculation) tool, not a substitute for official sidang isbat determination.
+        </footer>
       </body>
     </html>
   );
