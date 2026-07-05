@@ -63,30 +63,50 @@ export function LocationPicker({
     mode === CUSTOM_VALUE ? "Custom coordinates…" : mode === GPS_VALUE ? "My current location" : mode;
 
   return (
-    <div className="space-y-2 sm:col-span-2">
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <Field label="Location">
-            <Listbox value={mode} onChange={handleSelect}>
-              <div className="relative">
-                <Listbox.Button
-                  className={cn(inputClasses, "relative flex w-full items-center gap-2 pl-9 text-left")}
-                >
-                  <MapPin className="pointer-events-none absolute left-3 size-4 text-neutral-400" />
-                  <span className="block truncate">{buttonLabel}</span>
-                  <ChevronsUpDown className="ml-auto size-4 shrink-0 text-neutral-400" />
-                </Listbox.Button>
-                <Transition
-                  as={Fragment}
-                  leave="transition ease-in duration-100"
-                  leaveFrom="opacity-100"
-                  leaveTo="opacity-0"
-                >
-                  <Listbox.Options className="glass-card absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl py-1 text-sm shadow-lg shadow-black/10 focus:outline-none dark:shadow-black/40">
-                    {INDONESIAN_CITIES.map((city) => (
+    <div className="sm:col-span-2">
+      <div className="relative">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Field label="Location">
+              <Listbox value={mode} onChange={handleSelect}>
+                <div className="relative">
+                  <Listbox.Button
+                    className={cn(inputClasses, "relative flex w-full items-center gap-2 pl-9 text-left")}
+                  >
+                    <MapPin className="pointer-events-none absolute left-3 size-4 text-neutral-400" />
+                    <span className="block truncate">{buttonLabel}</span>
+                    <ChevronsUpDown className="ml-auto size-4 shrink-0 text-neutral-400" />
+                  </Listbox.Button>
+                  <Transition
+                    as={Fragment}
+                    leave="transition ease-in duration-100"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <Listbox.Options className="glass-card absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl py-1 text-sm shadow-lg shadow-black/10 focus:outline-none dark:shadow-black/40">
+                      {INDONESIAN_CITIES.map((city) => (
+                        <Listbox.Option
+                          key={city.name}
+                          value={city.name}
+                          className={({ active, selected }) =>
+                            cn(
+                              "flex cursor-pointer items-center gap-2 px-3 py-2",
+                              active && "bg-gold-500/10",
+                              selected && "text-gold-600 dark:text-gold-400",
+                            )
+                          }
+                        >
+                          {({ selected }) => (
+                            <>
+                              <Check className={cn("size-3.5", selected ? "opacity-100" : "opacity-0")} />
+                              {city.name}
+                            </>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                      <div className="my-1 border-t border-neutral-200 dark:border-night-700/60" />
                       <Listbox.Option
-                        key={city.name}
-                        value={city.name}
+                        value={CUSTOM_VALUE}
                         className={({ active, selected }) =>
                           cn(
                             "flex cursor-pointer items-center gap-2 px-3 py-2",
@@ -97,55 +117,43 @@ export function LocationPicker({
                       >
                         {({ selected }) => (
                           <>
-                            <Check className={cn("size-3.5", selected ? "opacity-100" : "opacity-0")} />
-                            {city.name}
+                            <Pencil className={cn("size-3.5", selected ? "opacity-100" : "opacity-0")} />
+                            Custom coordinates…
                           </>
                         )}
                       </Listbox.Option>
-                    ))}
-                    <div className="my-1 border-t border-neutral-200 dark:border-night-700/60" />
-                    <Listbox.Option
-                      value={CUSTOM_VALUE}
-                      className={({ active, selected }) =>
-                        cn(
-                          "flex cursor-pointer items-center gap-2 px-3 py-2",
-                          active && "bg-gold-500/10",
-                          selected && "text-gold-600 dark:text-gold-400",
-                        )
-                      }
-                    >
-                      {({ selected }) => (
-                        <>
-                          <Pencil className={cn("size-3.5", selected ? "opacity-100" : "opacity-0")} />
-                          Custom coordinates…
-                        </>
-                      )}
-                    </Listbox.Option>
-                  </Listbox.Options>
-                </Transition>
-              </div>
-            </Listbox>
-          </Field>
+                    </Listbox.Options>
+                  </Transition>
+                </div>
+              </Listbox>
+            </Field>
+          </div>
+
+          <button
+            type="button"
+            onClick={useMyLocation}
+            disabled={locating}
+            title="Use my current location"
+            className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 px-3 text-sm font-medium text-neutral-600 transition-colors hover:border-gold-500/50 hover:text-gold-600 disabled:opacity-60 dark:border-night-600/50 dark:text-neutral-400 dark:hover:text-gold-400"
+          >
+            {locating ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4" />}
+            <span className="hidden sm:inline">My location</span>
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={useMyLocation}
-          disabled={locating}
-          title="Use my current location"
-          className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 px-3 text-sm font-medium text-neutral-600 transition-colors hover:border-gold-500/50 hover:text-gold-600 disabled:opacity-60 dark:border-night-600/50 dark:text-neutral-400 dark:hover:text-gold-400"
-        >
-          {locating ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4" />}
-          <span className="hidden sm:inline">My location</span>
-        </button>
+        {/* Absolutely positioned so this caption's height never affects sibling
+            grid cells (e.g. the submit button) via items-end alignment. */}
+        {(geoError || (mode === GPS_VALUE && !geoError)) && (
+          <p
+            className={cn(
+              "absolute left-0 top-full mt-1.5 text-xs",
+              geoError ? "text-red-500 dark:text-red-400" : "text-neutral-500 dark:text-neutral-400",
+            )}
+          >
+            {geoError ?? `Using your device location: ${lat.toFixed(4)}, ${lon.toFixed(4)}`}
+          </p>
+        )}
       </div>
-
-      {geoError && <p className="text-xs text-red-500 dark:text-red-400">{geoError}</p>}
-      {mode === GPS_VALUE && !geoError && (
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Using your device location: {lat.toFixed(4)}, {lon.toFixed(4)}
-        </p>
-      )}
 
       <AnimatePresence initial={false}>
         {mode === CUSTOM_VALUE && (
@@ -154,7 +162,7 @@ export function LocationPicker({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="grid grid-cols-2 gap-3 overflow-hidden"
+            className="mt-3 grid grid-cols-2 gap-3 overflow-hidden"
           >
             <Field label="Latitude">
               <input
