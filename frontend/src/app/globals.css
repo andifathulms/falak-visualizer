@@ -33,9 +33,12 @@ body {
   }
 
   .glass-card {
-    background: color-mix(in srgb, var(--card) 92%, transparent);
+    /* No backdrop-filter here deliberately: blur() creates a new CSS
+       stacking context, which traps any absolutely-positioned overlay
+       inside it (e.g. a dropdown panel) so a later sibling card paints
+       over it regardless of z-index. Solid tinted background instead. */
+    background: color-mix(in srgb, var(--card) 96%, transparent);
     border: 1px solid var(--card-border);
-    backdrop-filter: blur(10px);
   }
 
   .bg-shimmer {
