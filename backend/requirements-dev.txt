@@ -1,0 +1,7 @@
+-r requirements.txt
+
+# Test-only (validation suite cross-check, PRD Sec. 5 / CLAUDE.md Phase 0.7)
+# Never imported by production code - see falak/tests/test_conjunction_skyfield_crosscheck.py
+pytest>=8.0
+pytest-django>=4.8
+skyfield>=1.49
