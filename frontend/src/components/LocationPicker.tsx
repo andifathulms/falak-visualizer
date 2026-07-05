@@ -134,7 +134,7 @@ export function LocationPicker({
             onClick={useMyLocation}
             disabled={locating}
             title="Use my current location"
-            className="flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 px-3 text-sm font-medium text-neutral-600 transition-colors hover:border-gold-500/50 hover:text-gold-600 disabled:opacity-60 dark:border-night-600/50 dark:text-neutral-400 dark:hover:text-gold-400"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 px-3 text-sm font-medium text-neutral-600 transition-colors hover:border-gold-500/50 hover:text-gold-600 disabled:opacity-60 dark:border-night-600/50 dark:text-neutral-400 dark:hover:text-gold-400"
           >
             {locating ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4" />}
             <span className="hidden sm:inline">My location</span>
