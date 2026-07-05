@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Field, inputClasses } from "@/components/ui/Field";
 import { LocationPicker } from "@/components/LocationPicker";
+import { HilalMoon } from "@/components/HilalMoon";
 import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 
@@ -109,12 +110,30 @@ export default function HilalVisibilityPage() {
           transition={{ duration: 0.3 }}
           className="space-y-4"
         >
-          <div className="flex items-center gap-2 rounded-xl bg-night-500/5 px-4 py-2.5 text-sm text-neutral-600 dark:text-neutral-400">
-            <Sunset className="size-4 text-gold-500" />
-            Sunset {new Date(obs.sunset_time_utc).toISOString().slice(11, 16)} UTC · Moonset{" "}
-            {obs.moonset_time_utc ? new Date(obs.moonset_time_utc).toISOString().slice(11, 16) : "—"} UTC ·
-            Conjunction {new Date(obs.conjunction_time_utc).toISOString().slice(0, 16).replace("T", " ")} UTC
-          </div>
+          <Card className="flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:justify-center sm:gap-8 sm:text-left">
+            <HilalMoon illuminationFraction={obs.illumination_fraction} visible={isVisible(obs.criteria.mabims_2021)} />
+            <div>
+              <div
+                className={
+                  isVisible(obs.criteria.mabims_2021)
+                    ? "text-2xl font-semibold bg-gradient-to-r from-gold-400 to-moon-500 bg-clip-text text-transparent"
+                    : "text-2xl font-semibold text-neutral-500 dark:text-neutral-400"
+                }
+              >
+                {isVisible(obs.criteria.mabims_2021) ? "Hilal likely visible" : "Hilal not established"}
+              </div>
+              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                {(obs.illumination_fraction * 100).toFixed(2)}% illuminated · per MABIMS 2021 — see comparison
+                below, criteria can disagree
+              </p>
+              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-500 sm:justify-start dark:text-neutral-400">
+                <Sunset className="size-3.5 text-gold-500" />
+                Sunset {new Date(obs.sunset_time_utc).toISOString().slice(11, 16)} UTC · Moonset{" "}
+                {obs.moonset_time_utc ? new Date(obs.moonset_time_utc).toISOString().slice(11, 16) : "—"} UTC ·
+                Conjunction {new Date(obs.conjunction_time_utc).toISOString().slice(0, 16).replace("T", " ")} UTC
+              </div>
+            </div>
+          </Card>
 
           <Card className="p-5">
             <h2 className="mb-3 font-medium">Observational numbers</h2>
