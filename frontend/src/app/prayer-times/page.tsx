@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Sun, Sunrise, Sunset, Moon, MoonStar, CloudSun, Search } from "lucide-react";
+import tzLookup from "tz-lookup";
+import { Sun, Sunrise, Sunset, Moon, MoonStar, CloudSun, Search, Clock } from "lucide-react";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -13,9 +14,17 @@ import { ApiError, fetchPrayerTimes, PrayerTimesResult } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
 
-function formatTime(iso: string | null) {
+function resolveTimeZone(lat: number, lon: number): string | null {
+  try {
+    return tzLookup(lat, lon);
+  } catch {
+    return null;
+  }
+}
+
+function formatTime(iso: string | null, timeZone: string) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone });
 }
 
 const PRAYERS = [
@@ -39,6 +48,12 @@ export default function PrayerTimesPage() {
     setDate(todayIso());
   }, []);
 
+  const timeZone = useMemo(
+    () => (result ? resolveTimeZone(result.latitude_deg, result.longitude_deg) : null),
+    [result],
+  );
+  const displayTimeZone = timeZone ?? "UTC";
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -59,7 +74,7 @@ export default function PrayerTimesPage() {
       <PageHeader
         icon={Sun}
         title="Prayer Times"
-        description="Kemenag RI convention (fajr 20°, isha 18°, Shafi'i shadow-length asr) — computed from solar position for any coordinate and date. Times shown in UTC."
+        description="Kemenag RI convention (fajr 20°, isha 18°, Shafi'i shadow-length asr) — computed from solar position for any coordinate and date, shown in the local time zone for that location."
       />
 
       <Card className="p-5">
@@ -78,23 +93,32 @@ export default function PrayerTimesPage() {
       {error && <ErrorBanner message={error} />}
 
       {result && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {PRAYERS.map((p, i) => (
-            <motion.div
-              key={p.key}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
-            >
-              <Card className="flex flex-col items-center gap-2 p-4 text-center transition-transform hover:-translate-y-0.5">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-gold-600 dark:text-gold-400">
-                  <p.icon className="size-5" strokeWidth={1.8} />
-                </div>
-                <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{p.label}</div>
-                <div className="font-mono text-lg font-semibold">{formatTime(result[p.key])}</div>
-              </Card>
-            </motion.div>
-          ))}
+        <div className="space-y-3">
+          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+            <Clock className="size-3.5" />
+            Local time for this location: {displayTimeZone}
+            {!timeZone && " (time zone lookup failed, showing UTC instead)"}
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {PRAYERS.map((p, i) => (
+              <motion.div
+                key={p.key}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
+              >
+                <Card className="flex flex-col items-center gap-2 p-4 text-center transition-transform hover:-translate-y-0.5">
+                  <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-gold-600 dark:text-gold-400">
+                    <p.icon className="size-5" strokeWidth={1.8} />
+                  </div>
+                  <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{p.label}</div>
+                  <div className="font-mono text-lg font-semibold">
+                    {formatTime(result[p.key], displayTimeZone)}
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
     </div>
