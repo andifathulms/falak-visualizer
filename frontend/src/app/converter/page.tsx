@@ -1,8 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeftRight, Calendar } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { CalculationPanel } from "@/components/CalculationPanel";
+import { ErrorBanner } from "@/components/ErrorBanner";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Field, inputClasses } from "@/components/ui/Field";
+import { cn } from "@/lib/cn";
 import { ApiError, convertDate, ConvertResult } from "@/lib/api";
 
 const HIJRI_MONTHS = [
@@ -53,123 +61,143 @@ export default function ConverterPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Hijri ↔ Gregorian Converter</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-          MABIMS-2021 method (Indonesia&apos;s current standard) — computed from real ijtimak + visibility, not a
-          tabular lookup.
-        </p>
-      </div>
+      <PageHeader
+        icon={Calendar}
+        title="Hijri ↔ Gregorian Converter"
+        description="MABIMS-2021 method (Indonesia's current standard) — computed from real ijtimak + visibility, not a tabular lookup."
+      />
 
       <HisabDisclaimer />
 
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              checked={direction === "gregorian_to_hijri"}
-              onChange={() => setDirection("gregorian_to_hijri")}
-            />
-            Gregorian → Hijri
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              checked={direction === "hijri_to_gregorian"}
-              onChange={() => setDirection("hijri_to_gregorian")}
-            />
-            Hijri → Gregorian
-          </label>
-        </div>
-
-        {direction === "gregorian_to_hijri" ? (
-          <label className="block text-sm">
-            Gregorian date
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-            />
-          </label>
-        ) : (
-          <div className="grid grid-cols-3 gap-3">
-            <label className="text-sm">
-              Hijri year
-              <input
-                type="number"
-                value={hijriYear}
-                onChange={(e) => setHijriYear(Number(e.target.value))}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-              />
-            </label>
-            <label className="text-sm">
-              Month
-              <select
-                value={hijriMonth}
-                onChange={(e) => setHijriMonth(Number(e.target.value))}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+      <Card className="p-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="inline-flex rounded-xl border border-neutral-300 p-1 dark:border-night-600/50">
+            {(
+              [
+                ["gregorian_to_hijri", "Gregorian → Hijri"],
+                ["hijri_to_gregorian", "Hijri → Gregorian"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setDirection(value)}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  direction === value
+                    ? "bg-gold-500/15 text-gold-600 dark:text-gold-400"
+                    : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200",
+                )}
               >
-                {HIJRI_MONTHS.map((name, i) => (
-                  <option key={name} value={i + 1}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-sm">
-              Day
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={hijriDay}
-                onChange={(e) => setHijriDay(Number(e.target.value))}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-              />
-            </label>
+                {label}
+              </button>
+            ))}
           </div>
+
+          <AnimatePresence mode="wait">
+            {direction === "gregorian_to_hijri" ? (
+              <motion.div
+                key="g2h"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Field label="Gregorian date">
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className={inputClasses}
+                  />
+                </Field>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="h2g"
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.2 }}
+                className="grid grid-cols-3 gap-3"
+              >
+                <Field label="Hijri year">
+                  <input
+                    type="number"
+                    value={hijriYear}
+                    onChange={(e) => setHijriYear(Number(e.target.value))}
+                    className={inputClasses}
+                  />
+                </Field>
+                <Field label="Month">
+                  <select
+                    value={hijriMonth}
+                    onChange={(e) => setHijriMonth(Number(e.target.value))}
+                    className={inputClasses}
+                  >
+                    {HIJRI_MONTHS.map((name, i) => (
+                      <option key={name} value={i + 1}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Day">
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={hijriDay}
+                    onChange={(e) => setHijriDay(Number(e.target.value))}
+                    className={inputClasses}
+                  />
+                </Field>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <Button type="submit" loading={loading}>
+            {!loading && <ArrowLeftRight className="size-4" />}
+            {loading ? "Converting…" : "Convert"}
+          </Button>
+        </form>
+      </Card>
+
+      {error && <ErrorBanner message={error} />}
+
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <Card className="p-5">
+              {result.direction === "gregorian_to_hijri" ? (
+                <p className="text-lg">
+                  {result.input_date} corresponds to{" "}
+                  <strong className="bg-gradient-to-r from-gold-500 to-moon-500 bg-clip-text text-transparent">
+                    {result.hijri_day} {result.hijri_month_name} {result.hijri_year}H
+                  </strong>
+                </p>
+              ) : (
+                <p className="text-lg">
+                  {result.hijri_day} {HIJRI_MONTHS[result.hijri_month - 1]} {result.hijri_year}H corresponds to{" "}
+                  <strong className="bg-gradient-to-r from-gold-500 to-moon-500 bg-clip-text text-transparent">
+                    {result.gregorian_date}
+                  </strong>
+                </p>
+              )}
+              <CalculationPanel
+                rows={[
+                  ["Method", result.method],
+                  ["Direction", result.direction],
+                ]}
+              />
+            </Card>
+          </motion.div>
         )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-        >
-          {loading ? "Converting…" : "Convert"}
-        </button>
-      </form>
-
-      {error && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          {result.direction === "gregorian_to_hijri" ? (
-            <p className="text-lg">
-              {result.input_date} corresponds to{" "}
-              <strong>
-                {result.hijri_day} {result.hijri_month_name} {result.hijri_year}H
-              </strong>
-            </p>
-          ) : (
-            <p className="text-lg">
-              {result.hijri_day} {HIJRI_MONTHS[result.hijri_month - 1]} {result.hijri_year}H corresponds to{" "}
-              <strong>{result.gregorian_date}</strong>
-            </p>
-          )}
-          <CalculationPanel
-            rows={[
-              ["Method", result.method],
-              ["Direction", result.direction],
-            ]}
-          />
-        </div>
-      )}
+      </AnimatePresence>
     </div>
   );
 }
