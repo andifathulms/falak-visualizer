@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeftRight, Calendar } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
@@ -10,7 +10,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/cn";
+import { todayIso } from "@/lib/date";
 import { ApiError, convertDate, ConvertResult } from "@/lib/api";
 
 const HIJRI_MONTHS = [
@@ -28,17 +30,32 @@ const HIJRI_MONTHS = [
   "Dzulhijjah",
 ];
 
+const MONTH_OPTIONS = HIJRI_MONTHS.map((name, i) => ({ value: String(i + 1), label: name }));
+
+const METHOD_LABELS: Record<string, string> = {
+  mabims_2021: "MABIMS 2021",
+};
+
+const DIRECTION_LABELS: Record<string, string> = {
+  gregorian_to_hijri: "Gregorian → Hijri",
+  hijri_to_gregorian: "Hijri → Gregorian",
+};
+
 export default function ConverterPage() {
   const [direction, setDirection] = useState<"gregorian_to_hijri" | "hijri_to_gregorian">(
     "gregorian_to_hijri",
   );
-  const [date, setDate] = useState("2024-04-09");
+  const [date, setDate] = useState("");
   const [hijriYear, setHijriYear] = useState(1445);
   const [hijriMonth, setHijriMonth] = useState(9);
   const [hijriDay, setHijriDay] = useState(1);
   const [result, setResult] = useState<ConvertResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setDate(todayIso());
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -129,19 +146,12 @@ export default function ConverterPage() {
                     className={inputClasses}
                   />
                 </Field>
-                <Field label="Month">
-                  <select
-                    value={hijriMonth}
-                    onChange={(e) => setHijriMonth(Number(e.target.value))}
-                    className={inputClasses}
-                  >
-                    {HIJRI_MONTHS.map((name, i) => (
-                      <option key={name} value={i + 1}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
+                <Select
+                  label="Month"
+                  value={String(hijriMonth)}
+                  onChange={(v) => setHijriMonth(Number(v))}
+                  options={MONTH_OPTIONS}
+                />
                 <Field label="Day">
                   <input
                     type="number"
@@ -190,8 +200,8 @@ export default function ConverterPage() {
               )}
               <CalculationPanel
                 rows={[
-                  ["Method", result.method],
-                  ["Direction", result.direction],
+                  ["Method", METHOD_LABELS[result.method] ?? result.method],
+                  ["Direction", DIRECTION_LABELS[result.direction] ?? result.direction],
                 ]}
               />
             </Card>
