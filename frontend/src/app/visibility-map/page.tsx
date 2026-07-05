@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as d3 from "d3";
 import { motion } from "framer-motion";
 import { Map, Loader2, Info, Search } from "lucide-react";
@@ -10,7 +10,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
+import { Select } from "@/components/ui/Select";
 import { ApiError, fetchVisibilityGrid, VisibilityGridResult } from "@/lib/api";
+import { todayIso } from "@/lib/date";
 
 const LAT_RANGE: [number, number] = [-11, 6];
 const LON_RANGE: [number, number] = [95, 141];
@@ -18,12 +20,22 @@ const WIDTH = 640;
 const HEIGHT = 320;
 const CELL = 8;
 
+const METHOD_OPTIONS = [
+  { value: "mabims_2021", label: "MABIMS 2021" },
+  { value: "wujudul_hilal", label: "Wujudul Hilal" },
+  { value: "odeh", label: "Odeh" },
+];
+
 export default function VisibilityMapPage() {
-  const [date, setDate] = useState("2024-04-09");
+  const [date, setDate] = useState("");
   const [method, setMethod] = useState("mabims_2021");
   const [result, setResult] = useState<VisibilityGridResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setDate(todayIso());
+  }, []);
 
   const xScale = useMemo(() => d3.scaleLinear().domain(LON_RANGE).range([0, WIDTH]), []);
   const yScale = useMemo(() => d3.scaleLinear().domain(LAT_RANGE).range([HEIGHT, 0]), []);
@@ -57,13 +69,7 @@ export default function VisibilityMapPage() {
           <Field label="Date (evening)">
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClasses} />
           </Field>
-          <Field label="Method">
-            <select value={method} onChange={(e) => setMethod(e.target.value)} className={inputClasses}>
-              <option value="mabims_2021">MABIMS 2021</option>
-              <option value="wujudul_hilal">Wujudul Hilal</option>
-              <option value="odeh">Odeh</option>
-            </select>
-          </Field>
+          <Select label="Method" value={method} onChange={setMethod} options={METHOD_OPTIONS} />
           <div className="sm:col-span-2">
             <Button type="submit" loading={loading} className="w-full">
               {!loading && <Search className="size-4" />}
