@@ -7,24 +7,58 @@ and non-negotiable engineering rules.
 
 ## Status
 
-Phase 0 (astronomy engine core) is being built and validated first, per the
-mandated build order, before any API or UI work begins.
+MVP is built end-to-end and verified via Docker Compose (real Postgres/Redis,
+migrations, all 5 API endpoints, Celery grid precomputation, and every
+frontend page all confirmed working over HTTP).
+
+One gap remains before Phase 0 is fully signed off per CLAUDE.md: the
+Skyfield + JPL DE440 cross-validation test
+(`backend/falak/tests/test_conjunction_skyfield_crosscheck.py`) needs network
+access to install `skyfield` and download the ephemeris, and hasn't been run
+yet. Everything else has been validated against Meeus' own worked examples
+and cross-checked against publicly documented Kemenag dates (see commit
+history in `backend/falak/astronomy/` and `backend/falak/calendar_engine/`
+for specifics).
+
+## Running it
+
+```bash
+docker compose up -d --build
+# backend:  http://localhost:8000/api/
+# frontend: http://localhost:3000  (override with FRONTEND_PORT=xxxx if taken)
+```
+
+To run the astronomy engine's own validation suite (no Docker needed):
+
+```bash
+cd backend
+pip install -r requirements-dev.txt   # only needed for the Skyfield cross-check
+python -m pytest -q
+```
 
 ## Structure
 
 ```
 backend/            Django 5 + DRF + Celery
+  config/            Django project settings, urls, celery app
   falak/
     astronomy/       Solar/lunar position, conjunction, visibility, qibla, prayer times
     calendar_engine/  Hijri <-> Gregorian conversion, historical archive
-    api/              DRF viewsets/serializers
+    api/              DRF views/serializers/urls
+    tasks.py          Celery visibility-grid precomputation
     tests/            Validation suite against Meeus reference values
 frontend/           Next.js 14 + Tailwind + D3 + Recharts
+  src/app/            converter, hilal-visibility, visibility-map, prayer-times, qibla
+docker-compose.yml   web, worker, redis, postgres, frontend
 ```
 
 ## Non-negotiable rules (see CLAUDE.md)
 
-- No third-party astronomy API at runtime (Skyfield/JPL ephemeris: test-only)
-- No silent fallback values — errors surface explicitly
-- Every computed verdict must expose its underlying numbers
+- No third-party astronomy API at runtime (Skyfield/JPL ephemeris: test-only,
+  kept out of `requirements.txt`/the production image, only in
+  `requirements-dev.txt`)
+- No silent fallback values — errors surface explicitly (see the 400/422
+  responses in `falak/api/views.py`)
+- Every computed verdict must expose its underlying numbers (see
+  `HilalObservationSerializer` and the `CalculationPanel` frontend component)
 - No ML/AI anywhere in the calculation path
