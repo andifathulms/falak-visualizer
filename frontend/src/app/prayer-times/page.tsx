@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Sun, Sunrise, Sunset, Moon, MoonStar, CloudSun, Search } from "lucide-react";
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -11,6 +11,7 @@ import { Field, inputClasses } from "@/components/ui/Field";
 import { LocationPicker } from "@/components/LocationPicker";
 import { ApiError, fetchPrayerTimes, PrayerTimesResult } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
+import { todayIso } from "@/lib/date";
 
 function formatTime(iso: string | null) {
   if (!iso) return "—";
@@ -27,12 +28,16 @@ const PRAYERS = [
 ];
 
 export default function PrayerTimesPage() {
-  const [date, setDate] = useState("2024-03-10");
+  const [date, setDate] = useState("");
   const [lat, setLat] = useState(DEFAULT_CITY.lat);
   const [lon, setLon] = useState(DEFAULT_CITY.lon);
   const [result, setResult] = useState<PrayerTimesResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setDate(todayIso());
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

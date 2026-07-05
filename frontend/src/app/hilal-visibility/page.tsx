@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { MoonStar, Search, Gauge, Ruler, Clock3, Sunset, Percent, Timer, Sparkles } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
@@ -14,6 +14,7 @@ import { LocationPicker } from "@/components/LocationPicker";
 import { HilalMoon } from "@/components/HilalMoon";
 import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
+import { todayIso } from "@/lib/date";
 
 function isVisible(verdict: boolean | string) {
   return verdict === true || verdict === "visible" || verdict === "visible_optical_aid";
@@ -38,12 +39,16 @@ const CRITERIA = [
 ];
 
 export default function HilalVisibilityPage() {
-  const [date, setDate] = useState("2024-04-09");
+  const [date, setDate] = useState("");
   const [lat, setLat] = useState(DEFAULT_CITY.lat);
   const [lon, setLon] = useState(DEFAULT_CITY.lon);
   const [obs, setObs] = useState<HilalObservation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setDate(todayIso());
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
