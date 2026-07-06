@@ -1,0 +1,130 @@
+"use client";
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { CalendarDays, Search } from "lucide-react";
+import { HisabDisclaimer } from "@/components/HisabDisclaimer";
+import { ErrorBanner } from "@/components/ErrorBanner";
+import { PageHeader } from "@/components/PageHeader";
+import { LocationPicker } from "@/components/LocationPicker";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Field, inputClasses } from "@/components/ui/Field";
+import { Select } from "@/components/ui/Select";
+import { ApiError, fetchVisibilityCalendar, HilalMethod, VisibilityCalendarResult } from "@/lib/api";
+import { DEFAULT_CITY } from "@/lib/locations";
+import { isVisible } from "@/lib/verdict";
+
+const METHOD_OPTIONS = [
+  { value: "mabims_2021", label: "MABIMS 2021" },
+  { value: "wujudul_hilal", label: "Wujudul Hilal" },
+  { value: "odeh", label: "Odeh" },
+];
+
+export default function VisibilityCalendarPage() {
+  const [hijriYear, setHijriYear] = useState(1446);
+  const [method, setMethod] = useState<HilalMethod>("mabims_2021");
+  const [lat, setLat] = useState(DEFAULT_CITY.lat);
+  const [lon, setLon] = useState(DEFAULT_CITY.lon);
+  const [result, setResult] = useState<VisibilityCalendarResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const r = await fetchVisibilityCalendar({ hijri_year: hijriYear, method, lat, lon });
+      setResult(r);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={CalendarDays}
+        title="Visibility Calendar"
+        description="A 12-month view of hilal-visibility conditions for a Hijri year, under a single method at a time - see the whole year instead of one date at a time."
+      />
+
+      <HisabDisclaimer />
+
+      <Card className="p-5">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-4">
+          <Field label="Hijri year">
+            <input
+              type="number"
+              value={hijriYear}
+              onChange={(e) => setHijriYear(Number(e.target.value))}
+              className={inputClasses}
+            />
+          </Field>
+          <Select
+            label="Method"
+            value={method}
+            onChange={(v) => setMethod(v as HilalMethod)}
+            options={METHOD_OPTIONS}
+          />
+          <LocationPicker lat={lat} lon={lon} onChange={(newLat, newLon) => { setLat(newLat); setLon(newLon); }} />
+          <Button type="submit" loading={loading} className="w-full">
+            {!loading && <Search className="size-4" />}
+            {loading ? "Loading…" : "Load calendar"}
+          </Button>
+        </form>
+      </Card>
+
+      {error && <ErrorBanner message={error} />}
+
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"
+        >
+          {result.months.map((month) => {
+            const visible = month.verdict !== undefined && isVisible(month.verdict);
+            const title = month.error
+              ? month.error
+              : `${month.date}: alt=${month.moon_altitude_deg?.toFixed(2)}° elong=${month.elongation_deg?.toFixed(2)}° lag=${month.lag_time_minutes?.toFixed(1) ?? "—"}min -> ${month.verdict}`;
+            return (
+              <Card
+                key={month.hijri_month}
+                title={title}
+                className={`p-4 ${
+                  month.error
+                    ? "border border-dashed border-neutral-300 dark:border-night-600/50"
+                    : visible
+                      ? "border border-moon-500/40 bg-moon-500/[0.07]"
+                      : "border border-neutral-200 dark:border-night-700/60"
+                }`}
+              >
+                <div className="text-sm font-medium">{month.hijri_month_name}</div>
+                {month.error ? (
+                  <p className="mt-1 text-xs text-neutral-400">unresolved</p>
+                ) : (
+                  <>
+                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{month.date}</p>
+                    <p
+                      className={`mt-2 text-xs font-medium ${
+                        visible ? "text-moon-600 dark:text-moon-400" : "text-neutral-500 dark:text-neutral-400"
+                      }`}
+                    >
+                      {String(month.verdict)}
+                    </p>
+                  </>
+                )}
+              </Card>
+            );
+          })}
+        </motion.div>
+      )}
+    </div>
+  );
+}
