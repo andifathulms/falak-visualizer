@@ -178,6 +178,43 @@ def qibla_view(request: Request) -> Response:
 
 
 @api_view(["GET"])
+def method_divergence(request: Request) -> Response:
+    try:
+        hijri_year = int(_require_float(request, "hijri_year"))
+        lat = _require_float(request, "lat", default=converter.JAKARTA_LATITUDE_DEG)
+        lon = _require_float(request, "lon", default=converter.JAKARTA_LONGITUDE_DEG)
+    except ValueError as exc:
+        return Response({"error": str(exc)}, status=400)
+
+    months = []
+    for month in range(1, 13):
+        start_dates = {}
+        errors = {}
+        for method in converter.MONTH_START_METHODS:
+            try:
+                start_dates[method] = converter.month_start_date_for_method(
+                    hijri_year, month, method, lat, lon
+                ).isoformat()
+            except ValueError as exc:
+                errors[method] = str(exc)
+
+        diverges = len(set(start_dates.values())) > 1 if not errors else None
+        months.append(
+            {
+                "hijri_month": month,
+                "hijri_month_name": converter.HIJRI_MONTH_NAMES[month - 1],
+                "start_dates": start_dates,
+                "errors": errors or None,
+                "diverges": diverges,
+            }
+        )
+
+    return Response(
+        {"hijri_year": hijri_year, "latitude_deg": lat, "longitude_deg": lon, "months": months}
+    )
+
+
+@api_view(["GET"])
 def visibility_grid_view(request: Request) -> Response:
     from falak.models import VisibilityResult
     from falak.tasks import precompute_visibility_grid
