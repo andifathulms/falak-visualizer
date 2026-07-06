@@ -79,3 +79,31 @@ class VisibilityResult(models.Model):
 
     def __str__(self) -> str:
         return f"{self.location.name} {self.date} [{self.method}] -> {self.verdict}"
+
+
+class IsbatRecord(models.Model):
+    """A real, historically-announced Kemenag sidang isbat month-start date -
+    reference data for checking what each hisab method would have predicted
+    against what was actually announced. Must be sourced from an actual,
+    citable Kemenag announcement (source_note); never estimated or
+    back-computed from this app's own engine, which would be circular.
+    `verified` stays False until a maintainer has confirmed the date against
+    a primary source - see falak/migrations/0003_seed_isbat_records.py.
+    """
+
+    hijri_year = models.IntegerField()
+    hijri_month = models.IntegerField()
+    gregorian_start_date = models.DateField(help_text="Actual Kemenag-announced first day of the Hijri month.")
+    source_note = models.TextField(help_text="Citation for this date, e.g. Kemenag press release URL/date.")
+    verified = models.BooleanField(
+        default=False,
+        help_text="False until a maintainer has confirmed gregorian_start_date against a primary Kemenag source.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("hijri_year", "hijri_month")
+        ordering = ["-hijri_year", "-hijri_month"]
+
+    def __str__(self) -> str:
+        return f"{self.hijri_year}-{self.hijri_month:02d} isbat: {self.gregorian_start_date} (verified={self.verified})"
