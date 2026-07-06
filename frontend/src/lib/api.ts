@@ -134,3 +134,35 @@ export interface MethodDivergenceResult {
 export function fetchMethodDivergence(params: { hijri_year: number; lat?: number; lon?: number }) {
   return getJson<MethodDivergenceResult>("/method-divergence/", params);
 }
+
+export interface VisibilityCalendarMonth {
+  hijri_month: number;
+  hijri_month_name: string;
+  error?: string;
+  date?: string;
+  moon_altitude_deg?: number;
+  sun_altitude_deg?: number;
+  elongation_deg?: number;
+  moon_age_hours?: number;
+  illumination_fraction?: number;
+  lag_time_minutes?: number | null;
+  crescent_width_arcmin?: number;
+  verdict?: boolean | string;
+}
+
+export interface VisibilityCalendarResult {
+  hijri_year: number;
+  method: HilalMethod;
+  latitude_deg: number;
+  longitude_deg: number;
+  months: VisibilityCalendarMonth[];
+}
+
+export function fetchVisibilityCalendar(params: {
+  hijri_year: number;
+  method?: HilalMethod;
+  lat?: number;
+  lon?: number;
+}) {
+  return getJson<VisibilityCalendarResult>("/visibility-calendar/", params);
+}

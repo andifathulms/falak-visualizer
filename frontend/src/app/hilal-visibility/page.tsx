@@ -15,10 +15,7 @@ import { HilalMoon } from "@/components/HilalMoon";
 import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
-
-function isVisible(verdict: boolean | string) {
-  return verdict === true || verdict === "visible" || verdict === "visible_optical_aid";
-}
+import { isVisible } from "@/lib/verdict";
 
 const CRITERIA = [
   {
