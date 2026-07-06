@@ -27,6 +27,8 @@ from dataclasses import dataclass
 from falak.astronomy import conjunction, visibility
 from falak.astronomy.visibility import mabims_2021
 
+MONTH_START_METHODS = ("wujudul_hilal", "mabims_2021", "odeh")
+
 JAKARTA_LATITUDE_DEG = -6.2
 JAKARTA_LONGITUDE_DEG = 106.8
 
@@ -75,26 +77,60 @@ def _conjunction_for_index(index: int) -> _dt.datetime:
     return conj
 
 
-def _month_start_from_conjunction(
-    conj: _dt.datetime, lat_deg: float, lon_deg: float
+def _is_visible_for_method(obs: "visibility.HilalObservation", method: str) -> bool:
+    """
+    Collapse each criterion to the yes/no decision a month-start search
+    needs. Odeh's classification is continuous (visible/visible_optical_aid/
+    marginal/not_visible) - for this decision only, anything better than
+    "marginal" counts as a go; the raw classification string is never
+    dropped from API responses that surface it elsewhere (e.g.
+    hilal-visibility's `criteria` payload).
+    """
+    if method == "wujudul_hilal":
+        return visibility.wujudul_hilal(obs.moonset_time, obs.sunset_time, obs.conjunction_time)
+    if method == "mabims_2021":
+        return mabims_2021(obs.moon_altitude_deg, obs.elongation_deg)
+    if method == "odeh":
+        verdict = visibility.odeh_criterion(
+            obs.moon_altitude_deg, obs.elongation_deg, obs.crescent_width_arcmin
+        )
+        return verdict in ("visible", "visible_optical_aid")
+    raise ValueError(f"unsupported month-start method: {method!r}; supported: {MONTH_START_METHODS}")
+
+
+def _month_start_from_conjunction_for_method(
+    conj: _dt.datetime, method: str, lat_deg: float, lon_deg: float
 ) -> _dt.date:
     """
-    Evaluate the MABIMS-2021 criterion on the evening of (and, if needed,
-    the evening after) the conjunction date to find which Gregorian day the
-    new Hijri month begins on. Islamic day convention: if the crescent is
-    visible at sunset on Gregorian day D, the new month's first full day is
-    D+1.
+    Evaluate `method` on the evening of (and, if needed, the evenings after)
+    the conjunction date to find which Gregorian day the new Hijri month
+    begins on. Islamic day convention: if the crescent is visible at sunset
+    on Gregorian day D, the new month's first full day is D+1.
     """
     for offset in (0, 1, 2, 3):
         evening = conj.date() + _dt.timedelta(days=offset)
         obs = visibility.compute_hilal_observation(evening, lat_deg, lon_deg)
-        if obs.conjunction_time < obs.sunset_time and mabims_2021(
-            obs.moon_altitude_deg, obs.elongation_deg
-        ):
+        if obs.conjunction_time < obs.sunset_time and _is_visible_for_method(obs, method):
             return evening + _dt.timedelta(days=1)
     raise ValueError(
-        f"could not establish month start within 3 evenings of conjunction {conj}"
+        f"could not establish month start ({method}) within 3 evenings of conjunction {conj}"
     )
+
+
+def month_start_date_for_method(
+    hijri_year: int,
+    hijri_month: int,
+    method: str,
+    lat_deg: float = JAKARTA_LATITUDE_DEG,
+    lon_deg: float = JAKARTA_LONGITUDE_DEG,
+) -> _dt.date:
+    """Gregorian date of day 1 of the given Hijri year/month, evaluated under
+    `method` (one of MONTH_START_METHODS)."""
+    if method not in MONTH_START_METHODS:
+        raise ValueError(f"unsupported month-start method: {method!r}; supported: {MONTH_START_METHODS}")
+    index = _absolute_month_index(hijri_year, hijri_month)
+    conj = _conjunction_for_index(index)
+    return _month_start_from_conjunction_for_method(conj, method, lat_deg, lon_deg)
 
 
 def month_start_date(
@@ -104,9 +140,7 @@ def month_start_date(
     lon_deg: float = JAKARTA_LONGITUDE_DEG,
 ) -> _dt.date:
     """Gregorian date of day 1 of the given Hijri year/month (MABIMS-2021)."""
-    index = _absolute_month_index(hijri_year, hijri_month)
-    conj = _conjunction_for_index(index)
-    return _month_start_from_conjunction(conj, lat_deg, lon_deg)
+    return month_start_date_for_method(hijri_year, hijri_month, "mabims_2021", lat_deg, lon_deg)
 
 
 @dataclass(frozen=True)
