@@ -262,6 +262,31 @@ def visibility_calendar(request: Request) -> Response:
 
 
 @api_view(["GET"])
+def isbat_accuracy_view(request: Request) -> Response:
+    import dataclasses
+
+    from falak.calendar_engine.isbat_accuracy import compare_record
+    from falak.models import IsbatRecord
+
+    try:
+        lat = _require_float(request, "lat", default=converter.JAKARTA_LATITUDE_DEG)
+        lon = _require_float(request, "lon", default=converter.JAKARTA_LONGITUDE_DEG)
+    except ValueError as exc:
+        return Response({"error": str(exc)}, status=400)
+
+    qs = IsbatRecord.objects.all()
+    hijri_year_raw = request.query_params.get("hijri_year")
+    if hijri_year_raw is not None:
+        try:
+            qs = qs.filter(hijri_year=int(hijri_year_raw))
+        except ValueError:
+            return Response({"error": "hijri_year must be an integer"}, status=400)
+
+    records = [dataclasses.asdict(compare_record(r, lat, lon)) for r in qs]
+    return Response({"count": len(records), "records": records})
+
+
+@api_view(["GET"])
 def visibility_grid_view(request: Request) -> Response:
     from falak.models import VisibilityResult
     from falak.tasks import precompute_visibility_grid
