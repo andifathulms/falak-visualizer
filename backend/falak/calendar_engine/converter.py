@@ -143,6 +143,27 @@ def month_start_date(
     return month_start_date_for_method(hijri_year, hijri_month, "mabims_2021", lat_deg, lon_deg)
 
 
+def observation_for_month(
+    hijri_year: int,
+    hijri_month: int,
+    lat_deg: float = JAKARTA_LATITUDE_DEG,
+    lon_deg: float = JAKARTA_LONGITUDE_DEG,
+) -> "visibility.HilalObservation":
+    """
+    The reference "29th evening" observation for `hijri_month` - one data
+    point per month regardless of which criterion is later evaluated
+    against it. Anchored to the evening before the MABIMS-2021-resolved
+    month start (the MVP baseline method - see month_start_date), not to
+    the raw conjunction date: the conjunction date itself is always too
+    early for any criterion to call visible (the Moon is still essentially
+    co-located with the Sun), so it would make every month in a calendar
+    view look like "not visible" regardless of which method is selected.
+    """
+    start = month_start_date_for_method(hijri_year, hijri_month, "mabims_2021", lat_deg, lon_deg)
+    evening = start - _dt.timedelta(days=1)
+    return visibility.compute_hilal_observation(evening, lat_deg, lon_deg)
+
+
 @dataclass(frozen=True)
 class HijriDate:
     year: int
