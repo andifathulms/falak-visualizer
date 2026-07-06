@@ -113,3 +113,24 @@ export interface VisibilityGridResult {
 export function fetchVisibilityGrid(params: { date: string; method?: string }) {
   return getJson<VisibilityGridResult>("/visibility-grid/", params);
 }
+
+export type HilalMethod = "wujudul_hilal" | "mabims_2021" | "odeh";
+
+export interface MethodDivergenceMonth {
+  hijri_month: number;
+  hijri_month_name: string;
+  start_dates: Partial<Record<HilalMethod, string>>;
+  errors: Record<string, string> | null;
+  diverges: boolean | null;
+}
+
+export interface MethodDivergenceResult {
+  hijri_year: number;
+  latitude_deg: number;
+  longitude_deg: number;
+  months: MethodDivergenceMonth[];
+}
+
+export function fetchMethodDivergence(params: { hijri_year: number; lat?: number; lon?: number }) {
+  return getJson<MethodDivergenceResult>("/method-divergence/", params);
+}
