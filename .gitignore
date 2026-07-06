@@ -36,3 +36,6 @@ npm-debug.log*
 
 # Local agent/tooling state (not project source)
 .claude/
+
+# Local design-tool exports (not project source)
+/exports/
