@@ -166,3 +166,24 @@ export function fetchVisibilityCalendar(params: {
 }) {
   return getJson<VisibilityCalendarResult>("/visibility-calendar/", params);
 }
+
+export interface IsbatComparisonRecord {
+  hijri_year: number;
+  hijri_month: number;
+  hijri_month_name: string;
+  actual_start_date: string;
+  source_note: string;
+  verified: boolean;
+  predicted: Partial<Record<HilalMethod, string>>;
+  errors: Record<string, string>;
+  matches: Partial<Record<HilalMethod, boolean | null>>;
+}
+
+export interface IsbatAccuracyResult {
+  count: number;
+  records: IsbatComparisonRecord[];
+}
+
+export function fetchIsbatAccuracy(params: { hijri_year?: number; lat?: number; lon?: number }) {
+  return getJson<IsbatAccuracyResult>("/isbat-accuracy/", params);
+}

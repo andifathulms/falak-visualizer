@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Calendar, CalendarDays, Compass, GitCompareArrows, Map, Menu, MoonStar, Sun, X } from "lucide-react";
+import { Calendar, CalendarDays, Compass, GitCompareArrows, History, Map, Menu, MoonStar, Sun, X } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/cn";
 
@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/visibility-map", label: "Visibility Map", icon: Map },
   { href: "/visibility-calendar", label: "Visibility Calendar", icon: CalendarDays },
   { href: "/method-divergence", label: "Method Divergence", icon: GitCompareArrows },
+  { href: "/isbat-accuracy", label: "Isbat Accuracy", icon: History },
   { href: "/prayer-times", label: "Prayer Times", icon: Sun },
   { href: "/qibla", label: "Qibla", icon: Compass },
 ];
