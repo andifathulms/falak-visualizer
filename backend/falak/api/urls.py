@@ -9,4 +9,5 @@ urlpatterns = [
     path("qibla/", views.qibla_view, name="qibla"),
     path("visibility-grid/", views.visibility_grid_view, name="visibility-grid"),
     path("method-divergence/", views.method_divergence, name="method-divergence"),
+    path("visibility-calendar/", views.visibility_calendar, name="visibility-calendar"),
 ]

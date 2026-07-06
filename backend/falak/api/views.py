@@ -215,6 +215,53 @@ def method_divergence(request: Request) -> Response:
 
 
 @api_view(["GET"])
+def visibility_calendar(request: Request) -> Response:
+    try:
+        hijri_year = int(_require_float(request, "hijri_year"))
+        lat = _require_float(request, "lat", default=converter.JAKARTA_LATITUDE_DEG)
+        lon = _require_float(request, "lon", default=converter.JAKARTA_LONGITUDE_DEG)
+    except ValueError as exc:
+        return Response({"error": str(exc)}, status=400)
+
+    method = request.query_params.get("method", "mabims_2021")
+    if method not in _SUPPORTED_VISIBILITY_METHODS:
+        return Response(
+            {"error": f"method '{method}' not recognized; supported: {sorted(_SUPPORTED_VISIBILITY_METHODS)}"},
+            status=400,
+        )
+
+    months = []
+    for month in range(1, 13):
+        try:
+            obs = converter.observation_for_month(hijri_year, month, lat, lon)
+        except ValueError as exc:
+            months.append(
+                {
+                    "hijri_month": month,
+                    "hijri_month_name": converter.HIJRI_MONTH_NAMES[month - 1],
+                    "error": str(exc),
+                }
+            )
+            continue
+
+        payload = HilalObservationSerializer(obs).data
+        payload["hijri_month"] = month
+        payload["hijri_month_name"] = converter.HIJRI_MONTH_NAMES[month - 1]
+        payload["verdict"] = (
+            visibility_module.wujudul_hilal(obs.moonset_time, obs.sunset_time, obs.conjunction_time)
+            if method == "wujudul_hilal"
+            else visibility_module.mabims_2021(obs.moon_altitude_deg, obs.elongation_deg)
+            if method == "mabims_2021"
+            else visibility_module.odeh_criterion(obs.moon_altitude_deg, obs.elongation_deg, obs.crescent_width_arcmin)
+        )
+        months.append(payload)
+
+    return Response(
+        {"hijri_year": hijri_year, "method": method, "latitude_deg": lat, "longitude_deg": lon, "months": months}
+    )
+
+
+@api_view(["GET"])
 def visibility_grid_view(request: Request) -> Response:
     from falak.models import VisibilityResult
     from falak.tasks import precompute_visibility_grid
