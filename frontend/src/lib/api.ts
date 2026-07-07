@@ -104,6 +104,21 @@ export function fetchQibla(params: { lat: number; lon: number }) {
   return getJson<QiblaResult>("/qibla/", params);
 }
 
+export interface RashdulQiblaEvent {
+  utc_time: string;
+  direction: "ascending" | "descending";
+  bearing_deg?: number;
+}
+
+export interface RashdulQiblaResult {
+  year: number;
+  events: RashdulQiblaEvent[];
+}
+
+export function fetchRashdulQibla(params: { year: number; lat?: number; lon?: number }) {
+  return getJson<RashdulQiblaResult>("/rashdul-qibla/", params);
+}
+
 export interface VisibilityGridResult {
   date: string;
   method: string;

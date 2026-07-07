@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import tzLookup from "tz-lookup";
 import { Sun, Sunrise, Sunset, Moon, MoonStar, CloudSun, Search, Clock } from "lucide-react";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
@@ -13,14 +12,7 @@ import { LocationPicker } from "@/components/LocationPicker";
 import { ApiError, fetchPrayerTimes, PrayerTimesResult } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
-
-function resolveTimeZone(lat: number, lon: number): string | null {
-  try {
-    return tzLookup(lat, lon);
-  } catch {
-    return null;
-  }
-}
+import { resolveTimeZone } from "@/lib/timezone";
 
 function formatTime(iso: string | null, timeZone: string) {
   if (!iso) return "—";

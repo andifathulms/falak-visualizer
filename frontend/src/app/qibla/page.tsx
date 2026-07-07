@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Compass as CompassIcon, MapPin, Search } from "lucide-react";
+import { Compass as CompassIcon, MapPin, Search, SunMedium } from "lucide-react";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { LocationPicker } from "@/components/LocationPicker";
-import { ApiError, fetchQibla, QiblaResult } from "@/lib/api";
+import { ApiError, fetchQibla, fetchRashdulQibla, QiblaResult, RashdulQiblaResult } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
+import { resolveTimeZone } from "@/lib/timezone";
 
 function CompassDial({ bearingDeg }: { bearingDeg: number }) {
   const size = 240;
@@ -91,12 +92,44 @@ function CompassDial({ bearingDeg }: { bearingDeg: number }) {
   );
 }
 
+function formatRashdulTime(iso: string, timeZone: string | null) {
+  return new Date(iso).toLocaleString([], {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: timeZone ?? "UTC",
+  });
+}
+
 export default function QiblaPage() {
   const [lat, setLat] = useState(DEFAULT_CITY.lat);
   const [lon, setLon] = useState(DEFAULT_CITY.lon);
   const [result, setResult] = useState<QiblaResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [rashdul, setRashdul] = useState<RashdulQiblaResult | null>(null);
+  const [rashdulError, setRashdulError] = useState<string | null>(null);
+  const [rashdulLoading, setRashdulLoading] = useState(false);
+
+  async function loadRashdul(e?: React.FormEvent) {
+    e?.preventDefault();
+    setRashdulLoading(true);
+    setRashdulError(null);
+    try {
+      const r = await fetchRashdulQibla({ year });
+      setRashdul(r);
+    } catch (err) {
+      setRashdulError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+    } finally {
+      setRashdulLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadRashdul();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -112,6 +145,8 @@ export default function QiblaPage() {
       setLoading(false);
     }
   }
+
+  const timeZone = resolveTimeZone(lat, lon);
 
   return (
     <div className="space-y-6">
@@ -154,6 +189,53 @@ export default function QiblaPage() {
           </Card>
         </motion.div>
       )}
+
+      <Card className="p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <SunMedium className="size-4 text-gold-500" strokeWidth={2} />
+          <h2 className="font-medium">Sun Calibration (Rashdul Qibla)</h2>
+        </div>
+        <p className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+          Twice a year the Sun sits directly over the Kaaba. At that exact moment, anywhere the Sun is up, a vertical
+          object&apos;s shadow points exactly opposite the qibla direction — no compass needed. Times below are shown
+          in the local time zone for the location selected above.
+        </p>
+
+        <form onSubmit={loadRashdul} className="mb-4 flex items-end gap-3">
+          <div className="w-32">
+            <label className="mb-1.5 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Year</label>
+            <input
+              type="number"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="h-11 w-full rounded-lg border border-neutral-300 bg-transparent px-3 text-sm dark:border-night-600/50"
+            />
+          </div>
+          <Button type="submit" loading={rashdulLoading}>
+            {!rashdulLoading && <Search className="size-4" />}
+            {rashdulLoading ? "Loading…" : "Load"}
+          </Button>
+        </form>
+
+        {rashdulError && <ErrorBanner message={rashdulError} />}
+
+        {rashdul && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {rashdul.events.map((event) => (
+              <div key={event.direction} className="rounded-xl border border-neutral-200 p-3.5 dark:border-night-700/60">
+                <div className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  {event.direction === "ascending" ? "Late May" : "Mid July"}
+                </div>
+                <div className="mt-1 font-mono text-lg">{formatRashdulTime(event.utc_time, timeZone)}</div>
+                <div className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  {timeZone ?? "UTC"}
+                  {!timeZone && " (time zone lookup failed)"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
