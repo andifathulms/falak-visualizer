@@ -132,6 +132,18 @@ def hilal_visibility(request: Request) -> Response:
         payload["verdict"] = criteria[method]
         payload["method"] = method
 
+    trajectory = visibility_module.hilal_trajectory(date, lat, lon)
+    payload["trajectory"] = [
+        {
+            "time_utc": p.time.isoformat(),
+            "minutes_from_sunset": p.minutes_from_sunset,
+            "moon_altitude_deg": p.moon_altitude_deg,
+            "sun_altitude_deg": p.sun_altitude_deg,
+            "elongation_deg": p.elongation_deg,
+        }
+        for p in trajectory
+    ]
+
     return Response(payload)
 
 
