@@ -8,9 +8,11 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { LocationPicker } from "@/components/LocationPicker";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ApiError, fetchQibla, fetchRashdulQibla, QiblaResult, RashdulQiblaResult } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { resolveTimeZone } from "@/lib/timezone";
+import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 function CompassDial({ bearingDeg }: { bearingDeg: number }) {
   const size = 240;
@@ -126,24 +128,37 @@ export default function QiblaPage() {
     }
   }
 
-  useEffect(() => {
-    loadRashdul();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function compute(la: number, lo: number) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const r = await fetchQibla({ lat, lon });
+      const r = await fetchQibla({ lat: la, lon: lo });
       setResult(r);
+      writeQueryParams({ lat: la, lon: lo });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
     } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    loadRashdul();
+    const params = readQueryParams();
+    const qLat = params.get("lat");
+    const qLon = params.get("lon");
+    if (qLat && qLon) {
+      setLat(Number(qLat));
+      setLon(Number(qLon));
+      compute(Number(qLat), Number(qLon));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await compute(lat, lon);
   }
 
   const timeZone = resolveTimeZone(lat, lon);
@@ -187,6 +202,9 @@ export default function QiblaPage() {
               </div>
             </dl>
           </Card>
+          <div className="mt-4">
+            <CopyLinkButton />
+          </div>
         </motion.div>
       )}
 

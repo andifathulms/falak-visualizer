@@ -23,10 +23,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, inputClasses } from "@/components/ui/Field";
 import { LocationPicker } from "@/components/LocationPicker";
 import { HilalMoon } from "@/components/HilalMoon";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
 import { isVisible } from "@/lib/verdict";
+import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 const CRITERIA = [
   {
@@ -54,23 +56,40 @@ export default function HilalVisibilityPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setDate(todayIso());
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function compute(d: string, la: number, lo: number) {
     setLoading(true);
     setError(null);
     setObs(null);
     try {
-      const r = await fetchHilalVisibility({ date, lat, lon });
+      const r = await fetchHilalVisibility({ date: d, lat: la, lon: lo });
       setObs(r);
+      writeQueryParams({ date: d, lat: la, lon: lo });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
     } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    const params = readQueryParams();
+    const qDate = params.get("date");
+    const qLat = params.get("lat");
+    const qLon = params.get("lon");
+    if (qDate && qLat && qLon) {
+      setDate(qDate);
+      setLat(Number(qLat));
+      setLon(Number(qLon));
+      compute(qDate, Number(qLat), Number(qLon));
+    } else {
+      setDate(todayIso());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await compute(date, lat, lon);
   }
 
   const stats = obs
@@ -245,6 +264,8 @@ export default function HilalVisibilityPage() {
               method.
             </p>
           </Card>
+
+          <CopyLinkButton />
         </motion.div>
       )}
     </div>

@@ -11,9 +11,11 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
 import { Select } from "@/components/ui/Select";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { cn } from "@/lib/cn";
 import { todayIso } from "@/lib/date";
 import { ApiError, convertDate, ConvertResult } from "@/lib/api";
+import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 const HIJRI_MONTHS = [
   "Muharram",
@@ -53,27 +55,61 @@ export default function ConverterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setDate(todayIso());
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function compute(
+    dir: "gregorian_to_hijri" | "hijri_to_gregorian",
+    d: string,
+    y: number,
+    m: number,
+    day: number,
+  ) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
       const r = await convertDate(
-        direction === "gregorian_to_hijri"
-          ? { direction, date }
-          : { direction, hijri_year: hijriYear, hijri_month: hijriMonth, hijri_day: hijriDay },
+        dir === "gregorian_to_hijri"
+          ? { direction: dir, date: d }
+          : { direction: dir, hijri_year: y, hijri_month: m, hijri_day: day },
       );
       setResult(r);
+      writeQueryParams(
+        dir === "gregorian_to_hijri"
+          ? { direction: dir, date: d }
+          : { direction: dir, hijri_year: y, hijri_month: m, hijri_day: day },
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
     } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    const params = readQueryParams();
+    const qDirection = params.get("direction");
+    if (qDirection === "gregorian_to_hijri" && params.get("date")) {
+      const qDate = params.get("date")!;
+      setDirection(qDirection);
+      setDate(qDate);
+      compute(qDirection, qDate, hijriYear, hijriMonth, hijriDay);
+    } else if (qDirection === "hijri_to_gregorian" && params.get("hijri_year")) {
+      const y = Number(params.get("hijri_year"));
+      const m = Number(params.get("hijri_month") ?? hijriMonth);
+      const day = Number(params.get("hijri_day") ?? hijriDay);
+      setDirection(qDirection);
+      setHijriYear(y);
+      setHijriMonth(m);
+      setHijriDay(day);
+      compute(qDirection, date, y, m, day);
+    } else {
+      setDate(todayIso());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await compute(direction, date, hijriYear, hijriMonth, hijriDay);
   }
 
   return (
@@ -205,6 +241,9 @@ export default function ConverterPage() {
                 ]}
               />
             </Card>
+            <div className="mt-4">
+              <CopyLinkButton />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
