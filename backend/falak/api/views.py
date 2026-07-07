@@ -169,6 +169,39 @@ def prayer_times_view(request: Request) -> Response:
 
 
 @api_view(["GET"])
+def prayer_times_month_view(request: Request) -> Response:
+    import calendar
+
+    try:
+        year = int(_require_float(request, "year"))
+        month = int(_require_float(request, "month"))
+        lat = _require_float(request, "lat")
+        lon = _require_float(request, "lon")
+    except ValueError as exc:
+        return Response({"error": str(exc)}, status=400)
+
+    if not 1 <= month <= 12:
+        return Response({"error": "month must be between 1 and 12"}, status=400)
+
+    convention_name = request.query_params.get("convention", "Kemenag RI")
+    convention = pt.CONVENTIONS.get(convention_name)
+    if convention is None:
+        return Response(
+            {"error": f"convention '{convention_name}' not recognized; supported: {sorted(pt.CONVENTIONS)}"},
+            status=400,
+        )
+
+    days_in_month = calendar.monthrange(year, month)[1]
+    days = []
+    for day in range(1, days_in_month + 1):
+        date = _dt.date(year, month, day)
+        result = pt.daily_prayer_times(date, lat, lon, convention)
+        days.append(PrayerTimesSerializer(result).data)
+
+    return Response({"year": year, "month": month, "latitude_deg": lat, "longitude_deg": lon, "days": days})
+
+
+@api_view(["GET"])
 def qibla_view(request: Request) -> Response:
     try:
         lat = _require_float(request, "lat")
