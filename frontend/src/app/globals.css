@@ -95,3 +95,27 @@ body {
 ::selection {
   background: rgba(217, 168, 62, 0.35);
 }
+
+/* Print/PDF export: hide chrome (nav, forms, buttons) and show only the
+   element marked .print-area, expanded to the full page. Used by pages
+   that offer a "Print / Save as PDF" export (prayer-times, hilal-visibility). */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+  }
+}

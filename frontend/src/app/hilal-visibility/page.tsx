@@ -24,6 +24,7 @@ import { Field, inputClasses } from "@/components/ui/Field";
 import { LocationPicker } from "@/components/LocationPicker";
 import { HilalMoon } from "@/components/HilalMoon";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { PrintButton } from "@/components/PrintButton";
 import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
@@ -140,7 +141,7 @@ export default function HilalVisibilityPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="space-y-4"
+          className="print-area space-y-4"
         >
           <Card className="flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:justify-center sm:gap-8 sm:text-left">
             <HilalMoon illuminationFraction={obs.illumination_fraction} visible={isVisible(obs.criteria.mabims_2021)} />
@@ -265,7 +266,10 @@ export default function HilalVisibilityPage() {
             </p>
           </Card>
 
-          <CopyLinkButton />
+          <div className="no-print flex flex-wrap gap-3">
+            <CopyLinkButton />
+            <PrintButton label="Print / Save as PDF (sidang isbat submission)" />
+          </div>
         </motion.div>
       )}
     </div>

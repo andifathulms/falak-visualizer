@@ -93,6 +93,24 @@ export function fetchPrayerTimes(params: { date: string; lat: number; lon: numbe
   return getJson<PrayerTimesResult>("/prayer-times/", params);
 }
 
+export interface PrayerTimesMonthResult {
+  year: number;
+  month: number;
+  latitude_deg: number;
+  longitude_deg: number;
+  days: PrayerTimesResult[];
+}
+
+export function fetchPrayerTimesMonth(params: {
+  year: number;
+  month: number;
+  lat: number;
+  lon: number;
+  convention?: string;
+}) {
+  return getJson<PrayerTimesMonthResult>("/prayer-times-month/", params);
+}
+
 export interface QiblaResult {
   latitude_deg: number;
   longitude_deg: number;
