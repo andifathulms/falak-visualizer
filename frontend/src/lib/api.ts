@@ -63,6 +63,13 @@ export interface HilalObservation {
     mabims_2021: boolean;
     odeh: string;
   };
+  trajectory: Array<{
+    time_utc: string;
+    minutes_from_sunset: number;
+    moon_altitude_deg: number;
+    sun_altitude_deg: number;
+    elongation_deg: number;
+  }>;
 }
 
 export function fetchHilalVisibility(params: { date: string; lat: number; lon: number }) {

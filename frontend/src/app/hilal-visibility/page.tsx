@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { MoonStar, Search, Gauge, Ruler, Clock3, Sunset, Percent, Timer, Sparkles } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -155,6 +166,55 @@ export default function HilalVisibilityPage() {
                   <div className="mt-1 font-mono text-lg">{stat.value}</div>
                 </motion.div>
               ))}
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="mb-1 font-medium">Around sunset</h2>
+            <p className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+              Moon altitude and elongation for the hour spanning sunset — not just the sunset-instant numbers above.
+            </p>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={obs.trajectory} margin={{ top: 4, right: 12, bottom: 0, left: -12 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.2} vertical={false} />
+                  <XAxis
+                    dataKey="minutes_from_sunset"
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                    tickFormatter={(v) => `${v > 0 ? "+" : ""}${v}m`}
+                    stroke="#94a3b8"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                    tickFormatter={(v) => `${v}°`}
+                    stroke="#94a3b8"
+                    width={40}
+                  />
+                  <ReferenceLine x={0} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: "Sunset", fontSize: 11, fill: "#94a3b8", position: "top" }} />
+                  <Tooltip
+                    formatter={(value, name) => [`${Number(value).toFixed(2)}°`, name]}
+                    labelFormatter={(v) => `${Number(v) > 0 ? "+" : ""}${v} min from sunset`}
+                    contentStyle={{ background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 8, fontSize: 12 }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="moon_altitude_deg"
+                    name="Moon altitude"
+                    stroke="#4fb3a6"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="elongation_deg"
+                    name="Elongation"
+                    stroke="#d9a83e"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </Card>
 
