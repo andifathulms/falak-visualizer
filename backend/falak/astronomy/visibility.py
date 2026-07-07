@@ -15,7 +15,8 @@ import math
 from dataclasses import dataclass
 
 from . import conjunction, lunar, solar
-from ._horizon import equatorial_from_ecliptic, find_horizon_crossing
+from ._horizon import altitude_deg, equatorial_from_ecliptic, find_horizon_crossing
+from .timescale import julian_day
 
 
 def _sun_ra_dec(dt: _dt.datetime) -> tuple[float, float]:
@@ -27,6 +28,14 @@ def _moon_ra_dec(dt: _dt.datetime) -> tuple[float, float]:
     moon = lunar.lunar_position(dt)
     eps = solar.obliquity_of_ecliptic(moon.t)
     return equatorial_from_ecliptic(moon.apparent_longitude_deg, moon.ecliptic_latitude_deg, eps)
+
+
+def _elongation_deg(sun_ra: float, sun_dec: float, moon_ra: float, moon_dec: float) -> float:
+    """Angular separation between Sun and Moon, via the spherical law of cosines."""
+    cos_elong = math.sin(math.radians(sun_dec)) * math.sin(math.radians(moon_dec)) + math.cos(
+        math.radians(sun_dec)
+    ) * math.cos(math.radians(moon_dec)) * math.cos(math.radians(moon_ra - sun_ra))
+    return math.degrees(math.acos(max(-1.0, min(1.0, cos_elong))))
 
 
 @dataclass(frozen=True)
@@ -63,17 +72,11 @@ def compute_hilal_observation(date: _dt.date, lat_deg: float, lon_deg: float) ->
     moon = lunar.lunar_position(sunset)
     moon_ra, moon_dec = _moon_ra_dec(sunset)
 
-    from .timescale import julian_day
-    from ._horizon import altitude_deg
-
     jd = julian_day(sunset)
     moon_alt = altitude_deg(moon_ra, moon_dec, lat_deg, lon_deg, jd)
     sun_alt = altitude_deg(sun_ra, sun_dec, lat_deg, lon_deg, jd)
 
-    cos_elong = math.sin(math.radians(sun_dec)) * math.sin(math.radians(moon_dec)) + math.cos(
-        math.radians(sun_dec)
-    ) * math.cos(math.radians(moon_dec)) * math.cos(math.radians(moon_ra - sun_ra))
-    elongation = math.degrees(math.acos(max(-1.0, min(1.0, cos_elong))))
+    elongation = _elongation_deg(sun_ra, sun_dec, moon_ra, moon_dec)
 
     moon_age_hours = (sunset - conj).total_seconds() / 3600.0
 
@@ -100,6 +103,54 @@ def compute_hilal_observation(date: _dt.date, lat_deg: float, lon_deg: float) ->
         lag_time_minutes=lag_time,
         crescent_width_arcmin=crescent_width,
     )
+
+
+@dataclass(frozen=True)
+class TrajectoryPoint:
+    time: _dt.datetime
+    minutes_from_sunset: float
+    moon_altitude_deg: float
+    sun_altitude_deg: float
+    elongation_deg: float
+
+
+def hilal_trajectory(
+    date: _dt.date,
+    lat_deg: float,
+    lon_deg: float,
+    window_minutes: float = 30.0,
+    step_minutes: float = 5.0,
+) -> list[TrajectoryPoint]:
+    """
+    Moon/Sun altitude and elongation sampled every `step_minutes` across a
+    window centered on sunset (+/- window_minutes) - lets a UI plot how
+    conditions evolve around the moment of interest, rather than showing
+    only the single-instant sunset numbers (CLAUDE.md: every verdict must
+    be inspectable, not just as a snapshot).
+    """
+    sunset = find_horizon_crossing(date, lat_deg, lon_deg, _sun_ra_dec, -0.8333, rising=False)
+    if sunset is None:
+        raise ValueError(f"no sunset found for {date} at ({lat_deg}, {lon_deg})")
+
+    points = []
+    offset = -window_minutes
+    while offset <= window_minutes + 1e-9:
+        t = sunset + _dt.timedelta(minutes=offset)
+        sun_ra, sun_dec = _sun_ra_dec(t)
+        moon_ra, moon_dec = _moon_ra_dec(t)
+        jd = julian_day(t)
+        points.append(
+            TrajectoryPoint(
+                time=t,
+                minutes_from_sunset=offset,
+                moon_altitude_deg=altitude_deg(moon_ra, moon_dec, lat_deg, lon_deg, jd),
+                sun_altitude_deg=altitude_deg(sun_ra, sun_dec, lat_deg, lon_deg, jd),
+                elongation_deg=_elongation_deg(sun_ra, sun_dec, moon_ra, moon_dec),
+            )
+        )
+        offset += step_minutes
+
+    return points
 
 
 def wujudul_hilal(moonset: "_dt.datetime | None", sunset: _dt.datetime, conjunction_time: _dt.datetime) -> bool:
