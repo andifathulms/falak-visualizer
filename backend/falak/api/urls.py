@@ -11,4 +11,5 @@ urlpatterns = [
     path("method-divergence/", views.method_divergence, name="method-divergence"),
     path("visibility-calendar/", views.visibility_calendar, name="visibility-calendar"),
     path("isbat-accuracy/", views.isbat_accuracy_view, name="isbat-accuracy"),
+    path("rashdul-qibla/", views.rashdul_qibla_view, name="rashdul-qibla"),
 ]

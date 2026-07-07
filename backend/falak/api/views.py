@@ -274,6 +274,33 @@ def visibility_calendar(request: Request) -> Response:
 
 
 @api_view(["GET"])
+def rashdul_qibla_view(request: Request) -> Response:
+    try:
+        year = int(_require_float(request, "year"))
+    except ValueError as exc:
+        return Response({"error": str(exc)}, status=400)
+
+    lat_raw = request.query_params.get("lat")
+    lon_raw = request.query_params.get("lon")
+    try:
+        lat = float(lat_raw) if lat_raw is not None else None
+        lon = float(lon_raw) if lon_raw is not None else None
+    except ValueError:
+        return Response({"error": "lat/lon must be numbers"}, status=400)
+
+    events = qibla_module.rashdul_qibla_events(year)
+    payload_events = []
+    for event in events:
+        entry = {"utc_time": event.utc_time.isoformat(), "direction": event.direction}
+        if lat is not None and lon is not None:
+            result = qibla_module.qibla_direction(lat, lon)
+            entry["bearing_deg"] = result.bearing_deg
+        payload_events.append(entry)
+
+    return Response({"year": year, "events": payload_events})
+
+
+@api_view(["GET"])
 def isbat_accuracy_view(request: Request) -> Response:
     import dataclasses
 
