@@ -35,12 +35,14 @@ Postgres and Redis are both required. Postgres caches engine output
 `IsbatRecord` reference data; Redis is the Celery broker for
 `precompute_visibility_grid`.
 
-```bash
-fly postgres create --name falak-db --region sin   # sets DATABASE_URL for you
-fly postgres attach falak-db --app falak-api
-```
+For Postgres, run `fly help` and use whichever Postgres command your CLI
+version offers (Fly has moved from `fly postgres` to Managed Postgres, `fly mpg`);
+attaching it to the app sets `DATABASE_URL` for you. A free Supabase or Neon
+database works equally well — the backend only needs a `DATABASE_URL`, and this
+schema is small, since the tables are a cache in front of the engine rather than
+a source of truth.
 
-For Redis, either `fly redis create` or a free Upstash database. Note that
+For Redis, use Fly's Upstash Redis extension or a free Upstash account. Note that
 Celery needs the TLS mode spelled out explicitly on an `rediss://` URL:
 
 ```
