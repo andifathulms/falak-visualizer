@@ -47,7 +47,7 @@ invitation to silent drift, so they are pinned to each other:
    through the TypeScript engine and fails on any deviation. In practice the two
    agree to the last digit; the tolerance that remains exists only so a
    different `libm` cannot fail the build over a last-ulp `sin` difference.
-3. CI runs the Python suite, **regenerates the fixture and diffs it**, then runs
+3. CI runs the Python suite, **regenerates the fixture and re-checks it numerically**, then runs
    the conformance suite — and blocks the deploy if any of that fails. The diff
    step is what stops someone changing the oracle and leaving the port pinned to
    stale numbers, which would let both be wrong while the tests stayed green.

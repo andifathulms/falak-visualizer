@@ -83,20 +83,18 @@ jobs:
           DJANGO_SECRET_KEY: ci-only-not-a-real-secret
         run: pytest -q
 
-      # Regenerating and diffing proves the committed fixture is what the current
-      # Python engine actually produces. Without this, someone could change the
-      # oracle and leave the browser port pinned to stale numbers - the
-      # golden-vector suite would still pass, and both would be wrong.
+      # Regenerating and comparing proves the committed fixture is what the
+      # current Python engine actually produces. Without this, someone could
+      # change the oracle and leave the browser port pinned to stale numbers -
+      # the golden-vector suite would still pass, and both would be wrong.
+      #
+      # --check compares numerically rather than byte-for-byte: libm
+      # implementations disagree in the last digit or two of sin/cos/atan2, so a
+      # fixture generated on a contributor's Mac would never match one
+      # regenerated on this Linux runner. Verdicts and dates still compare
+      # exactly.
       - name: Check golden vectors are up to date
-        run: |
-          python3 backend/scripts/generate_golden_vectors.py
-          if ! git diff --exit-code -- frontend/src/lib/falak/__fixtures__/golden-vectors.json; then
-            echo "::error::golden-vectors.json is stale. The Python engine changed but the" \
-                 "fixture was not regenerated. Run:" \
-                 "cd backend && python3 scripts/generate_golden_vectors.py" \
-                 "then commit the result."
-            exit 1
-          fi
+        run: python3 backend/scripts/generate_golden_vectors.py --check
 
       - uses: actions/setup-node@v4
         with:

@@ -24,6 +24,13 @@ Regenerate after ANY change to the Python engine, and commit the result:
 
     python3 scripts/generate_golden_vectors.py
 
+CI runs `--check` instead, which regenerates in memory and compares numerically
+against the committed fixture. It is deliberately not a byte-for-byte diff: the
+last digit or two of sin/cos/atan2 differs between libm implementations, so a
+fixture generated on macOS never matches one generated on Linux exactly, while
+agreeing far beyond any precision that could matter. Verdict strings, dates and
+booleans are still compared exactly.
+
 Adding a case is always safe. Changing or removing one is a claim that the
 engine's previous answer was wrong - say why in the commit message.
 """
@@ -689,6 +696,86 @@ def build_grid():
     }
 
 
+# Tolerance for --check. Well above the last-ulp noise floor between libm
+# implementations (macOS vs glibc differ in the final digit or two of sin/cos/
+# atan2, ~1e-15 relative) and well below anything that could move a published
+# number. Deliberately the same 1e-9 the TypeScript conformance suite compares
+# against, so the two gates agree on what "unchanged" means.
+CHECK_ATOL = 1e-9
+CHECK_RTOL = 1e-9
+
+
+def compare(expected, actual, path=""):
+    """
+    Yield a description of every way `actual` departs from `expected`.
+
+    Numbers compare within tolerance; everything else - verdict strings, dates,
+    booleans, the shape of the structure - compares exactly. A criterion landing
+    on the other side of a threshold must fail this check, not be absorbed by it.
+    """
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict):
+            yield f"{path}: expected an object, got {type(actual).__name__}"
+            return
+        for key in sorted(set(expected) | set(actual)):
+            if key not in expected:
+                yield f"{path}/{key}: added"
+            elif key not in actual:
+                yield f"{path}/{key}: removed"
+            else:
+                yield from compare(expected[key], actual[key], f"{path}/{key}")
+        return
+
+    if isinstance(expected, list):
+        if not isinstance(actual, list):
+            yield f"{path}: expected a list, got {type(actual).__name__}"
+            return
+        if len(expected) != len(actual):
+            yield f"{path}: length {len(expected)} -> {len(actual)}"
+            return
+        for index, (want, got) in enumerate(zip(expected, actual)):
+            yield from compare(want, got, f"{path}[{index}]")
+        return
+
+    # bool before number: bool is a subclass of int, and a flipped verdict must
+    # never be treated as a numeric near-miss.
+    if isinstance(expected, bool) or isinstance(actual, bool):
+        if expected is not actual:
+            yield f"{path}: {expected!r} -> {actual!r}"
+        return
+
+    if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
+        if abs(actual - expected) > max(CHECK_ATOL, CHECK_RTOL * abs(expected)):
+            yield f"{path}: {expected!r} -> {actual!r}"
+        return
+
+    if expected != actual:
+        yield f"{path}: {expected!r} -> {actual!r}"
+
+
+def check(payload) -> int:
+    """Compare freshly-generated vectors against the committed fixture."""
+    if not OUTPUT_PATH.exists():
+        print(f"error: {OUTPUT_PATH} does not exist; run this script without --check")
+        return 1
+
+    with OUTPUT_PATH.open() as handle:
+        committed = json.load(handle)
+
+    differences = list(compare(committed, payload))
+    if not differences:
+        print(f"golden vectors are up to date (within {CHECK_ATOL:g} of the current engine)")
+        return 0
+
+    print(f"golden vectors are STALE - {len(differences)} value(s) differ from the current engine:")
+    for line in differences[:25]:
+        print(f"  {line}")
+    if len(differences) > 25:
+        print(f"  ... and {len(differences) - 25} more")
+    print("\nRegenerate and commit:  python3 backend/scripts/generate_golden_vectors.py")
+    return 1
+
+
 def main() -> int:
     payload = {
         "_readme": (
@@ -707,6 +794,9 @@ def main() -> int:
         "converter": build_converter(),
         "grid": build_grid(),
     }
+
+    if "--check" in sys.argv:
+        return check(payload)
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_PATH.open("w") as handle:

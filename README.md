@@ -67,7 +67,7 @@ They cannot drift apart silently:
   ~2,000 fixed inputs into `frontend/src/lib/falak/__fixtures__/`.
 - `frontend/src/lib/falak/__tests__/golden.test.ts` replays them through the port
   and fails on any deviation. The two agree to the last digit.
-- CI runs the Python suite, regenerates the fixture and diffs it, then runs the
+- CI runs the Python suite, regenerates the fixture and re-checks it numerically, then runs the
   conformance suite — and blocks the deploy on any failure.
 
 After changing the Python engine, regenerate the fixture and commit it.
