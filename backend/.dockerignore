@@ -5,3 +5,9 @@ venv/
 staticfiles/
 *.sqlite3
 .pytest_cache/
+
+# Skyfield's JPL ephemeris - a 31MB test-only artifact, downloaded on demand by
+# falak/tests/test_conjunction_skyfield_crosscheck.py. Production code must
+# never read it (CLAUDE.md: no third-party ephemeris in the request path), so
+# keep it out of the image entirely.
+*.bsp

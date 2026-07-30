@@ -1,0 +1,45 @@
+# Fly.io deployment for the Falak API. See ../DEPLOY.md for the secrets this
+# expects and how it pairs with the GitHub Pages frontend.
+#
+# `app` must match the name you passed to `fly launch --no-deploy`.
+app = "falak-api"
+primary_region = "sin" # Singapore - nearest region to Indonesian users
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # Runs once per deploy, before the new machines take traffic.
+  release_command = "python manage.py migrate --noinput"
+
+[processes]
+  web = "gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+  # Celery keeps precompute_visibility_grid out of the request path
+  # (CLAUDE.md Phase 1.3). Without a running worker, /api/visibility-grid/
+  # returns status:"computing" indefinitely - the map page will never fill in.
+  worker = "celery -A config worker --loglevel=info --concurrency=1"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  processes = ["web"]
+  # Scale to zero when idle and wake on the next request. Suspend (rather than
+  # stop) keeps wake-up to a second or two, which matters because this URL is
+  # hit directly from a public Pages site.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/healthz"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+
+[[vm]]
+  # The engine is pure float math - CPU-light and allocation-light. 512MB is
+  # comfortable; the grid precompute is the only sustained workload.
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
