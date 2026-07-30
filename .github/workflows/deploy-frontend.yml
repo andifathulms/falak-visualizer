@@ -1,13 +1,25 @@
-name: Deploy frontend to GitHub Pages
+name: Verify engines and deploy to GitHub Pages
 
-# Publishes frontend/ as a static export. The astronomy engine stays in the
-# Django backend (see DEPLOY.md) - Pages only hosts the UI, which calls the API
-# from the browser at runtime.
+# Publishes frontend/ as a static export. The astronomy engine now runs in the
+# browser (frontend/src/lib/falak/), so Pages hosts the entire product and there
+# is no backend in the request path - see DEPLOY.md.
+#
+# The Python engine in backend/ remains the validated oracle: it is what was
+# cross-checked against JPL DE440. The `verify` job below is what keeps the two
+# implementations from drifting, and it gates every deploy.
 
 on:
   push:
     branches: [main]
     paths:
+      # backend/** matters even though it is no longer deployed: a change to the
+      # oracle must re-prove that the browser port still agrees with it.
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
       - "frontend/**"
       - ".github/workflows/deploy-frontend.yml"
   workflow_dispatch:
@@ -23,31 +35,70 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  verify:
+    name: Verify the browser engine matches the Python oracle
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # NEXT_PUBLIC_API_BASE_URL is baked in at build time, so a missing or
-      # http:// value cannot be recovered from at runtime - it would ship a
-      # site where every page fails with an opaque fetch error (browsers block
-      # http requests from an https page). Fail the build loudly instead.
-      - name: Check API base URL is configured
-        env:
-          API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+
+      # The oracle has to be sound before it is worth comparing anything to it.
+      # This includes the Skyfield/DE440 cross-check of the conjunction solver
+      # (PRD Sec. 5 / CLAUDE.md Phase 0.7).
+      - name: Run the Python engine suite
+        working-directory: backend
+        run: pytest -q
+
+      # Regenerating and diffing proves the committed fixture is what the current
+      # Python engine actually produces. Without this, someone could change the
+      # oracle and leave the browser port pinned to stale numbers - the
+      # golden-vector suite would still pass, and both would be wrong.
+      - name: Check golden vectors are up to date
         run: |
-          if [ -z "$API_BASE_URL" ]; then
-            echo "::error::Repository variable NEXT_PUBLIC_API_BASE_URL is not set." \
-                 "Set it under Settings > Secrets and variables > Actions > Variables" \
-                 "to your deployed backend, e.g. https://falak-api.fly.dev/api"
+          python3 backend/scripts/generate_golden_vectors.py
+          if ! git diff --exit-code -- frontend/src/lib/falak/__fixtures__/golden-vectors.json; then
+            echo "::error::golden-vectors.json is stale. The Python engine changed but the" \
+                 "fixture was not regenerated. Run:" \
+                 "cd backend && python3 scripts/generate_golden_vectors.py" \
+                 "then commit the result."
             exit 1
           fi
-          case "$API_BASE_URL" in
-            https://*) ;;
-            *) echo "::error::NEXT_PUBLIC_API_BASE_URL must start with https:// (got: $API_BASE_URL)." \
-                    "GitHub Pages is served over https and browsers block mixed-content requests."
-               exit 1 ;;
-          esac
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # The conformance suite: replays every golden vector through the TypeScript
+      # port and fails on any deviation beyond tolerance.
+      - name: Verify the browser engine against the golden vectors
+        working-directory: frontend
+        run: npm test
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+  build:
+    name: Build static export
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -65,7 +116,9 @@ jobs:
           STATIC_EXPORT: "1"
           # Pages serves project sites from https://<user>.github.io/<repo>/
           NEXT_PUBLIC_BASE_PATH: /falak-visualizer
-          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          # NEXT_PUBLIC_API_BASE_URL is deliberately unset. Every calculation runs
+          # in the browser, so there is no API to point at; setting it would only
+          # surface a dead "API Docs" link in the nav.
         run: npm run build
 
       # Belt-and-braces: Actions-based Pages deploys skip Jekyll entirely, but
@@ -80,7 +133,10 @@ jobs:
           path: frontend/out
 
   deploy:
+    name: Deploy to GitHub Pages
     needs: build
+    # Pull requests verify and build but must not publish.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
