@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
 import { Select } from "@/components/ui/Select";
 import { ApiError, fetchVisibilityGrid, VisibilityGridResult } from "@/lib/api";
+import { GRID_POINT_COUNT } from "@/lib/falak/grid";
 import { todayIso } from "@/lib/date";
 import { INDONESIAN_CITIES } from "@/lib/locations";
 import { cn } from "@/lib/cn";
@@ -71,6 +72,10 @@ export default function VisibilityMapPage() {
   const [result, setResult] = useState<VisibilityGridResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // The grid is ~3,255 hilal observations computed in this browser, which takes
+  // seconds rather than milliseconds - so show real progress instead of an
+  // indefinite spinner.
+  const [progress, setProgress] = useState<{ completed: number; total: number } | null>(null);
   const [hover, setHover] = useState<{ x: number; y: number; point: GridPoint } | null>(null);
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
@@ -86,13 +91,15 @@ export default function VisibilityMapPage() {
     setLoading(true);
     setError(null);
     setHover(null);
+    setProgress({ completed: 0, total: GRID_POINT_COUNT });
     try {
-      const r = await fetchVisibilityGrid({ date, method });
+      const r = await fetchVisibilityGrid({ date, method }, setProgress);
       setResult(r);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setError(err instanceof ApiError ? err.message : "Failed to compute the visibility grid.");
     } finally {
       setLoading(false);
+      setProgress(null);
     }
   }
 
@@ -159,15 +166,31 @@ export default function VisibilityMapPage() {
 
       {error && <ErrorBanner message={error} />}
 
-      {result?.status === "computing" && (
+      {progress !== null && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center gap-3 rounded-xl border border-moon-500/30 bg-moon-500/[0.07] px-4 py-3.5 text-sm text-neutral-700 dark:text-neutral-300"
+          className="rounded-xl border border-moon-500/30 bg-moon-500/[0.07] px-4 py-3.5 text-sm text-neutral-700 dark:text-neutral-300"
         >
-          <Loader2 className="size-4 shrink-0 animate-spin text-moon-500" />
-          The grid for this date/method isn&apos;t cached yet — a background task has been queued to compute it.
-          Try &quot;Load grid&quot; again in a moment.
+          <div className="flex items-center gap-3">
+            <Loader2 className="size-4 shrink-0 animate-spin text-moon-500" />
+            <span>
+              Calculating hilal visibility at {progress.total.toLocaleString()} locations across
+              Indonesia — {Math.round((progress.completed / progress.total) * 100)}% done.
+            </span>
+          </div>
+          <div
+            className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-moon-500/20"
+            role="progressbar"
+            aria-valuenow={progress.completed}
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+          >
+            <div
+              className="h-full rounded-full bg-moon-500 transition-[width] duration-200"
+              style={{ width: `${(progress.completed / progress.total) * 100}%` }}
+            />
+          </div>
         </motion.div>
       )}
 

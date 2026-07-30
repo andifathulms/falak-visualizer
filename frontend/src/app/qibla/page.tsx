@@ -122,7 +122,7 @@ export default function QiblaPage() {
       const r = await fetchRashdulQibla({ year });
       setRashdul(r);
     } catch (err) {
-      setRashdulError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setRashdulError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
       setRashdulLoading(false);
     }
@@ -137,7 +137,7 @@ export default function QiblaPage() {
       setResult(r);
       writeQueryParams({ lat: la, lon: lo });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
       setLoading(false);
     }

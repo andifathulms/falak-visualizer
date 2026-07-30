@@ -70,7 +70,7 @@ export default function PrayerTimesPage() {
       const r = await fetchPrayerTimesMonth({ year: monthYear, month, lat, lon, convention: "Kemenag RI" });
       setMonthResult(r);
     } catch (err) {
-      setMonthError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setMonthError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
       setMonthLoading(false);
     }
@@ -102,7 +102,7 @@ export default function PrayerTimesPage() {
       setResult(r);
       writeQueryParams({ date: d, lat: la, lon: lo });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
       setLoading(false);
     }

@@ -50,7 +50,7 @@ export default function IsbatAccuracyPage() {
       const r = await fetchIsbatAccuracy(hijriYear ? { hijri_year: Number(hijriYear) } : {});
       setResult(r);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
       setLoading(false);
     }

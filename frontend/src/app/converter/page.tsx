@@ -78,7 +78,7 @@ export default function ConverterPage() {
           : { direction: dir, hijri_year: y, hijri_month: m, hijri_day: day },
       );
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
       setLoading(false);
     }

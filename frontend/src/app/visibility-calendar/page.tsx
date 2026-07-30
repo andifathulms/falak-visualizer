@@ -39,7 +39,7 @@ export default function VisibilityCalendarPage() {
       const r = await fetchVisibilityCalendar({ hijri_year: hijriYear, method, lat, lon });
       setResult(r);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to reach the Falak API.");
+      setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
       setLoading(false);
     }
