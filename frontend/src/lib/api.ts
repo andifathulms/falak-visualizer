@@ -1,5 +1,68 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+/**
+ * The app's data layer. Every function here used to be an HTTP call to the
+ * Django/DRF backend; they now run the astronomy engine in the browser
+ * (lib/falak/*), which is a line-by-line port of backend/falak pinned to it by
+ * the golden-vector suite.
+ *
+ * Why the shapes look like a REST API
+ * -----------------------------------
+ * The exported names, argument objects and snake_case result interfaces are
+ * unchanged from the HTTP version, and the functions are still async. That is
+ * deliberate: the pages under src/app are untouched by the move off the server,
+ * so the diff that removed the backend is confined to this file and is easy to
+ * audit. `ApiError` is still what a validation failure throws, so the existing
+ * `err instanceof ApiError` handling keeps reporting real messages.
+ *
+ * Everything the backend did is reproducible here because none of it needed a
+ * server: the endpoints were pure functions of their query parameters, the
+ * Postgres tables were caches of deterministic output plus one static reference
+ * table, and there were no accounts and no writes.
+ */
+import {
+  gregorianToHijri,
+  hijriToGregorian,
+  HIJRI_MONTH_NAMES,
+  JAKARTA_LATITUDE_DEG,
+  JAKARTA_LONGITUDE_DEG,
+  MONTH_START_METHODS,
+  monthStartDateForMethod,
+  observationForMonth,
+} from "./falak/converter";
+import { computeVisibilityGrid, type GridProgress } from "./falak/gridRunner";
+import { compareRecord, ISBAT_RECORDS } from "./falak/isbat";
+import { CONVENTIONS, dailyPrayerTimes } from "./falak/prayerTimes";
+import { qiblaDirection, rashdulQiblaEvents } from "./falak/qibla";
+import {
+  daysInMonth,
+  formatInstant,
+  formatPlainDate,
+  parsePlainDate,
+  type Instant,
+  type PlainDate,
+} from "./falak/time";
+import {
+  computeHilalObservation,
+  evaluateCriteria,
+  hilalTrajectory,
+  type HilalMethod as EngineHilalMethod,
+} from "./falak/visibility";
 
+/**
+ * Where the interactive API docs live, when a backend is running.
+ *
+ * The static GitHub Pages build has no backend, so this is null there and the
+ * nav link is hidden rather than pointing at a dead host. Set
+ * NEXT_PUBLIC_API_BASE_URL (as docker-compose does) to surface it again.
+ */
+export const API_DOCS_URL: string | null =
+  process.env.NEXT_PUBLIC_API_BASE_URL === undefined
+    ? null
+    : `${process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/api\/?$/, "")}/api/schema/swagger-ui/`;
+
+/**
+ * Raised for the inputs the DRF views used to reject with a 400/422. Kept as a
+ * class with a `status` so existing error handling and messaging still work.
+ */
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -8,17 +71,45 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) query.set(key, String(value));
+const SUPPORTED_CONVERTER_METHODS = new Set(["mabims_2021"]);
+const SUPPORTED_VISIBILITY_METHODS = new Set<string>(MONTH_START_METHODS);
+
+/** Mirrors the views' `_require_date`: an explicit error, never a substituted date. */
+function requireDate(value: string | undefined, name = "date"): PlainDate {
+  if (value === undefined) {
+    throw new ApiError(`missing required query parameter: ${name}`, 400);
   }
-  const res = await fetch(`${API_BASE_URL}${path}?${query.toString()}`, { cache: "no-store" });
-  const body = await res.json();
-  if (!res.ok) {
-    throw new ApiError(body.error ?? `request failed with status ${res.status}`, res.status);
+  try {
+    return parsePlainDate(value);
+  } catch {
+    throw new ApiError(
+      `query parameter '${name}' must be an ISO date (YYYY-MM-DD), got '${value}'`,
+      400,
+    );
   }
-  return body as T;
+}
+
+/** Mirrors the views' `_require_float`. */
+function requireNumber(value: number | undefined, name: string, fallback?: number): number {
+  if (value === undefined || Number.isNaN(value)) {
+    if (fallback !== undefined) return fallback;
+    throw new ApiError(`missing required query parameter: ${name}`, 400);
+  }
+  return value;
+}
+
+function requireVisibilityMethod(method: string): EngineHilalMethod {
+  if (!SUPPORTED_VISIBILITY_METHODS.has(method)) {
+    throw new ApiError(
+      `method '${method}' not recognized; supported: ${[...MONTH_START_METHODS].sort().join(", ")}`,
+      400,
+    );
+  }
+  return method as EngineHilalMethod;
+}
+
+function isoOrNull(instant: Instant | null): string | null {
+  return instant === null ? null : formatInstant(instant);
 }
 
 export interface ConvertResult {
@@ -32,7 +123,7 @@ export interface ConvertResult {
   gregorian_date?: string;
 }
 
-export function convertDate(params: {
+export async function convertDate(params: {
   direction: "gregorian_to_hijri" | "hijri_to_gregorian";
   date?: string;
   hijri_year?: number;
@@ -40,8 +131,51 @@ export function convertDate(params: {
   hijri_day?: number;
   lat?: number;
   lon?: number;
-}) {
-  return getJson<ConvertResult>("/convert/", params);
+  method?: string;
+}): Promise<ConvertResult> {
+  const method = params.method ?? "mabims_2021";
+  if (!SUPPORTED_CONVERTER_METHODS.has(method)) {
+    throw new ApiError(
+      `method '${method}' is not supported in the MVP converter (only mabims_2021 is implemented)`,
+      400,
+    );
+  }
+
+  const lat = requireNumber(params.lat, "lat", JAKARTA_LATITUDE_DEG);
+  const lon = requireNumber(params.lon, "lon", JAKARTA_LONGITUDE_DEG);
+
+  if (params.direction === "gregorian_to_hijri") {
+    const date = requireDate(params.date);
+    const result = gregorianToHijri(date, lat, lon);
+    return {
+      direction: params.direction,
+      method,
+      input_date: formatPlainDate(date),
+      hijri_year: result.year,
+      hijri_month: result.month,
+      hijri_day: result.day,
+      hijri_month_name: result.monthName,
+    };
+  }
+
+  if (params.direction === "hijri_to_gregorian") {
+    const year = Math.trunc(requireNumber(params.hijri_year, "hijri_year"));
+    const month = Math.trunc(requireNumber(params.hijri_month, "hijri_month"));
+    const day = Math.trunc(requireNumber(params.hijri_day, "hijri_day"));
+    return {
+      direction: params.direction,
+      method,
+      hijri_year: year,
+      hijri_month: month,
+      hijri_day: day,
+      gregorian_date: formatPlainDate(hijriToGregorian(year, month, day, lat, lon)),
+    };
+  }
+
+  throw new ApiError(
+    "query parameter 'direction' must be 'gregorian_to_hijri' or 'hijri_to_gregorian'",
+    400,
+  );
 }
 
 export interface HilalObservation {
@@ -72,8 +206,55 @@ export interface HilalObservation {
   }>;
 }
 
-export function fetchHilalVisibility(params: { date: string; lat: number; lon: number }) {
-  return getJson<HilalObservation>("/hilal-visibility/", params);
+/** The serializer shape shared by the hilal-visibility and calendar payloads. */
+function serializeObservation(observation: ReturnType<typeof computeHilalObservation>) {
+  return {
+    date: formatPlainDate(observation.date),
+    latitude_deg: observation.latitudeDeg,
+    longitude_deg: observation.longitudeDeg,
+    conjunction_time_utc: formatInstant(observation.conjunctionTime),
+    sunset_time_utc: formatInstant(observation.sunsetTime),
+    moonset_time_utc: isoOrNull(observation.moonsetTime),
+    moon_altitude_deg: observation.moonAltitudeDeg,
+    sun_altitude_deg: observation.sunAltitudeDeg,
+    elongation_deg: observation.elongationDeg,
+    moon_age_hours: observation.moonAgeHours,
+    illumination_fraction: observation.illuminationFraction,
+    lag_time_minutes: observation.lagTimeMinutes,
+    crescent_width_arcmin: observation.crescentWidthArcmin,
+  };
+}
+
+export async function fetchHilalVisibility(params: {
+  date: string;
+  lat: number;
+  lon: number;
+  method?: string;
+}): Promise<HilalObservation> {
+  const date = requireDate(params.date);
+  const lat = requireNumber(params.lat, "lat");
+  const lon = requireNumber(params.lon, "lon");
+  if (params.method !== undefined) requireVisibilityMethod(params.method);
+
+  let observation: ReturnType<typeof computeHilalObservation>;
+  try {
+    observation = computeHilalObservation(date, lat, lon);
+  } catch (error) {
+    // 422 is what the view returned for a date/location with no sunset.
+    throw new ApiError(error instanceof Error ? error.message : String(error), 422);
+  }
+
+  return {
+    ...serializeObservation(observation),
+    criteria: evaluateCriteria(observation),
+    trajectory: hilalTrajectory(date, lat, lon).map((point) => ({
+      time_utc: formatInstant(point.time),
+      minutes_from_sunset: point.minutesFromSunset,
+      moon_altitude_deg: point.moonAltitudeDeg,
+      sun_altitude_deg: point.sunAltitudeDeg,
+      elongation_deg: point.elongationDeg,
+    })),
+  };
 }
 
 export interface PrayerTimesResult {
@@ -89,8 +270,43 @@ export interface PrayerTimesResult {
   isha: string | null;
 }
 
-export function fetchPrayerTimes(params: { date: string; lat: number; lon: number; convention?: string }) {
-  return getJson<PrayerTimesResult>("/prayer-times/", params);
+function requireConvention(name: string) {
+  const convention = CONVENTIONS[name];
+  if (convention === undefined) {
+    throw new ApiError(
+      `convention '${name}' not recognized; supported: ${Object.keys(CONVENTIONS).sort().join(", ")}`,
+      400,
+    );
+  }
+  return convention;
+}
+
+function serializePrayerTimes(result: ReturnType<typeof dailyPrayerTimes>): PrayerTimesResult {
+  return {
+    date: formatPlainDate(result.date),
+    latitude_deg: result.latitudeDeg,
+    longitude_deg: result.longitudeDeg,
+    convention: result.convention,
+    fajr: isoOrNull(result.fajr),
+    sunrise: isoOrNull(result.sunrise),
+    dhuhr: formatInstant(result.dhuhr),
+    asr: isoOrNull(result.asr),
+    maghrib: isoOrNull(result.maghrib),
+    isha: isoOrNull(result.isha),
+  };
+}
+
+export async function fetchPrayerTimes(params: {
+  date: string;
+  lat: number;
+  lon: number;
+  convention?: string;
+}): Promise<PrayerTimesResult> {
+  const date = requireDate(params.date);
+  const lat = requireNumber(params.lat, "lat");
+  const lon = requireNumber(params.lon, "lon");
+  const convention = requireConvention(params.convention ?? "Kemenag RI");
+  return serializePrayerTimes(dailyPrayerTimes(date, lat, lon, convention));
 }
 
 export interface PrayerTimesMonthResult {
@@ -101,14 +317,28 @@ export interface PrayerTimesMonthResult {
   days: PrayerTimesResult[];
 }
 
-export function fetchPrayerTimesMonth(params: {
+export async function fetchPrayerTimesMonth(params: {
   year: number;
   month: number;
   lat: number;
   lon: number;
   convention?: string;
-}) {
-  return getJson<PrayerTimesMonthResult>("/prayer-times-month/", params);
+}): Promise<PrayerTimesMonthResult> {
+  const year = Math.trunc(requireNumber(params.year, "year"));
+  const month = Math.trunc(requireNumber(params.month, "month"));
+  const lat = requireNumber(params.lat, "lat");
+  const lon = requireNumber(params.lon, "lon");
+  if (month < 1 || month > 12) {
+    throw new ApiError("month must be between 1 and 12", 400);
+  }
+  const convention = requireConvention(params.convention ?? "Kemenag RI");
+
+  const days: PrayerTimesResult[] = [];
+  for (let day = 1; day <= daysInMonth(year, month); day += 1) {
+    days.push(serializePrayerTimes(dailyPrayerTimes({ year, month, day }, lat, lon, convention)));
+  }
+
+  return { year, month, latitude_deg: lat, longitude_deg: lon, days };
 }
 
 export interface QiblaResult {
@@ -118,8 +348,16 @@ export interface QiblaResult {
   distance_km: number;
 }
 
-export function fetchQibla(params: { lat: number; lon: number }) {
-  return getJson<QiblaResult>("/qibla/", params);
+export async function fetchQibla(params: { lat: number; lon: number }): Promise<QiblaResult> {
+  const lat = requireNumber(params.lat, "lat");
+  const lon = requireNumber(params.lon, "lon");
+  const result = qiblaDirection(lat, lon);
+  return {
+    latitude_deg: lat,
+    longitude_deg: lon,
+    bearing_deg: result.bearingDeg,
+    distance_km: result.distanceKm,
+  };
 }
 
 export interface RashdulQiblaEvent {
@@ -133,8 +371,25 @@ export interface RashdulQiblaResult {
   events: RashdulQiblaEvent[];
 }
 
-export function fetchRashdulQibla(params: { year: number; lat?: number; lon?: number }) {
-  return getJson<RashdulQiblaResult>("/rashdul-qibla/", params);
+export async function fetchRashdulQibla(params: {
+  year: number;
+  lat?: number;
+  lon?: number;
+}): Promise<RashdulQiblaResult> {
+  const year = Math.trunc(requireNumber(params.year, "year"));
+  const hasLocation = params.lat !== undefined && params.lon !== undefined;
+  const bearing = hasLocation
+    ? qiblaDirection(params.lat as number, params.lon as number).bearingDeg
+    : undefined;
+
+  return {
+    year,
+    events: rashdulQiblaEvents(year).map((event) => ({
+      utc_time: formatInstant(event.utcTime),
+      direction: event.direction,
+      ...(bearing === undefined ? {} : { bearing_deg: bearing }),
+    })),
+  };
 }
 
 export interface VisibilityGridResult {
@@ -150,11 +405,32 @@ export interface VisibilityGridResult {
   }>;
 }
 
-export function fetchVisibilityGrid(params: { date: string; method?: string }) {
-  return getJson<VisibilityGridResult>("/visibility-grid/", params);
+/**
+ * Compute the Indonesia visibility grid.
+ *
+ * The HTTP version could answer `status: "computing"` and leave the caller to
+ * poll while Celery worked. Here the promise simply takes as long as the grid
+ * takes, so the result is always `"ready"`; pass `onProgress` to show how far
+ * along it is rather than an indefinite spinner.
+ */
+export async function fetchVisibilityGrid(
+  params: { date: string; method?: string },
+  onProgress?: (progress: GridProgress) => void,
+): Promise<VisibilityGridResult> {
+  const date = requireDate(params.date);
+  const method = requireVisibilityMethod(params.method ?? "mabims_2021");
+
+  const grid = await computeVisibilityGrid(formatPlainDate(date), method, onProgress);
+
+  return {
+    date: formatPlainDate(date),
+    method,
+    status: "ready",
+    points: grid.points,
+  };
 }
 
-export type HilalMethod = "wujudul_hilal" | "mabims_2021" | "odeh";
+export type HilalMethod = EngineHilalMethod;
 
 export interface MethodDivergenceMonth {
   hijri_month: number;
@@ -171,8 +447,41 @@ export interface MethodDivergenceResult {
   months: MethodDivergenceMonth[];
 }
 
-export function fetchMethodDivergence(params: { hijri_year: number; lat?: number; lon?: number }) {
-  return getJson<MethodDivergenceResult>("/method-divergence/", params);
+export async function fetchMethodDivergence(params: {
+  hijri_year: number;
+  lat?: number;
+  lon?: number;
+}): Promise<MethodDivergenceResult> {
+  const hijriYear = Math.trunc(requireNumber(params.hijri_year, "hijri_year"));
+  const lat = requireNumber(params.lat, "lat", JAKARTA_LATITUDE_DEG);
+  const lon = requireNumber(params.lon, "lon", JAKARTA_LONGITUDE_DEG);
+
+  const months: MethodDivergenceMonth[] = [];
+  for (let month = 1; month <= 12; month += 1) {
+    const startDates: Partial<Record<HilalMethod, string>> = {};
+    const errors: Record<string, string> = {};
+
+    for (const method of MONTH_START_METHODS) {
+      try {
+        startDates[method] = formatPlainDate(
+          monthStartDateForMethod(hijriYear, month, method, lat, lon),
+        );
+      } catch (error) {
+        errors[method] = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    const hasErrors = Object.keys(errors).length > 0;
+    months.push({
+      hijri_month: month,
+      hijri_month_name: HIJRI_MONTH_NAMES[month - 1],
+      start_dates: startDates,
+      errors: hasErrors ? errors : null,
+      diverges: hasErrors ? null : new Set(Object.values(startDates)).size > 1,
+    });
+  }
+
+  return { hijri_year: hijriYear, latitude_deg: lat, longitude_deg: lon, months };
 }
 
 export interface VisibilityCalendarMonth {
@@ -198,13 +507,47 @@ export interface VisibilityCalendarResult {
   months: VisibilityCalendarMonth[];
 }
 
-export function fetchVisibilityCalendar(params: {
+export async function fetchVisibilityCalendar(params: {
   hijri_year: number;
   method?: HilalMethod;
   lat?: number;
   lon?: number;
-}) {
-  return getJson<VisibilityCalendarResult>("/visibility-calendar/", params);
+}): Promise<VisibilityCalendarResult> {
+  const hijriYear = Math.trunc(requireNumber(params.hijri_year, "hijri_year"));
+  const lat = requireNumber(params.lat, "lat", JAKARTA_LATITUDE_DEG);
+  const lon = requireNumber(params.lon, "lon", JAKARTA_LONGITUDE_DEG);
+  const method = requireVisibilityMethod(params.method ?? "mabims_2021");
+
+  const months: VisibilityCalendarMonth[] = [];
+  for (let month = 1; month <= 12; month += 1) {
+    let observation: ReturnType<typeof observationForMonth>;
+    try {
+      observation = observationForMonth(hijriYear, month, lat, lon);
+    } catch (error) {
+      months.push({
+        hijri_month: month,
+        hijri_month_name: HIJRI_MONTH_NAMES[month - 1],
+        error: error instanceof Error ? error.message : String(error),
+      });
+      continue;
+    }
+
+    const criteria = evaluateCriteria(observation);
+    months.push({
+      ...serializeObservation(observation),
+      hijri_month: month,
+      hijri_month_name: HIJRI_MONTH_NAMES[month - 1],
+      verdict: criteria[method],
+    });
+  }
+
+  return {
+    hijri_year: hijriYear,
+    method,
+    latitude_deg: lat,
+    longitude_deg: lon,
+    months,
+  };
 }
 
 export interface IsbatComparisonRecord {
@@ -224,6 +567,19 @@ export interface IsbatAccuracyResult {
   records: IsbatComparisonRecord[];
 }
 
-export function fetchIsbatAccuracy(params: { hijri_year?: number; lat?: number; lon?: number }) {
-  return getJson<IsbatAccuracyResult>("/isbat-accuracy/", params);
+export async function fetchIsbatAccuracy(params: {
+  hijri_year?: number;
+  lat?: number;
+  lon?: number;
+}): Promise<IsbatAccuracyResult> {
+  const lat = requireNumber(params.lat, "lat", JAKARTA_LATITUDE_DEG);
+  const lon = requireNumber(params.lon, "lon", JAKARTA_LONGITUDE_DEG);
+
+  const selected =
+    params.hijri_year === undefined
+      ? ISBAT_RECORDS
+      : ISBAT_RECORDS.filter((record) => record.hijriYear === Math.trunc(params.hijri_year as number));
+
+  const records = selected.map((record) => compareRecord(record, lat, lon));
+  return { count: records.length, records };
 }

@@ -20,9 +20,7 @@ import {
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/cn";
-import { API_BASE_URL } from "@/lib/api";
-
-const SWAGGER_URL = `${API_BASE_URL.replace(/\/api\/?$/, "")}/api/schema/swagger-ui/`;
+import { API_DOCS_URL } from "@/lib/api";
 
 const PRIMARY_LINKS = [
   { href: "/converter", label: "Converter", icon: Calendar },
@@ -112,16 +110,20 @@ export function NavBar() {
             </Transition>
           </HeadlessMenu>
 
-          <a
-            href={SWAGGER_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={linkClasses(false)}
-            title="OpenAPI/Swagger docs for the Falak API"
-          >
-            <FileCode2 className="size-4 shrink-0" strokeWidth={2} />
-            API Docs
-          </a>
+          {/* Only shown when a backend is configured - the static build computes
+              everything in the browser, so there is no API to document. */}
+          {API_DOCS_URL !== null && (
+            <a
+              href={API_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkClasses(false)}
+              title="OpenAPI/Swagger docs for the Falak API"
+            >
+              <FileCode2 className="size-4 shrink-0" strokeWidth={2} />
+              API Docs
+            </a>
+          )}
         </div>
 
         <button
@@ -181,18 +183,20 @@ export function NavBar() {
             })}
           </div>
 
-          <div className="mt-1.5 border-t border-neutral-200/70 pt-1.5 dark:border-night-700/60">
-            <a
-              href={SWAGGER_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-600 dark:text-neutral-400"
-            >
-              <FileCode2 className="size-4" strokeWidth={2} />
-              API Docs
-            </a>
-          </div>
+          {API_DOCS_URL !== null && (
+            <div className="mt-1.5 border-t border-neutral-200/70 pt-1.5 dark:border-night-700/60">
+              <a
+                href={API_DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-600 dark:text-neutral-400"
+              >
+                <FileCode2 className="size-4" strokeWidth={2} />
+                API Docs
+              </a>
+            </div>
+          )}
         </div>
       )}
     </header>
