@@ -37,6 +37,12 @@ pip install -r requirements-dev.txt   # adds pytest-django + skyfield for the JP
 python -m pytest -q                   # 66 passed
 ```
 
+## Deploying
+
+The frontend exports to static files and is hosted free on GitHub Pages; the
+Django astronomy engine runs on Fly.io and is called from the browser. See
+[DEPLOY.md](DEPLOY.md) for the full walkthrough.
+
 ## Structure
 
 ```
