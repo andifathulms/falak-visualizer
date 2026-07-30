@@ -38,6 +38,27 @@ jobs:
   verify:
     name: Verify the browser engine matches the Python oracle
     runs-on: ubuntu-latest
+
+    # The engine itself needs no database, but the suite also covers the DRF
+    # views, and five of those tests exercise the IsbatRecord model. They are
+    # worth keeping green even though the API is no longer deployed - it is
+    # still the reference implementation the browser port is judged against.
+    # Defaults match config/settings.py's POSTGRES_* fallbacks.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: falak
+          POSTGRES_USER: falak
+          POSTGRES_PASSWORD: falak
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U falak"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -56,6 +77,10 @@ jobs:
       # (PRD Sec. 5 / CLAUDE.md Phase 0.7).
       - name: Run the Python engine suite
         working-directory: backend
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+          DJANGO_SECRET_KEY: ci-only-not-a-real-secret
         run: pytest -q
 
       # Regenerating and diffing proves the committed fixture is what the current
