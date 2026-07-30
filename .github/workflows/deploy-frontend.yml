@@ -1,0 +1,90 @@
+name: Deploy frontend to GitHub Pages
+
+# Publishes frontend/ as a static export. The astronomy engine stays in the
+# Django backend (see DEPLOY.md) - Pages only hosts the UI, which calls the API
+# from the browser at runtime.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two Pages deploys race; the newer commit always wins.
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # NEXT_PUBLIC_API_BASE_URL is baked in at build time, so a missing or
+      # http:// value cannot be recovered from at runtime - it would ship a
+      # site where every page fails with an opaque fetch error (browsers block
+      # http requests from an https page). Fail the build loudly instead.
+      - name: Check API base URL is configured
+        env:
+          API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+        run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "::error::Repository variable NEXT_PUBLIC_API_BASE_URL is not set." \
+                 "Set it under Settings > Secrets and variables > Actions > Variables" \
+                 "to your deployed backend, e.g. https://falak-api.fly.dev/api"
+            exit 1
+          fi
+          case "$API_BASE_URL" in
+            https://*) ;;
+            *) echo "::error::NEXT_PUBLIC_API_BASE_URL must start with https:// (got: $API_BASE_URL)." \
+                    "GitHub Pages is served over https and browsers block mixed-content requests."
+               exit 1 ;;
+          esac
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build static export
+        working-directory: frontend
+        env:
+          STATIC_EXPORT: "1"
+          # Pages serves project sites from https://<user>.github.io/<repo>/
+          NEXT_PUBLIC_BASE_PATH: /falak-visualizer
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+        run: npm run build
+
+      # Belt-and-braces: Actions-based Pages deploys skip Jekyll entirely, but
+      # this guarantees the _next/ directory is never treated as private.
+      - name: Disable Jekyll processing
+        run: touch frontend/out/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
