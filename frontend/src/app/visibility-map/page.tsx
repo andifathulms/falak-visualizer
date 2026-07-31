@@ -265,7 +265,10 @@ export default function VisibilityMapPage() {
                 width={WIDTH}
                 height={HEIGHT}
                 viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-                className="w-full max-w-full"
+                // h-auto lets the height follow the width through the viewBox's
+                // aspect ratio. With a fixed height attribute and a stretched
+                // width, the map was letterboxed inside its own card.
+                className="h-auto w-full max-w-full"
                 role="img"
                 aria-label="Indonesia hilal visibility grid"
                 onMouseLeave={() => setHover(null)}
@@ -386,26 +389,34 @@ export default function VisibilityMapPage() {
                   />
                 </g>
 
-                {cityMarkers.map(({ city, visible }) => (
-                  <g key={city.name}>
-                    <circle
-                      cx={xScale(city.lon)}
-                      cy={yScale(city.lat)}
-                      r={2.5}
-                      className={visible === null ? "fill-neutral-400" : "fill-neutral-900 dark:fill-white"}
-                      stroke="white"
-                      strokeWidth={0.75}
-                    />
-                    <text
-                      x={xScale(city.lon) + 5}
-                      y={yScale(city.lat) + 3}
-                      className="fill-neutral-700 text-[9px] font-medium dark:fill-neutral-200"
-                      style={{ paintOrder: "stroke", stroke: "var(--card)", strokeWidth: 3 }}
-                    >
-                      {city.name}
-                    </text>
-                  </g>
-                ))}
+                {cityMarkers.map(({ city, visible }) => {
+                  // Jayapura sits within a degree of the eastern edge, so a
+                  // label drawn to its right runs off the map. Anything in the
+                  // last fifth of the width flips to the other side of its dot.
+                  const cx = xScale(city.lon);
+                  const flip = cx > WIDTH * 0.8;
+                  return (
+                    <g key={city.name}>
+                      <circle
+                        cx={cx}
+                        cy={yScale(city.lat)}
+                        r={2.5}
+                        className={visible === null ? "fill-neutral-400" : "fill-neutral-900 dark:fill-white"}
+                        stroke="white"
+                        strokeWidth={0.75}
+                      />
+                      <text
+                        x={flip ? cx - 5 : cx + 5}
+                        y={yScale(city.lat) + 3}
+                        textAnchor={flip ? "end" : "start"}
+                        className="fill-neutral-700 text-[9px] font-medium dark:fill-neutral-200"
+                        style={{ paintOrder: "stroke", stroke: "var(--card)", strokeWidth: 3 }}
+                      >
+                        {city.name}
+                      </text>
+                    </g>
+                  );
+                })}
               </svg>
 
               {hover && (
