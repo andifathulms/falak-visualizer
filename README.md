@@ -1,33 +1,88 @@
 # Falak — Hijri Calendar & Islamic Astronomy Visualizer
 
-A deterministic, astronomically-grounded platform for Hijri calendar conversion,
-hilal (new crescent moon) visibility analysis, prayer time calculation, and
-qibla direction. See `PRD.md` for product scope and `CLAUDE.md` for build order
-and non-negotiable engineering rules.
+**[→ Open the app](https://andifathulms.github.io/falak-visualizer/)**
 
-## Status
+Work out when an Islamic month actually begins — and see the numbers that decide
+it, not just a verdict. Falak computes the Moon's and Sun's positions from first
+principles to answer four questions: what Hijri date is this, is the new crescent
+(*hilal*) visible tonight, when are the prayer times here, and which way is the
+qibla.
 
-MVP is built end-to-end and verified via Docker Compose (real Postgres/Redis,
-migrations, all 5 API endpoints, Celery grid precomputation, and every
-frontend page all confirmed working over HTTP).
+Every calculation runs **in your browser**. There is no backend, no database, and
+no API key — the astronomy engine is ~2,300 lines of TypeScript shipped with the
+page, so the app works on a plane and costs nothing to host.
 
-Phase 0 validation is complete per CLAUDE.md's gate: 66/66 tests pass,
-including the mandated independent Skyfield + JPL DE440 cross-check
-(`backend/falak/tests/test_conjunction_skyfield_crosscheck.py`) — 50/50
-historical months (rolling window ending on the current year, e.g.
-2002-2026 as of this run) matched JPL DE440 within a 5-minute tolerance.
-Everything else has been validated against Meeus' own worked examples and
-cross-checked against publicly documented Kemenag dates (see commit history
-in `backend/falak/astronomy/` and `backend/falak/calendar_engine/` for
-specifics).
+![The Indonesia visibility map on an evening when the crescent is visible across
+Sumatra and Java but not further east](docs/visibility-map.jpg)
 
-The engine now also exists as a TypeScript port that runs in the browser, so the
-whole product deploys as static files with no backend. The Python engine remains
-the validated oracle, and the two are pinned to each other by a generated
-golden-vector suite that gates every deploy — see
-[Two engines, one source of truth](#two-engines-one-source-of-truth).
+*The visibility map on 15 June 2026: the crescent clears the MABIMS threshold
+across Sumatra and Java, and does not further east. This is the problem the app
+exists to show — "has the month started?" can have a different answer depending
+on where you stand.*
+
+## Why it exists
+
+In Indonesia the start of Ramadan, Syawal and Dzulhijjah is a recurring point of
+public confusion, because different organisations use different *hisab*
+(calculation) criteria for whether the hilal is visible. The public usually sees
+only the announcement, never the arithmetic.
+
+Existing converters are either lookup tables with no astronomy behind them, or
+official tools that give a verdict with no way to inspect why. Falak implements
+three real competing criteria — **Wujudul Hilal**, **MABIMS 2021**, and
+**Odeh** — evaluates them independently, and shows where they disagree, because
+the disagreement is the actual subject.
+
+> **Hisab only.** This is calculation, not *rukyat* (observation). Indonesia's
+> official month start is set by Kemenag's sidang isbat, which may incorporate
+> sighting reports this tool cannot. The app says so on every page that reports a
+> month boundary.
+
+## What it does
+
+| Page | What you get |
+|---|---|
+| **Converter** | Hijri ↔ Gregorian from real conjunction times and a visibility criterion, not an offset table |
+| **Hilal Visibility** | Moon altitude, elongation, age, illumination and lag time for any date and place, judged against all three criteria at once |
+| **Visibility Map** | The criterion evaluated at 3,255 points across Indonesia and drawn over the real coastline |
+| **Prayer Times** | Daily times and a printable monthly *jadwal imsakiyah*, in the location's own timezone |
+| **Qibla** | Great-circle bearing and distance, plus *Rashdul Qibla* — the moments the Sun sits directly over the Kaaba, so you can calibrate with a shadow and no instruments |
+| **Method Divergence** | Where the three criteria disagree across a whole Hijri year |
+| **Visibility Calendar** | A twelve-month view of the conditions behind each month start |
+| **Isbat Accuracy** | Each method's predictions against historically announced Kemenag dates |
+
+Every verdict is paired with the raw numbers that produced it — that was the
+point.
+
+## How it's built
+
+The engine implements Meeus' *Astronomical Algorithms*: a truncated VSOP87 solar
+model, the ELP2000 lunar series, a bisection solver for conjunction times, and
+the visibility criteria as pure functions. No ephemeris API, no lookup tables, no
+ML — deliberately, so that every number can be traced to a formula in this repo.
+
+That self-containment is what later made the backend removable. Each endpoint was
+a pure function of its inputs, the database held only cached deterministic output
+plus one static reference table, and the engine imported nothing but `math` and
+`datetime`. So the engine was ported to TypeScript and the server left the
+request path entirely.
+
+## Accuracy
+
+Validated before being trusted, per the project's own build-order rule:
+
+- **50/50 historical lunar conjunctions** match Skyfield with the JPL DE440
+  ephemeris within a 5-minute tolerance
+  ([test_conjunction_skyfield_crosscheck.py](backend/falak/tests/test_conjunction_skyfield_crosscheck.py)).
+  Skyfield is a **test-only** dependency and is never imported by the shipped
+  engine.
+- Solar and lunar positions are checked against Meeus' own worked examples.
+- **100 backend tests** and **51 frontend tests** run in CI and gate every
+  deploy.
 
 ## Running it
+
+Just the frontend — this is the whole app, no services needed:
 
 Just the frontend — this is the whole app, no services needed:
 
@@ -56,6 +111,9 @@ python -m pytest -q
 ```
 
 ## Two engines, one source of truth
+
+Shipping a religious-calendar engine in two languages invites silent drift, so
+they are pinned to each other.
 
 `backend/falak/` (Python) is the **oracle** — the implementation cross-checked
 against JPL DE440. `frontend/src/lib/falak/` (TypeScript) is a line-by-line port
@@ -97,9 +155,18 @@ frontend/           Next.js 14 + Tailwind + D3 + Recharts — the deployed produ
     __fixtures__/     Generated golden vectors (do not hand-edit)
     __tests__/        Conformance suite: port vs oracle
   src/lib/api.ts      Same shapes the HTTP API had, computed locally
-  src/app/            converter, hilal-visibility, visibility-map, prayer-times, qibla
+  src/lib/geo/        Indonesian coastline, extracted from Natural Earth at build time
+  scripts/            One-off generator for that coastline
+  src/app/            The nine pages
 docker-compose.yml   web, worker, redis, postgres, frontend (optional, dev only)
 ```
+
+## Docs
+
+- [DEPLOY.md](DEPLOY.md) — how it deploys, why no server is needed, and how the
+  two engines are kept in agreement
+- [PRD.md](PRD.md) — product scope
+- [CLAUDE.md](CLAUDE.md) — build order and the engineering rules below
 
 ## Non-negotiable rules (see CLAUDE.md)
 
