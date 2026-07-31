@@ -12,16 +12,30 @@ import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
 import { Select } from "@/components/ui/Select";
 import { ApiError, fetchVisibilityGrid, VisibilityGridResult } from "@/lib/api";
-import { GRID_POINT_COUNT } from "@/lib/falak/grid";
+import { GRID_POINT_COUNT, GRID_STEP_DEG } from "@/lib/falak/grid";
 import { todayIso } from "@/lib/date";
 import { INDONESIAN_CITIES } from "@/lib/locations";
-import { cn } from "@/lib/cn";
+import indonesiaGeo from "@/lib/geo/indonesia.geo.json";
 
 const LAT_RANGE: [number, number] = [-11, 6];
 const LON_RANGE: [number, number] = [95, 141];
 const WIDTH = 640;
-const HEIGHT = 320;
-const CELL = 8;
+
+// Height follows from the width so that a degree of longitude and a degree of
+// latitude get the same number of pixels. The old 640x320 box stretched 17
+// degrees of latitude over the same span as 46 of longitude, which was harmless
+// when this was an abstract lattice but visibly deforms a real coastline.
+//
+// Equal scaling also makes the grid cells square without being asked: 0.5
+// degrees is 0.5 degrees on both axes.
+const LON_SPAN = LON_RANGE[1] - LON_RANGE[0];
+const LAT_SPAN = LAT_RANGE[1] - LAT_RANGE[0];
+const HEIGHT = Math.round((WIDTH * LAT_SPAN) / LON_SPAN);
+
+// One cell per grid step, derived rather than guessed - the previous fixed 8px
+// was wider than the 6.96px longitude spacing, so columns overlapped and the map
+// read as horizontal stripes.
+const CELL = WIDTH / (LON_SPAN / GRID_STEP_DEG);
 
 const METHOD_OPTIONS = [
   { value: "mabims_2021", label: "MABIMS 2021" },
@@ -46,6 +60,29 @@ const LABEL_CITY_NAMES = [
   "Jayapura",
 ];
 const LABEL_CITIES = INDONESIAN_CITIES.filter((c) => LABEL_CITY_NAMES.includes(c.name));
+
+// Real coastlines, extracted from Natural Earth at build time by
+// scripts/build-indonesia-geo.mjs and committed - not fetched from a CDN, which
+// would put a runtime dependency back into an app that deliberately has none.
+const INDONESIA_FEATURE = indonesiaGeo.features.find((f) => f.properties.role === "focus")!
+  .geometry as GeoJSON.MultiPolygon;
+const NEIGHBOURS_FEATURE = indonesiaGeo.features.find((f) => f.properties.role === "context")!
+  .geometry as GeoJSON.MultiPolygon;
+
+// The geometry file records the window it was built for. If someone changes the
+// map's extent without regenerating it, the coastlines would silently sit a few
+// degrees off the grid squares - visually plausible and completely wrong.
+if (
+  indonesiaGeo.view.lonMin !== LON_RANGE[0] ||
+  indonesiaGeo.view.lonMax !== LON_RANGE[1] ||
+  indonesiaGeo.view.latMin !== LAT_RANGE[0] ||
+  indonesiaGeo.view.latMax !== LAT_RANGE[1]
+) {
+  throw new Error(
+    "indonesia.geo.json was built for a different lat/lon window than the map draws; " +
+      "re-run `node scripts/build-indonesia-geo.mjs` after changing LAT_RANGE/LON_RANGE",
+  );
+}
 
 type GridPoint = NonNullable<VisibilityGridResult["points"]>[number];
 
@@ -85,6 +122,25 @@ export default function VisibilityMapPage() {
 
   const xScale = useMemo(() => d3.scaleLinear().domain(LON_RANGE).range([0, WIDTH]), []);
   const yScale = useMemo(() => d3.scaleLinear().domain(LAT_RANGE).range([HEIGHT, 0]), []);
+
+  // Project the coastlines through the *same* scales the grid squares use,
+  // rather than fitting a d3 projection to the box independently. Two ways of
+  // computing the same mapping is how a map ends up half a degree out of
+  // register with its own data.
+  const geoPath = useMemo(
+    () =>
+      d3.geoPath(
+        d3.geoTransform({
+          point(lon: number, lat: number) {
+            this.stream.point(xScale(lon), yScale(lat));
+          },
+        }),
+      ),
+    [xScale, yScale],
+  );
+
+  const indonesiaPath = useMemo(() => geoPath(INDONESIA_FEATURE) ?? "", [geoPath]);
+  const neighboursPath = useMemo(() => geoPath(NEIGHBOURS_FEATURE) ?? "", [geoPath]);
 
   async function load(e?: React.FormEvent) {
     e?.preventDefault();
@@ -144,7 +200,7 @@ export default function VisibilityMapPage() {
       <PageHeader
         icon={Map}
         title="Visibility Map (Indonesia)"
-        description="Choropleth of calculated hilal visibility across a 0.5° lat/lon grid, precomputed by a background Celery task rather than on request."
+        description="Calculated hilal visibility across a 0.5° lat/lon grid — 3,255 locations, computed in your browser when you press Load grid."
       />
 
       <HisabDisclaimer />
@@ -226,7 +282,24 @@ export default function VisibilityMapPage() {
                   </clipPath>
                 </defs>
 
+                <clipPath id="visibility-map-frame">
+                  <rect x={0} y={0} width={WIDTH} height={HEIGHT} rx={12} />
+                </clipPath>
+
+                {/* Sea. */}
                 <rect x={0} y={0} width={WIDTH} height={HEIGHT} rx={12} className="fill-neutral-100 dark:fill-night-900" />
+
+                {/*
+                  Land fill, beneath the data. Neighbouring countries are dimmer
+                  than Indonesia: they orient the reader without implying the
+                  grid covers them, which it does not - the MVP is Indonesia-only
+                  (PRD 4.2/10). The coastline stroke is drawn after the data, not
+                  here; see below.
+                */}
+                <g clipPath="url(#visibility-map-frame)">
+                  <path d={neighboursPath} className="fill-land-light-context dark:fill-land-dark-context" />
+                  <path d={indonesiaPath} className="fill-land-light dark:fill-land-dark" />
+                </g>
 
                 {/* Faint compass labels so the grid reads as oriented geography, not an arbitrary heatmap. */}
                 <text x={8} y={14} className="fill-neutral-400 text-[10px] dark:fill-neutral-500">
@@ -239,25 +312,78 @@ export default function VisibilityMapPage() {
                   S
                 </text>
 
+                {/*
+                  The data. Two marks rather than two colours: a filled square
+                  where the criterion is met, a small dot where it is not. The
+                  shape difference means the verdict never rests on colour alone
+                  - which also lets the "not met" lattice stay recessive enough
+                  for the coastline to read through it.
+
+                  Every point gets a transparent hit rect a full cell wide, so
+                  the hover target is bigger than the mark it reveals.
+                */}
                 <g clipPath="url(#visibility-map-reveal)">
                   {result.points.map((p) => {
                     const visible = isVisiblePoint(p);
+                    const cx = xScale(p.lon);
+                    const cy = yScale(p.lat);
                     return (
-                      <rect
-                        key={`${p.lat}-${p.lon}`}
-                        x={xScale(p.lon) - CELL / 2}
-                        y={yScale(p.lat) - CELL / 2}
-                        width={CELL - 1}
-                        height={CELL - 1}
-                        rx={1.5}
-                        className={cn(
-                          "transition-opacity",
-                          visible ? "fill-moon-500" : "fill-neutral-300 dark:fill-night-700",
+                      <g key={`${p.lat}-${p.lon}`}>
+                        {visible ? (
+                          <rect
+                            x={cx - CELL / 2}
+                            y={cy - CELL / 2}
+                            width={CELL - 1}
+                            height={CELL - 1}
+                            rx={1.5}
+                            // Slightly translucent so the land beneath stays
+                            // legible. On an evening when the criterion is met
+                            // everywhere - which is common, and exactly when
+                            // people look - an opaque field would erase the
+                            // archipelago and leave a rectangle of colour.
+                            className="fill-moon-700/85 dark:fill-moon-400/85"
+                          />
+                        ) : (
+                          <circle cx={cx} cy={cy} r={1.15} className="fill-lattice-light dark:fill-lattice-dark" />
                         )}
-                        onMouseMove={(e) => handlePointerMove(e, p)}
-                      />
+                        <rect
+                          x={cx - CELL / 2}
+                          y={cy - CELL / 2}
+                          width={CELL}
+                          height={CELL}
+                          fill="transparent"
+                          onMouseMove={(e) => handlePointerMove(e, p)}
+                        />
+                      </g>
                     );
                   })}
+                </g>
+
+                {/*
+                  Coastline over the data, the way boundaries sit above the fill
+                  on any choropleth. Drawn beneath it instead, the outline
+                  disappears the moment the criterion is met everywhere - which
+                  is exactly when the map is most worth looking at.
+                */}
+                <g clipPath="url(#visibility-map-frame)" fill="none" pointerEvents="none" strokeLinejoin="round">
+                  <path
+                    d={neighboursPath}
+                    className="stroke-land-light-coast dark:stroke-land-dark-coast"
+                    strokeWidth={0.5}
+                    strokeOpacity={0.7}
+                  />
+                  {/*
+                    Two passes: a soft light halo, then a thin dark core. A single
+                    stroke cannot hold up here - the same line has to cross pale
+                    sea and saturated teal fill, and any one colour disappears
+                    against one of them.
+                  */}
+                  <path d={indonesiaPath} className="stroke-white/70 dark:stroke-black/45" strokeWidth={2} />
+                  <path
+                    d={indonesiaPath}
+                    className="stroke-neutral-700/80 dark:stroke-white/70"
+                    strokeWidth={0.7}
+                  />
                 </g>
 
                 {cityMarkers.map(({ city, visible }) => (
@@ -305,16 +431,23 @@ export default function VisibilityMapPage() {
             </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500 dark:text-neutral-400">
-              <div className="flex items-center gap-4">
+              {/* Swatches mirror the marks' shapes, not just their colours, so
+                  the legend reads the same way the map does. */}
+              <div className="flex flex-wrap items-center gap-4">
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-sm bg-moon-500" /> Criterion met (likely visible)
+                  <span className="size-2.5 rounded-sm bg-moon-700 dark:bg-moon-400" /> Criterion met (likely visible)
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-sm bg-neutral-300 dark:bg-night-700" /> Not met
+                  <span className="size-1 rounded-full bg-lattice-light dark:bg-lattice-dark" /> Calculated, criterion
+                  not met
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-sm bg-land-light ring-1 ring-land-light-coast dark:bg-land-dark dark:ring-land-dark-coast" />{" "}
+                  Land
                 </span>
               </div>
               <span className="flex items-center gap-1.5">
-                <Info className="size-3.5" /> Hover any square for the numbers behind it
+                <Info className="size-3.5" /> Hover anywhere on the grid for the numbers behind it
               </span>
             </div>
           </Card>

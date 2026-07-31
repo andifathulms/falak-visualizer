@@ -31,6 +31,27 @@ const config: Config = {
           400: "#7dd3c8",
           500: "#4fb3a6",
           600: "#2f8f83",
+          // Added for the visibility map's light mode: moon-600 against a slate
+          // lattice measures dE 12.8 for normal vision, below the 15 floor where
+          // full-colour readers can still tell two marks apart. This step clears
+          // it at 21.1.
+          700: "#1f7a6e",
+        },
+        // Map layers. `land` is context the data sits on, never a data colour;
+        // `lattice` marks a computed grid location whose criterion was not met,
+        // and is deliberately recessive - the verdict it carries is conveyed by
+        // the legend, its shape, and its hover tooltip, not by its colour.
+        land: {
+          light: "#e8eaf0",
+          "light-context": "#eef0f4",
+          "light-coast": "#cbd2e0",
+          dark: "#1b2440",
+          "dark-context": "#131a2e",
+          "dark-coast": "#293353",
+        },
+        lattice: {
+          light: "#9aa4b8",
+          dark: "#6b7899",
         },
       },
       fontFamily: {
