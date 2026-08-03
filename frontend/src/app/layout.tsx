@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   title: "Falak — Hijri Calendar & Islamic Astronomy Visualizer",
   description:
     "Deterministic, auditable Hijri calendar conversion, hilal visibility, prayer times, and qibla direction.",
+  // Stated explicitly because Next emits the auto-generated manifest link
+  // without the basePath: on a project Pages site that resolves to the origin
+  // root and 404s, so Chrome never reads the manifest and never offers to
+  // install the app. Everything else about the failure is silent.
+  manifest: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/manifest.webmanifest`,
 };
 
 export default function RootLayout({

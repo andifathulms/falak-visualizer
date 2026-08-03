@@ -1,0 +1,41 @@
+{
+  "name": "Falak — Hijri Calendar & Islamic Astronomy",
+  "short_name": "Falak",
+  "description": "Hijri calendar conversion, hilal visibility, prayer times and qibla direction, computed from astronomical first principles — with the numbers behind every verdict.",
+  "start_url": "/falak-visualizer/",
+  "scope": "/falak-visualizer/",
+  "display": "standalone",
+  "background_color": "#05070d",
+  "theme_color": "#0a0e1a",
+  "categories": [
+    "utilities",
+    "education",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "/falak-visualizer/icons/falak-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/falak-visualizer/icons/falak-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/falak-visualizer/icons/falak-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/falak-visualizer/icons/falak-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
