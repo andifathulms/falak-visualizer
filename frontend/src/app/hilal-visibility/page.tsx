@@ -114,6 +114,15 @@ export default function HilalVisibilityPage() {
       ]
     : [];
 
+  // The headline reports MABIMS, so it has to be able to report the same three
+  // states the MABIMS card below can. Before this it was a binary on
+  // isVisible(), which meant a margin inside tolerance produced a confident
+  // "Hilal not established" in 36px type directly above a card saying the
+  // criterion does not resolve. Same data, read the same way - no second
+  // calculation, and the moon still renders unlit when nothing is established.
+  const headlineUndecided = obs?.margins?.mabims_2021?.verdict === "indeterminate";
+  const headlineVisible = obs ? !headlineUndecided && isVisible(obs.criteria.mabims_2021) : false;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -150,20 +159,26 @@ export default function HilalVisibilityPage() {
           className="print-area space-y-4"
         >
           <Card className="flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:justify-center sm:gap-8 sm:text-left">
-            <HilalMoon illuminationFraction={obs.illumination_fraction} visible={isVisible(obs.criteria.mabims_2021)} />
+            <HilalMoon illuminationFraction={obs.illumination_fraction} visible={headlineVisible} />
             <div>
               <div
                 className={
-                  isVisible(obs.criteria.mabims_2021)
+                  headlineVisible
                     ? "text-2xl font-semibold text-gradient-accent"
                     : "text-2xl font-semibold text-ink-muted"
                 }
               >
-                {isVisible(obs.criteria.mabims_2021) ? "Hilal likely visible" : "Hilal not established"}
+                {headlineUndecided
+                  ? "Too close to call"
+                  : headlineVisible
+                    ? "Hilal likely visible"
+                    : "Hilal not established"}
               </div>
               <p className="mt-1 text-sm text-ink-muted">
-                {(obs.illumination_fraction * 100).toFixed(2)}% illuminated · per MABIMS 2021 — see comparison
-                below, criteria can disagree
+                {(obs.illumination_fraction * 100).toFixed(2)}% illuminated ·{" "}
+                {headlineUndecided
+                  ? "MABIMS 2021 lands within this engine's own tolerance here, so it does not resolve — see the margin in the comparison below"
+                  : "per MABIMS 2021 — see comparison below, criteria can disagree"}
               </p>
               <div className="mt-3 flex items-center justify-center gap-2 text-xs text-ink-muted sm:justify-start dark:text-ink-muted">
                 <Sunset className="size-3.5 text-gold-500" />
