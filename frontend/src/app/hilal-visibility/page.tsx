@@ -259,7 +259,15 @@ export default function HilalVisibilityPage() {
             </p>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={obs.trajectory} margin={{ top: 4, right: 12, bottom: 0, left: -12 }}>
+                <LineChart
+                  data={obs.trajectory}
+                  margin={{ top: 4, right: 12, bottom: 0, left: -12 }}
+                  // Recharts 3's built-in keyboard layer: arrow keys walk the
+                  // series and each point is announced. Without it the chart is
+                  // an unlabelled SVG carrying data that appears nowhere else on
+                  // the page.
+                  accessibilityLayer
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.2} vertical={false} />
                   <XAxis
                     dataKey="minutes_from_sunset"
@@ -299,6 +307,60 @@ export default function HilalVisibilityPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+
+            {/* The chart is the only place the trajectory exists - unlike the
+                map, whose verdicts are also summarised in prose. A picture with
+                no textual equivalent fails 1.1.1, so the same series is offered
+                as a table. Collapsed by default because it repeats what the
+                chart already shows for anyone who can see it. */}
+            <details className="mt-3 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm dark:border-night-700/60">
+              <summary className="cursor-pointer list-none font-medium [&::-webkit-details-marker]:hidden">
+                Trajectory as a table{" "}
+                <span className="font-normal text-ink-muted underline decoration-dotted underline-offset-2">
+                  ({obs.trajectory.length} samples)
+                </span>
+              </summary>
+              <div className="mt-2.5 overflow-x-auto">
+                <table className="w-full min-w-max text-left text-xs">
+                  <caption className="sr-only">
+                    Moon altitude and elongation sampled every five minutes across the hour
+                    surrounding sunset.
+                  </caption>
+                  <thead>
+                    <tr className="border-b border-neutral-200 dark:border-night-700/60">
+                      <th scope="col" className="px-3 py-2 font-medium text-ink-muted">
+                        From sunset
+                      </th>
+                      <th scope="col" className="px-3 py-2 font-medium text-ink-muted">
+                        Moon altitude
+                      </th>
+                      <th scope="col" className="px-3 py-2 font-medium text-ink-muted">
+                        Elongation
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {obs.trajectory.map((point) => (
+                      <tr
+                        key={point.minutes_from_sunset}
+                        className="border-b border-neutral-100 last:border-0 dark:border-night-700/40"
+                      >
+                        <th scope="row" className="whitespace-nowrap px-3 py-1.5 font-normal">
+                          {point.minutes_from_sunset > 0 ? "+" : ""}
+                          {point.minutes_from_sunset} min
+                        </th>
+                        <td className="whitespace-nowrap px-3 py-1.5 font-mono tabular-nums">
+                          {point.moon_altitude_deg.toFixed(2)}°
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-1.5 font-mono tabular-nums">
+                          {point.elongation_deg.toFixed(2)}°
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
           </Card>
 
           <Card className="p-5">
