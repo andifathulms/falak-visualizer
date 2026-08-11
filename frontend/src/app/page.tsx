@@ -130,8 +130,6 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      <HisabDisclaimer />
-
       <motion.div
         variants={container}
         initial="hidden"
@@ -155,6 +153,11 @@ export default function HomePage() {
           </motion.div>
         ))}
       </motion.div>
+
+      {/* Below the grid, not above it: on a page with no computed output there
+          is nothing yet to caution, and leading with the alert made the loudest
+          element on the landing view one the visitor could not yet parse. */}
+      <HisabDisclaimer variant="compact" />
     </div>
   );
 }
