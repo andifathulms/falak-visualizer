@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeftRight, Calendar } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { CalculationPanel } from "@/components/CalculationPanel";
+import { DerivationTrace } from "@/components/DerivationTrace";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -242,6 +243,14 @@ export default function ConverterPage() {
                   ["Direction", DIRECTION_LABELS[result.direction] ?? result.direction],
                 ]}
               />
+              {result.derivation ? (
+                <DerivationTrace derivation={result.derivation} />
+              ) : (
+                <p className="mt-4 text-sm text-ink-muted">
+                  The step-by-step derivation could not be built for this month. The date above still
+                  comes from the same engine; only the explanation is missing.
+                </p>
+              )}
             </Card>
             <div className="mt-4">
               <CopyLinkButton />

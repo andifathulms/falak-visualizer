@@ -25,7 +25,9 @@ import {
   JAKARTA_LATITUDE_DEG,
   JAKARTA_LONGITUDE_DEG,
   MONTH_START_METHODS,
+  conjunctionForHijriMonth,
   monthStartDateForMethod,
+  monthStartTrace,
   observationForMonth,
 } from "./falak/converter";
 import { computeVisibilityGrid, type GridProgress } from "./falak/gridRunner";
@@ -114,6 +116,35 @@ function isoOrNull(instant: Instant | null): string | null {
   return instant === null ? null : formatInstant(instant);
 }
 
+/** One evening the month-start search tested, flattened for display. */
+export interface DerivationStep {
+  evening: string;
+  conjunction_before_sunset: boolean;
+  criterion_met: boolean;
+  sunset_utc: string;
+  moonset_utc: string | null;
+  moon_altitude_deg: number;
+  elongation_deg: number;
+  lag_time_minutes: number | null;
+}
+
+/**
+ * How the converter reached its answer: which conjunction governs the month,
+ * which evenings were tested, and what the sky was doing on each.
+ *
+ * This is the product's whole question - "why does this month start here?" -
+ * and the converter previously answered it with the method name and the
+ * direction, both of which the user had just chosen.
+ */
+export interface ConversionDerivation {
+  hijri_year: number;
+  hijri_month: number;
+  hijri_month_name: string;
+  conjunction_utc: string;
+  steps: DerivationStep[];
+  month_start: string;
+}
+
 export interface ConvertResult {
   direction: string;
   method: string;
@@ -123,6 +154,47 @@ export interface ConvertResult {
   hijri_day: number;
   hijri_month_name?: string;
   gregorian_date?: string;
+  /** Absent only if the trace could not be built; never silently faked. */
+  derivation?: ConversionDerivation;
+}
+
+/**
+ * Build the display form of the month-start trace for the month a converted
+ * date falls in.
+ *
+ * Returns undefined rather than a placeholder when the trace cannot be built -
+ * an unexplained result is honest, an invented explanation is not.
+ */
+function buildDerivation(
+  hijriYear: number,
+  hijriMonth: number,
+  method: EngineHilalMethod,
+  lat: number,
+  lon: number,
+): ConversionDerivation | undefined {
+  try {
+    const conjunction = conjunctionForHijriMonth(hijriYear, hijriMonth);
+    const trace = monthStartTrace(conjunction, method, lat, lon);
+    return {
+      hijri_year: hijriYear,
+      hijri_month: hijriMonth,
+      hijri_month_name: HIJRI_MONTH_NAMES[hijriMonth - 1],
+      conjunction_utc: formatInstant(conjunction),
+      month_start: formatPlainDate(trace.start),
+      steps: trace.steps.map((step) => ({
+        evening: formatPlainDate(step.evening),
+        conjunction_before_sunset: step.conjunctionBeforeSunset,
+        criterion_met: step.criterionMet,
+        sunset_utc: formatInstant(step.observation.sunsetTime),
+        moonset_utc: isoOrNull(step.observation.moonsetTime),
+        moon_altitude_deg: step.observation.moonAltitudeDeg,
+        elongation_deg: step.observation.elongationDeg,
+        lag_time_minutes: step.observation.lagTimeMinutes,
+      })),
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 export async function convertDate(params: {
@@ -157,6 +229,7 @@ export async function convertDate(params: {
       hijri_month: result.month,
       hijri_day: result.day,
       hijri_month_name: result.monthName,
+      derivation: buildDerivation(result.year, result.month, "mabims_2021", lat, lon),
     };
   }
 
@@ -171,6 +244,7 @@ export async function convertDate(params: {
       hijri_month: month,
       hijri_day: day,
       gregorian_date: formatPlainDate(hijriToGregorian(year, month, day, lat, lon)),
+      derivation: buildDerivation(year, month, "mabims_2021", lat, lon),
     };
   }
 

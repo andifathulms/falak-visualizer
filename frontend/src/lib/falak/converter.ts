@@ -141,31 +141,79 @@ function isVisibleForMethod(observation: HilalObservation, method: HilalMethod):
   );
 }
 
+/** One evening tested by the month-start search, and what it decided. */
+export interface MonthStartStep {
+  /** The Gregorian evening whose sunset was evaluated. */
+  evening: PlainDate;
+  /** Gate one: a crescent cannot exist before the moon has passed the sun. */
+  conjunctionBeforeSunset: boolean;
+  /** Gate two: the selected criterion, applied to that evening's numbers. */
+  criterionMet: boolean;
+  observation: HilalObservation;
+}
+
+export interface MonthStartTrace {
+  method: HilalMethod;
+  /** Every evening tested, in order, including the ones that failed. */
+  steps: MonthStartStep[];
+  /** Gregorian date of day 1 of the month. */
+  start: PlainDate;
+}
+
 /**
  * Evaluate `method` on the evening of (and, if needed, the evenings after) the
  * conjunction date to find which Gregorian day the new Hijri month begins on.
  * Islamic day convention: if the crescent is visible at sunset on Gregorian day
  * D, the new month's first full day is D+1.
+ *
+ * The trace exists so the UI can show HOW a date was reached rather than only
+ * what it was - which is the question this whole product exists to answer, and
+ * which the converter could not answer about its own output.
+ *
+ * It is returned by the search itself rather than reconstructed afterwards by a
+ * second walk over the same evenings. A reconstruction can disagree with the
+ * result it claims to explain; this cannot, because the result is read off the
+ * last step of the trace.
  */
+export function monthStartTrace(
+  conjunction: Instant,
+  method: HilalMethod,
+  latDeg: number,
+  lonDeg: number,
+): MonthStartTrace {
+  const steps: MonthStartStep[] = [];
+  for (const offset of [0, 1, 2, 3]) {
+    const evening = addDays(plainDateOf(conjunction), offset);
+    const observation = computeHilalObservation(evening, latDeg, lonDeg);
+    const conjunctionBeforeSunset = observation.conjunctionTime < observation.sunsetTime;
+    const criterionMet = conjunctionBeforeSunset && isVisibleForMethod(observation, method);
+    steps.push({ evening, conjunctionBeforeSunset, criterionMet, observation });
+    if (criterionMet) {
+      return { method, steps, start: addDays(evening, 1) };
+    }
+  }
+  throw new Error(
+    `could not establish month start (${method}) within 3 evenings of conjunction`,
+  );
+}
+
 function monthStartFromConjunction(
   conjunction: Instant,
   method: HilalMethod,
   latDeg: number,
   lonDeg: number,
 ): PlainDate {
-  for (const offset of [0, 1, 2, 3]) {
-    const evening = addDays(plainDateOf(conjunction), offset);
-    const observation = computeHilalObservation(evening, latDeg, lonDeg);
-    if (
-      observation.conjunctionTime < observation.sunsetTime &&
-      isVisibleForMethod(observation, method)
-    ) {
-      return addDays(evening, 1);
-    }
-  }
-  throw new Error(
-    `could not establish month start (${method}) within 3 evenings of conjunction`,
-  );
+  return monthStartTrace(conjunction, method, latDeg, lonDeg).start;
+}
+
+/**
+ * The conjunction (ijtimak) that governs a given Hijri month - the instant the
+ * Moon passes the Sun in ecliptic longitude, before which no crescent of that
+ * month can exist. Exported so the UI can show which conjunction a converted
+ * date traces back to.
+ */
+export function conjunctionForHijriMonth(hijriYear: number, hijriMonth: number): Instant {
+  return conjunctionForIndex(absoluteMonthIndex(hijriYear, hijriMonth));
 }
 
 /** Gregorian date of day 1 of the given Hijri year/month, evaluated under `method`. */
