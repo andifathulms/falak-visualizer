@@ -10,7 +10,7 @@ import "./globals.css";
 // `font-mono` in the app resolves to the default ui-monospace system stack. The
 // variable was declared, preloaded at high priority, and referenced nowhere.
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
+  src: "./fonts/GeistVF.woff2",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
