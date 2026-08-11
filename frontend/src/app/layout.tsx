@@ -38,9 +38,26 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} relative min-h-screen bg-night-sky antialiased`}
       >
         <MotionProvider>
+          {/*
+            Bypass block (WCAG 2.4.1). The landmarks below already let screen
+            reader users jump straight to <main>, but a sighted keyboard user
+            has no landmark navigation and tabs through six nav links and the
+            Analysis menu on every page load. Different audience, same
+            criterion - this is not a duplicate of the landmarks.
+
+            Visible only while focused: it is the first tab stop, and showing it
+            permanently would put a control at the top of every page that nobody
+            using a pointer needs.
+          */}
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-[var(--card)] focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--accent-solid)]"
+          >
+            Skip to content
+          </a>
           <div className="starfield" />
           <NavBar />
-          <main className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+          <main id="main" className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
           {/*
             One seam only: a single rule above a bottom bar carrying both the
             hisab caveat and the byline. They sit opposite each other on desktop
