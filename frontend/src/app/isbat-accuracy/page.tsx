@@ -86,7 +86,7 @@ export default function IsbatAccuracyPage() {
       <PageHeader
         icon={History}
         title="Isbat Accuracy"
-        description="How often does each hisab method match the real Kemenag sidang isbat announcement? Compared against actual historical records, not this app's own engine."
+        description="How often does each hisab method match the real Kemenag sidang isbat announcement? Compared against actual historical records, not this app's own engine. Predictions are evaluated for Jakarta; sidang isbat is a national determination, so a criterion can miss simply because the deciding evening looked different elsewhere in the archipelago — and because isbat can weigh rukyat testimony no calculation anticipates."
       />
 
       <HisabDisclaimer />

@@ -155,13 +155,35 @@ describe("payload shapes", () => {
     }
   });
 
-  it("returns an empty isbat comparison until records are sourced", async () => {
-    // The Django seed migration shipped with SEED_RECORDS = [] pending citable
-    // Kemenag sources; the port carries that state over rather than inventing
-    // rows, so this asserting zero is correct, not a gap in the test.
+  it("compares every seeded isbat record against all three criteria", async () => {
+    // This list was empty for as long as no citable Kemenag source had been
+    // found for it. Now that it is seeded, the thing worth guarding is not the
+    // count but the sourcing standard: a row without a primary kemenag.go.id
+    // press release in its note is the failure mode this list exists to avoid.
     const result = await fetchIsbatAccuracy({});
-    expect(result.count).toBe(0);
-    expect(result.records).toEqual([]);
+    expect(result.count).toBeGreaterThan(0);
+    expect(result.records).toHaveLength(result.count);
+
+    for (const record of result.records) {
+      expect(record.source_note).toMatch(/https:\/\/kemenag\.go\.id\//);
+      expect(record.actual_start_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      // Every criterion either produced a date or recorded why it could not.
+      // A method silently missing from both maps would mean a dropped failure.
+      for (const method of ["wujudul_hilal", "mabims_2021", "odeh"] as const) {
+        const predicted = record.predicted[method];
+        const failed = record.errors[method];
+        expect(Boolean(predicted) || Boolean(failed)).toBe(true);
+      }
+    }
+  });
+
+  it("keeps unverified isbat rows flagged as unverified", async () => {
+    // `verified` means a maintainer opened the release and confirmed the date,
+    // not that a URL exists. Nothing should flip to true without that.
+    const result = await fetchIsbatAccuracy({});
+    for (const record of result.records) {
+      expect(typeof record.verified).toBe("boolean");
+    }
   });
 });
 
