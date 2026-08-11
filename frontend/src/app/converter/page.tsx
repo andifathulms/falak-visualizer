@@ -105,7 +105,14 @@ export default function ConverterPage() {
       setHijriDay(day);
       compute(qDirection, date, y, m, day);
     } else {
-      setDate(todayIso());
+      // Convert today on arrival rather than showing an empty form. With the
+      // derivation now attached to every result, a first-time visitor lands on a
+      // complete worked example - real conjunction, real evenings tested, real
+      // numbers - and can then change the date rather than having to guess what
+      // to ask before the page will teach them anything.
+      const today = todayIso();
+      setDate(today);
+      compute("gregorian_to_hijri", today, hijriYear, hijriMonth, hijriDay);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

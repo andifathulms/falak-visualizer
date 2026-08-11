@@ -125,7 +125,14 @@ export default function HilalVisibilityPage() {
       setLon(Number(qLon));
       compute(qDate, Number(qLat), Number(qLon));
     } else {
-      setDate(todayIso());
+      // Compute on arrival rather than presenting an empty form. A newcomer
+      // landing here previously had to already know what to ask before the page
+      // would show them anything - so the app taught nothing until you could
+      // already use it. Tonight at the default location is a real, live
+      // calculation they can read end to end and then change.
+      const today = todayIso();
+      setDate(today);
+      compute(today, lat, lon);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
