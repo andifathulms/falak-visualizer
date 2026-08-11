@@ -29,6 +29,7 @@ import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
 import { isVisible } from "@/lib/verdict";
+import { verdictLabel } from "@/lib/verdictLabels";
 import { formatMargin, MODEL_CAVEATS } from "@/lib/falak/tolerance";
 import { CRITERION_CITATIONS } from "@/lib/falak/citations";
 import { CitationList } from "@/components/CitationList";
@@ -265,7 +266,7 @@ export default function HilalVisibilityPage() {
                           undecided ? "indeterminate" : isVisible(verdict) ? "positive" : "neutral"
                         }
                       >
-                        {undecided ? "Too close to call" : String(verdict)}
+                        {undecided ? "Too close to call" : verdictLabel(verdict)}
                       </Badge>
                     </div>
                     <p className="mt-1.5 text-sm text-ink-muted">{c.rule}</p>

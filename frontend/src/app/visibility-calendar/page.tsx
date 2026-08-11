@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/Select";
 import { ApiError, fetchVisibilityCalendar, HilalMethod, VisibilityCalendarResult } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { isVisible } from "@/lib/verdict";
+import { verdictLabel } from "@/lib/verdictLabels";
 
 const METHOD_OPTIONS = [
   { value: "mabims_2021", label: "MABIMS 2021" },
@@ -116,7 +117,7 @@ export default function VisibilityCalendarPage() {
                         visible ? "text-verdict-positive" : "text-ink-muted"
                       }`}
                     >
-                      {String(month.verdict)}
+                      {verdictLabel(month.verdict)}
                     </p>
                   </>
                 )}
