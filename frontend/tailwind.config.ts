@@ -12,6 +12,26 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+
+        // Semantic tokens. Prefer these over the raw ramps below for anything
+        // carrying text: each resolves to a per-mode value in globals.css that
+        // was measured at >= 4.5:1 against both that mode's page background and
+        // its card surface. The raw `gold`/`moon`/`neutral` ramps are fixed
+        // hexes and cannot make that guarantee in both modes at once.
+        ink: {
+          DEFAULT: "var(--text-body)",
+          muted: "var(--text-muted)",
+        },
+        accent: {
+          DEFAULT: "var(--accent-text)",
+          solid: "var(--accent-solid)",
+          on: "var(--accent-on-solid)",
+        },
+        verdict: {
+          positive: "var(--verdict-positive)",
+          negative: "var(--verdict-negative)",
+        },
+
         night: {
           950: "#05070d",
           900: "#0a0e1a",
@@ -56,6 +76,35 @@ const config: Config = {
       },
       fontFamily: {
         display: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui"],
+      },
+
+      // The single type ladder from globals.css. Overriding (not extending)
+      // Tailwind's defaults is deliberate: leaving `text-sm` at its stock 14px
+      // would let any component silently drop under the 16px body floor just by
+      // using the class it always used. Here `text-sm` IS the floor.
+      fontSize: {
+        "2xs": ["var(--text-2xs)", { lineHeight: "1.4" }],
+        xs: ["var(--text-xs)", { lineHeight: "1.45" }],
+        sm: ["var(--text-sm)", { lineHeight: "var(--leading-normal)" }],
+        base: ["var(--text-sm)", { lineHeight: "var(--leading-normal)" }],
+        md: ["var(--text-md)", { lineHeight: "var(--leading-snug)" }],
+        lg: ["var(--text-lg)", { lineHeight: "var(--leading-snug)" }],
+        xl: ["var(--text-xl)", { lineHeight: "var(--leading-tight)" }],
+        "2xl": ["var(--text-2xl)", { lineHeight: "var(--leading-tight)" }],
+        "3xl": ["var(--text-3xl)", { lineHeight: "var(--leading-tight)" }],
+      },
+
+      spacing: {
+        s1: "var(--space-1)",
+        s2: "var(--space-2)",
+        s3: "var(--space-3)",
+        s4: "var(--space-4)",
+        s5: "var(--space-5)",
+        s6: "var(--space-6)",
+        s7: "var(--space-7)",
+        s8: "var(--space-8)",
+        s9: "var(--space-9)",
+        s10: "var(--space-10)",
       },
       backgroundImage: {
         "night-sky":

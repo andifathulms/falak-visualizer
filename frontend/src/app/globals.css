@@ -2,20 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------------
+   Design tokens.
+
+   Three scales - colour, type, space - defined once here and consumed through
+   tailwind.config.ts. Components reference the token, never a raw value, so a
+   change to contrast or rhythm is a one-line edit in this file.
+
+   Every colour pair below was measured against the mode's own background AND
+   its card surface; the ratio in each comment is the worse of the two. The AA
+   floor for body text is 4.5:1 and nothing here ships under it.
+
+   Note that the muted/accent/verdict colours MUST be mode-dependent variables
+   rather than one fixed hex: with a #f7f7fb light ground and a #05070d dark
+   ground, no single mid-tone clears 4.5:1 against both. That is precisely the
+   job a token layer exists to do.
+   --------------------------------------------------------------------------- */
+
 :root {
+  /* --- Surfaces ---------------------------------------------------------- */
   --background: #f7f7fb;
-  --foreground: #12131a;
+  --foreground: #12131a; /* 17.3:1 */
   --card: #ffffff;
   --card-border: #e5e5ee;
+
+  /* --- Text tiers -------------------------------------------------------- */
+  --text-body: #12131a; /* 17.3:1 */
+  --text-muted: #5c6373; /*  5.6:1 - secondary prose, labels, footer */
+
+  /* --- Accent (brand gold) ------------------------------------------------
+     Two roles, deliberately split. `accent-text` is the readable tier used for
+     any gold *lettering*; `accent-solid` is the saturated brand tone reserved
+     for fills and borders, where the 4.5:1 text floor does not apply. Light
+     mode previously used the solid tone for both, which is why every gold
+     label on the site sat at 3.0:1. */
+  --accent-text: #8d6420; /*  4.9:1 */
+  --accent-solid: #d9a83e;
+  --accent-on-solid: #05070d; /*  9.2:1 on accent-solid */
+
+  /* --- Verdict tones ------------------------------------------------------ */
+  --verdict-positive: #1f7a6e; /*  4.8:1 */
+  --verdict-negative: #c92a2a; /*  5.1:1 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #05070d;
-    --foreground: #eceef5;
+    --foreground: #eceef5; /* 15.8:1 */
     --card: #0e1425;
     --card-border: #1b2440;
+
+    --text-body: #eceef5; /* 15.8:1 */
+    --text-muted: #98a1b5; /*  7.1:1 */
+
+    --accent-text: #e8c164; /* 10.7:1 */
+    --accent-solid: #d9a83e;
+    --accent-on-solid: #05070d;
+
+    --verdict-positive: #7dd3c8; /* 10.5:1 */
+    --verdict-negative: #f87171; /*  6.6:1 */
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Type scale. One ladder, used everywhere. Body sits at 1rem/16px and nothing
+   carrying prose is allowed below it; the two steps under `base` exist only for
+   dense tabular figures and eyebrow labels.
+   --------------------------------------------------------------------------- */
+:root {
+  --text-2xs: 0.8125rem; /* 13px - eyebrow/meta labels only */
+  --text-xs: 0.875rem; /* 14px - dense numeric table cells only */
+  --text-sm: 1rem; /* 16px - BODY FLOOR. Named `sm` so the scale reads
+                              in order; it is the smallest prose size. */
+  --text-md: 1.125rem; /* 18px - lead paragraphs, card titles */
+  --text-lg: 1.375rem; /* 22px - section headings (h2) */
+  --text-xl: 1.75rem; /* 28px - page title (h1 on interior pages) */
+  --text-2xl: 2.25rem; /* 36px - hero title, small viewports */
+  --text-3xl: 3rem; /* 48px - hero title, sm+ */
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+}
+
+/* ---------------------------------------------------------------------------
+   Space scale. A 4px base, exposed so vertical rhythm between sections is set
+   in one place rather than re-picked per page.
+   --------------------------------------------------------------------------- */
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.5rem;
+  --space-8: 3rem;
+  --space-9: 4rem;
+  --space-10: 5rem;
 }
 
 * {
@@ -25,6 +109,20 @@
 body {
   color: var(--foreground);
   background: var(--background);
+  /* The body floor, set once at the root rather than re-declared per component.
+     Tailwind's own `text-sm` default is 14px; ours resolves to 16px via the
+     token, so inherited prose is at the floor even where no size class is set. */
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+/* Headings default to the tight end of the ladder so a bare <h1>/<h2> is
+   already correct; components override the step, never the rhythm. */
+h1,
+h2,
+h3 {
+  line-height: var(--leading-tight);
+  text-wrap: balance;
 }
 
 @layer utilities {
