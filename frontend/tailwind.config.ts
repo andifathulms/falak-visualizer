@@ -94,6 +94,17 @@ const config: Config = {
         "3xl": ["var(--text-3xl)", { lineHeight: "var(--leading-tight)" }],
       },
 
+      // Wired to the motion tokens so `duration-base` etc. collapse to 1ms under
+      // prefers-reduced-motion without any component knowing about the
+      // preference. Tailwind's numeric duration utilities (duration-200) are
+      // left in place and still hardcode their value - these are the ones to
+      // reach for in new code.
+      transitionDuration: {
+        fast: "var(--duration-fast)",
+        base: "var(--duration-base)",
+        slow: "var(--duration-slow)",
+      },
+
       spacing: {
         s1: "var(--space-1)",
         s2: "var(--space-2)",

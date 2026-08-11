@@ -93,6 +93,34 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Motion scale.
+
+   Durations for CSS transitions, exposed as tokens for the same reason colour
+   and type are: so the reduced-motion preference is honoured in ONE place
+   rather than depending on every component remembering to.
+
+   The reduced-motion block below collapses all three to 1ms rather than 0.
+   Zero-length transitions do not fire transitionend in every engine, and code
+   that waits on that event would hang; 1ms is imperceptible and still fires.
+
+   framer-motion durations are JavaScript numbers and are not covered by these -
+   MotionConfig in layout.tsx handles that side.
+   --------------------------------------------------------------------------- */
+:root {
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Space scale. A 4px base, exposed so vertical rhythm between sections is set
    in one place rather than re-picked per page.
    --------------------------------------------------------------------------- */
@@ -220,6 +248,22 @@ h3 {
     radial-gradient(1.3px 1.3px at 180px 90px, rgba(217, 168, 62, 0.7), transparent),
     radial-gradient(1px 1px at 30px 140px, rgba(236, 238, 245, 0.6), transparent);
   animation: twinkle 5s ease-in-out infinite reverse;
+}
+
+/* The two animations that never stop on their own. WCAG 2.2.2 asks for a way to
+   pause anything auto-animating beyond five seconds; honouring the OS
+   preference is that mechanism. The starfield keeps its stars, it just stops
+   twinkling - the decoration survives, the motion does not. */
+@media (prefers-reduced-motion: reduce) {
+  .starfield::before,
+  .starfield::after {
+    animation: none;
+  }
+
+  .bg-shimmer {
+    animation: none;
+    background-image: none;
+  }
 }
 
 ::selection {
