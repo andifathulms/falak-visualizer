@@ -18,6 +18,7 @@ import { todayIso } from "@/lib/date";
 import { ApiError, convertDate, ConvertResult } from "@/lib/api";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { HowMonthsWork } from "@/components/HowMonthsWork";
 
 const HIJRI_MONTHS = [
   "Muharram",
@@ -124,6 +125,8 @@ export default function ConverterPage() {
       />
 
       <HisabDisclaimer />
+
+      <HowMonthsWork />
 
       <Card className="p-5">
         <form onSubmit={handleSubmit} className="space-y-5">

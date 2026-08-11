@@ -36,6 +36,7 @@ import { CitationList } from "@/components/CitationList";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { resolveTimeZone } from "@/lib/timezone";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { HowMonthsWork } from "@/components/HowMonthsWork";
 
 // Each criterion states its rule AND why that rule - what question the
 // arithmetic is standing in for. Citing a threshold answers "who says so";
@@ -210,6 +211,8 @@ export default function HilalVisibilityPage() {
       />
 
       <HisabDisclaimer />
+
+      <HowMonthsWork />
 
       <Card className="p-5">
         <form
