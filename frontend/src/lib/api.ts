@@ -46,6 +46,7 @@ import {
   hilalTrajectory,
   type HilalMethod as EngineHilalMethod,
 } from "./falak/visibility";
+import { criterionMargin, type CriterionMargin } from "./falak/tolerance";
 
 /**
  * Where the interactive API docs live, when a backend is running.
@@ -197,6 +198,12 @@ export interface HilalObservation {
     mabims_2021: boolean;
     odeh: string;
   };
+  /**
+   * How much room each criterion had, and whether that room exceeded the
+   * engine's own accuracy. Derived from the same observation as `criteria`,
+   * so the two can never disagree.
+   */
+  margins: Record<EngineHilalMethod, CriterionMargin>;
   trajectory: Array<{
     time_utc: string;
     minutes_from_sunset: number;
@@ -247,6 +254,11 @@ export async function fetchHilalVisibility(params: {
   return {
     ...serializeObservation(observation),
     criteria: evaluateCriteria(observation),
+    margins: {
+      wujudul_hilal: criterionMargin(observation, "wujudul_hilal"),
+      mabims_2021: criterionMargin(observation, "mabims_2021"),
+      odeh: criterionMargin(observation, "odeh"),
+    },
     trajectory: hilalTrajectory(date, lat, lon).map((point) => ({
       time_utc: formatInstant(point.time),
       minutes_from_sunset: point.minutesFromSunset,

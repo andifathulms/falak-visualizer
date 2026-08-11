@@ -237,9 +237,16 @@ export function wujudulHilal(
  * MABIMS 2021 imkanur rukyat (neo-MABIMS): visible if the Moon's altitude is at
  * least 3 degrees AND elongation is at least 6.4 degrees. Both comparisons are
  * inclusive - a value sitting exactly on the threshold passes.
+ *
+ * The thresholds are named constants rather than literals so that the margin
+ * layer measures against the same numbers the criterion is decided by, instead
+ * of a second copy that could drift.
  */
+export const MABIMS_MIN_ALTITUDE_DEG = 3.0;
+export const MABIMS_MIN_ELONGATION_DEG = 6.4;
+
 export function mabims2021(altitudeDegrees: number, elongationDegrees: number): boolean {
-  return altitudeDegrees >= 3.0 && elongationDegrees >= 6.4;
+  return altitudeDegrees >= MABIMS_MIN_ALTITUDE_DEG && elongationDegrees >= MABIMS_MIN_ELONGATION_DEG;
 }
 
 export type OdehVerdict = "visible" | "visible_optical_aid" | "marginal" | "not_visible";
@@ -251,15 +258,25 @@ export type OdehVerdict = "visible" | "visible_optical_aid" | "marginal" | "not_
  * simplification of Yallop/Odeh's "best time" (Sun at roughly -4.5 deg), which
  * would require re-evaluating altitude/elongation slightly later.
  */
+/**
+ * Odeh's continuous v-value, extracted so the margin layer can report how far a
+ * classification sat from its nearest boundary rather than throwing the number
+ * away at the comparison chain below. Same expression as before - this is a
+ * refactor, not a change - so the existing golden vectors still pin it through
+ * the classification they already assert.
+ */
+export function odehVValue(altitudeDegrees: number, crescentWidthArcmin: number | null): number {
+  const arcv = altitudeDegrees + 0.8333;
+  const w = crescentWidthArcmin === null ? 0 : crescentWidthArcmin;
+  return arcv - (-0.1018 * w ** 3 + 0.7319 * w ** 2 - 6.3226 * w + 7.1651);
+}
+
 export function odehCriterion(
   altitudeDegrees: number,
   _elongationDegrees: number,
   crescentWidthArcmin: number | null = null,
 ): OdehVerdict {
-  const arcv = altitudeDegrees + 0.8333;
-  const w = crescentWidthArcmin === null ? 0 : crescentWidthArcmin;
-
-  const v = arcv - (-0.1018 * w ** 3 + 0.7319 * w ** 2 - 6.3226 * w + 7.1651);
+  const v = odehVValue(altitudeDegrees, crescentWidthArcmin);
 
   if (v >= 5.65) return "visible";
   if (v >= 2.0) return "visible_optical_aid";

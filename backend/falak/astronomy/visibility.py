@@ -199,12 +199,29 @@ def wujudul_hilal(moonset: "_dt.datetime | None", sunset: _dt.datetime, conjunct
     return conjunction_time < sunset and moonset > sunset
 
 
+MABIMS_MIN_ALTITUDE_DEG = 3.0
+MABIMS_MIN_ELONGATION_DEG = 6.4
+
+
 def mabims_2021(altitude_deg: float, elongation_deg: float) -> bool:
     """
     MABIMS 2021 imkanur rukyat (neo-MABIMS) criterion: visible if the Moon's
     altitude is at least 3 degrees AND elongation is at least 6.4 degrees.
     """
-    return altitude_deg >= 3.0 and elongation_deg >= 6.4
+    return altitude_deg >= MABIMS_MIN_ALTITUDE_DEG and elongation_deg >= MABIMS_MIN_ELONGATION_DEG
+
+
+def odeh_v_value(altitude_deg: float, crescent_width_arcmin: "float | None") -> float:
+    """
+    Odeh's continuous v-value, extracted so callers can report how far a
+    classification sat from its nearest boundary rather than discarding the
+    number at the comparison chain below. Same expression as before - a
+    refactor, not a change - so the existing golden vectors still pin it
+    through the classification they already assert.
+    """
+    arcv = altitude_deg + 0.8333
+    w = 0.0 if crescent_width_arcmin is None else crescent_width_arcmin
+    return arcv - (-0.1018 * w**3 + 0.7319 * w**2 - 6.3226 * w + 7.1651)
 
 
 def odeh_criterion(altitude_deg: float, elongation_deg: float, crescent_width_arcmin: "float | None" = None) -> str:
@@ -220,14 +237,7 @@ def odeh_criterion(altitude_deg: float, elongation_deg: float, crescent_width_ar
 
     Returns one of: "visible", "visible_optical_aid", "marginal", "not_visible".
     """
-    arcv = altitude_deg + 0.8333
-
-    if crescent_width_arcmin is None:
-        w = 0.0
-    else:
-        w = crescent_width_arcmin
-
-    v = arcv - (-0.1018 * w**3 + 0.7319 * w**2 - 6.3226 * w + 7.1651)
+    v = odeh_v_value(altitude_deg, crescent_width_arcmin)
 
     if v >= 5.65:
         return "visible"

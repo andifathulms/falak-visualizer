@@ -29,6 +29,7 @@ import { ApiError, fetchHilalVisibility, HilalObservation } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
 import { isVisible } from "@/lib/verdict";
+import { formatMargin, MODEL_CAVEATS } from "@/lib/falak/tolerance";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 const CRITERIA = [
@@ -56,6 +57,8 @@ export default function HilalVisibilityPage() {
   const [obs, setObs] = useState<HilalObservation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+
 
   async function compute(d: string, la: number, lo: number) {
     setLoading(true);
@@ -243,6 +246,8 @@ export default function HilalVisibilityPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {CRITERIA.map((c, i) => {
                 const verdict = obs.criteria[c.key];
+                const m = obs.margins?.[c.key];
+                const undecided = m?.verdict === "indeterminate";
                 return (
                   <motion.div
                     key={c.key}
@@ -253,9 +258,39 @@ export default function HilalVisibilityPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium">{c.name}</span>
-                      <Badge tone={isVisible(verdict) ? "positive" : "neutral"}>{String(verdict)}</Badge>
+                      <Badge
+                        tone={
+                          undecided ? "indeterminate" : isVisible(verdict) ? "positive" : "neutral"
+                        }
+                      >
+                        {undecided ? "Too close to call" : String(verdict)}
+                      </Badge>
                     </div>
                     <p className="mt-1.5 text-sm text-ink-muted">{c.rule}</p>
+                    {/* The margin is the point of this whole panel: a verdict
+                        without it reads as settled when it may have been decided
+                        by a hundredth of a degree. */}
+                    {m && (
+                      <p className="mt-2 border-t border-neutral-200 pt-2 text-2xs text-ink-muted dark:border-night-700/60">
+                        {formatMargin(m) ? (
+                          <>
+                            <span className="font-mono font-semibold tabular-nums text-foreground">
+                              {formatMargin(m)}
+                            </span>{" "}
+                            margin on {m.binding}
+                          </>
+                        ) : (
+                          <>Decided by: {m.binding}</>
+                        )}
+                        {undecided && (
+                          <>
+                            {" "}— inside this engine&apos;s ±
+                            {m.tolerance}
+                            {m.unit === "deg" ? "°" : " min"} tolerance, so it is not resolved.
+                          </>
+                        )}
+                      </p>
+                    )}
                   </motion.div>
                 );
               })}
@@ -264,6 +299,26 @@ export default function HilalVisibilityPage() {
               These criteria can and do disagree — that is expected, not a bug. This tool does not advocate for one
               method.
             </p>
+
+            {/* An accuracy claim that omitted these would mislead by omission:
+                each is larger than the tolerance quoted above and none of them
+                is fixed by more arithmetic precision. */}
+            <details className="mt-3 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm dark:border-night-700/60">
+              <summary className="cursor-pointer list-none font-medium [&::-webkit-details-marker]:hidden">
+                What this engine assumes{" "}
+                <span className="font-normal text-ink-muted underline decoration-dotted underline-offset-2">
+                  ({MODEL_CAVEATS.length} known limits)
+                </span>
+              </summary>
+              <dl className="mt-2.5 space-y-2.5">
+                {MODEL_CAVEATS.map((cav) => (
+                  <div key={cav.title}>
+                    <dt className="text-2xs font-semibold uppercase tracking-wide">{cav.title}</dt>
+                    <dd className="mt-0.5 text-sm text-ink-muted">{cav.detail}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
           </Card>
 
           <div className="no-print flex flex-wrap gap-3">
