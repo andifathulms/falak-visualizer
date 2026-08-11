@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { todayIso } from "@/lib/date";
 import { ApiError, convertDate, ConvertResult } from "@/lib/api";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 const HIJRI_MONTHS = [
   "Muharram",
@@ -114,6 +115,7 @@ export default function ConverterPage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? (result.direction === "gregorian_to_hijri" ? `Converted. ${result.input_date} is ${result.hijri_day} ${result.hijri_month_name} ${result.hijri_year} Hijri.` : `Converted. ${result.hijri_day} ${HIJRI_MONTHS[result.hijri_month - 1]} ${result.hijri_year} Hijri is ${result.gregorian_date}.`) : null} />
       <PageHeader
         icon={Calendar}
         title="Hijri ↔ Gregorian Converter"

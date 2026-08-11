@@ -35,6 +35,7 @@ import { CRITERION_CITATIONS } from "@/lib/falak/citations";
 import { CitationList } from "@/components/CitationList";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { resolveTimeZone } from "@/lib/timezone";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 const CRITERIA = [
   {
@@ -156,6 +157,7 @@ export default function HilalVisibilityPage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={obs ? `Result ready. ${headlineUndecided ? "Too close to call under MABIMS 2021" : headlineVisible ? "Hilal likely visible" : "Hilal not established"}. Moon altitude ${obs.moon_altitude_deg.toFixed(2)} degrees, elongation ${obs.elongation_deg.toFixed(2)} degrees.` : null} />
       <PageHeader
         icon={MoonStar}
         title="Hilal Visibility"

@@ -16,6 +16,7 @@ import { ApiError, fetchHijriYearArchive, HijriYearArchive } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { cn } from "@/lib/cn";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 // Column order is fixed with MABIMS in the middle because every offset is
 // measured against it: putting the baseline between the two comparisons makes
@@ -80,6 +81,7 @@ export default function HijriArchivePage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? `Year ${result.hijri_year} Hijri ready. ${result.unanimous_months} of 12 months agreed across all three criteria; ${result.diverging_months} decided by the criterion.` : null} />
       <PageHeader
         icon={CalendarRange}
         title="Hijri Year Archive"

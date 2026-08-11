@@ -19,6 +19,7 @@ import {
   MethodDivergenceResult,
 } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 const METHODS: { key: HilalMethod; label: string }[] = [
   { key: "wujudul_hilal", label: "Wujudul Hilal" },
@@ -83,6 +84,7 @@ export default function MethodDivergencePage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? `Comparison ready for ${result.hijri_year} Hijri, ${result.months.length} months.` : null} />
       <PageHeader
         icon={GitCompareArrows}
         title="Method Divergence"

@@ -16,6 +16,7 @@ import { GRID_POINT_COUNT, GRID_STEP_DEG } from "@/lib/falak/grid";
 import { todayIso } from "@/lib/date";
 import { INDONESIAN_CITIES } from "@/lib/locations";
 import indonesiaGeo from "@/lib/geo/indonesia.geo.json";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 const LAT_RANGE: [number, number] = [-11, 6];
 const LON_RANGE: [number, number] = [95, 141];
@@ -197,6 +198,7 @@ export default function VisibilityMapPage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? `Map ready. ${summary ?? ""}` : null} />
       <PageHeader
         icon={Map}
         title="Visibility Map (Indonesia)"

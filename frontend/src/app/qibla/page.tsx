@@ -13,6 +13,7 @@ import { ApiError, fetchQibla, fetchRashdulQibla, QiblaResult, RashdulQiblaResul
 import { DEFAULT_CITY } from "@/lib/locations";
 import { resolveTimeZone } from "@/lib/timezone";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 function CompassDial({ bearingDeg }: { bearingDeg: number }) {
   const size = 240;
@@ -165,6 +166,7 @@ export default function QiblaPage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? `Qibla bearing ${result.bearing_deg.toFixed(1)} degrees, ${Math.round(result.distance_km)} kilometres to the Kaaba.` : null} />
       <PageHeader
         icon={CompassIcon}
         title="Qibla Direction"

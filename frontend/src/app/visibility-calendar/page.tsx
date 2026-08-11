@@ -15,6 +15,7 @@ import { ApiError, fetchVisibilityCalendar, HilalMethod, VisibilityCalendarResul
 import { DEFAULT_CITY } from "@/lib/locations";
 import { isVisible } from "@/lib/verdict";
 import { verdictLabel } from "@/lib/verdictLabels";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 const METHOD_OPTIONS = [
   { value: "mabims_2021", label: "MABIMS 2021" },
@@ -48,6 +49,7 @@ export default function VisibilityCalendarPage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? `Calendar ready for ${result.hijri_year} Hijri, ${result.months.length} months.` : null} />
       <PageHeader
         icon={CalendarDays}
         title="Visibility Calendar"

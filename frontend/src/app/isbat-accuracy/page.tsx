@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Table, TableColumn } from "@/components/ui/Table";
 import { ISBAT_RECORDS } from "@/lib/falak/isbat";
 import { ApiError, fetchIsbatAccuracy, HilalMethod, IsbatAccuracyResult, IsbatComparisonRecord } from "@/lib/api";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 const METHODS: { key: HilalMethod; label: string }[] = [
   { key: "wujudul_hilal", label: "Wujudul Hilal" },
@@ -91,6 +92,7 @@ export default function IsbatAccuracyPage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? `${result.count} isbat ${result.count === 1 ? "record" : "records"} loaded.` : null} />
       <PageHeader
         icon={History}
         title="Isbat Accuracy"

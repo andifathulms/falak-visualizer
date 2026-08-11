@@ -26,6 +26,7 @@ import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
 import { resolveTimeZone } from "@/lib/timezone";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
+import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
 function formatTime(iso: string | null, timeZone: string) {
   if (!iso) return "—";
@@ -146,6 +147,7 @@ export default function PrayerTimesPage() {
 
   return (
     <div className="space-y-6">
+      <ResultAnnouncer message={result ? `Prayer times ready for ${result.date}, ${convention} convention.` : null} />
       <PageHeader
         icon={Sun}
         title="Prayer Times"
