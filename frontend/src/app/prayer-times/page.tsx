@@ -191,7 +191,7 @@ export default function PrayerTimesPage() {
                       <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-accent">
                         <p.icon className="size-5" strokeWidth={1.8} />
                       </div>
-                      <div className="text-xs font-medium text-ink-muted">{p.label}</div>
+                      <div className="text-2xs font-medium text-ink-muted">{p.label}</div>
                       <div className="font-mono text-lg font-semibold">
                         {formatTime(result[p.key], displayTimeZone)}
                       </div>

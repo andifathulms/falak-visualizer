@@ -71,7 +71,7 @@ export default function IsbatAccuracyPage() {
     {
       key: "source",
       header: "Source",
-      className: "max-w-xs whitespace-normal text-xs text-ink-muted",
+      className: "max-w-xs whitespace-normal text-sm text-ink-muted",
       render: (r) => (
         <div className="flex flex-col gap-1">
           <span>{r.source_note}</span>

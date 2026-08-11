@@ -159,7 +159,7 @@ export function NavBar() {
           })}
 
           <div className="mt-1.5 border-t border-neutral-200/70 pt-1.5 dark:border-night-700/60">
-            <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-ink-muted">
+            <p className="px-3 pb-1 text-2xs font-medium uppercase tracking-wide text-ink-muted">
               Analysis
             </p>
             {ANALYSIS_LINKS.map((link) => {

@@ -211,7 +211,7 @@ export default function QiblaPage() {
       <Card className="p-5">
         <div className="mb-3 flex items-center gap-2">
           <SunMedium className="size-4 text-gold-500" strokeWidth={2} />
-          <h2 className="font-medium">Sun Calibration (Rashdul Qibla)</h2>
+          <h2 className="text-md font-semibold">Sun Calibration (Rashdul Qibla)</h2>
         </div>
         <p className="mb-4 text-sm text-ink-muted">
           Twice a year the Sun sits directly over the Kaaba. At that exact moment, anywhere the Sun is up, a vertical
@@ -221,7 +221,7 @@ export default function QiblaPage() {
 
         <form onSubmit={loadRashdul} className="mb-4 flex items-end gap-3">
           <div className="w-32">
-            <label className="mb-1.5 block text-xs font-medium text-ink-muted">Year</label>
+            <label className="mb-1.5 block text-2xs font-medium text-ink-muted">Year</label>
             <input
               type="number"
               value={year}
@@ -241,11 +241,11 @@ export default function QiblaPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {rashdul.events.map((event) => (
               <div key={event.direction} className="rounded-xl border border-neutral-200 p-3.5 dark:border-night-700/60">
-                <div className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                <div className="text-2xs font-medium uppercase tracking-wide text-ink-muted">
                   {event.direction === "ascending" ? "Late May" : "Mid July"}
                 </div>
                 <div className="mt-1 font-mono text-lg">{formatRashdulTime(event.utc_time, timeZone)}</div>
-                <div className="mt-1 text-xs text-ink-muted">
+                <div className="mt-1 text-sm text-ink-muted">
                   {timeZone ?? "UTC"}
                   {!timeZone && " (time zone lookup failed)"}
                 </div>

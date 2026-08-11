@@ -8,7 +8,7 @@ export function Badge({ tone, children }: { tone: Tone; children: React.ReactNod
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-2xs font-medium",
         tone === "positive" &&
           "bg-moon-500/15 text-verdict-positive dark:bg-moon-500/20",
         tone === "neutral" && "bg-neutral-500/10 text-ink-muted",

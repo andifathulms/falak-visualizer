@@ -169,7 +169,7 @@ export default function HilalVisibilityPage() {
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-3 font-medium">Observational numbers</h2>
+            <h2 className="mb-3 text-md font-semibold">Observational numbers</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {stats.map((stat, i) => (
                 <motion.div
@@ -190,8 +190,8 @@ export default function HilalVisibilityPage() {
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-1 font-medium">Around sunset</h2>
-            <p className="mb-3 text-xs text-ink-muted">
+            <h2 className="mb-1 text-md font-semibold">Around sunset</h2>
+            <p className="mb-3 text-sm text-ink-muted">
               Moon altitude and elongation for the hour spanning sunset — not just the sunset-instant numbers above.
             </p>
             <div className="h-64 w-full">
@@ -239,7 +239,7 @@ export default function HilalVisibilityPage() {
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-3 font-medium">Criteria comparison</h2>
+            <h2 className="mb-3 text-md font-semibold">Criteria comparison</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {CRITERIA.map((c, i) => {
                 const verdict = obs.criteria[c.key];
@@ -255,12 +255,12 @@ export default function HilalVisibilityPage() {
                       <span className="text-sm font-medium">{c.name}</span>
                       <Badge tone={isVisible(verdict) ? "positive" : "neutral"}>{String(verdict)}</Badge>
                     </div>
-                    <p className="mt-1.5 text-xs text-ink-muted">{c.rule}</p>
+                    <p className="mt-1.5 text-sm text-ink-muted">{c.rule}</p>
                   </motion.div>
                 );
               })}
             </div>
-            <p className="mt-4 text-xs text-ink-muted">
+            <p className="mt-4 text-sm text-ink-muted">
               These criteria can and do disagree — that is expected, not a bug. This tool does not advocate for one
               method.
             </p>
