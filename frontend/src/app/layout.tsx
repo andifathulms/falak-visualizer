@@ -5,14 +5,13 @@ import { MotionProvider } from "@/components/MotionProvider";
 import { NavBar } from "@/components/NavBar";
 import "./globals.css";
 
+// One family, one file. Geist Mono used to be loaded here too and was consumed
+// by nothing: tailwind.config declares only `fontFamily.display`, so every
+// `font-mono` in the app resolves to the default ui-monospace system stack. The
+// variable was declared, preloaded at high priority, and referenced nowhere.
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
   weight: "100 900",
 });
 
@@ -35,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} relative min-h-screen bg-night-sky antialiased`}
+        className={`${geistSans.variable} relative min-h-screen bg-night-sky antialiased`}
       >
         <MotionProvider>
           {/*
