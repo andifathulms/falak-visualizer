@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Table, TableColumn } from "@/components/ui/Table";
+import { ISBAT_RECORDS } from "@/lib/falak/isbat";
 import { ApiError, fetchIsbatAccuracy, HilalMethod, IsbatAccuracyResult, IsbatComparisonRecord } from "@/lib/api";
 
 const METHODS: { key: HilalMethod; label: string }[] = [
@@ -35,6 +36,13 @@ function MatchCell({ record, method }: { record: IsbatComparisonRecord; method: 
     </div>
   );
 }
+
+/** Distinct Hijri years present in the seeded record list, ascending. */
+// Array.from rather than spreading the Set: the project targets a JS level
+// below the one that allows iterating a Set with spread, and widening the
+// tsconfig target for a cosmetic line would be a config change smuggled into a
+// presentation pass.
+const SEEDED_YEARS = Array.from(new Set(ISBAT_RECORDS.map((r) => r.hijriYear))).sort((a, b) => a - b);
 
 export default function IsbatAccuracyPage() {
   const [hijriYear, setHijriYear] = useState("");
@@ -128,9 +136,23 @@ export default function IsbatAccuracyPage() {
 
       {error && <ErrorBanner message={error} />}
 
+      {/* This used to read "No isbat records seeded yet", which was true when the
+          list was empty and is now misleading: the only way to reach this branch
+          is to filter to a year that has none, and the message told the reader
+          the app was unfinished instead. The available years are derived from
+          the record list rather than written out, so they cannot go stale as
+          rows are added. */}
       {result && result.records.length === 0 && (
         <Card className="p-5 text-center text-sm text-ink-muted">
-          No isbat records seeded yet.
+          {SEEDED_YEARS.length === 0 ? (
+            <>No isbat records have been seeded yet.</>
+          ) : (
+            <>
+              No sidang isbat record for {hijriYear || "that year"}. Records are currently seeded for{" "}
+              <span className="font-medium text-foreground">{SEEDED_YEARS.join(", ")} H</span> — clear the year
+              field to see all of them.
+            </>
+          )}
         </Card>
       )}
 
