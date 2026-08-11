@@ -2,40 +2,50 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Calendar, Compass, Map, MoonStar, Sun } from "lucide-react";
+import { ArrowRight, Calendar, Check, Compass, Map, MoonStar, Sun } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { Card } from "@/components/ui/Card";
 import { BrandMark } from "@/components/BrandMark";
 
+// Each description leads with the question the tool answers, in words that
+// assume no prior vocabulary, and only then names what it computes. The
+// previous copy did the reverse - it opened on "bidirectional conversion",
+// "choropleth", "great-circle bearing" - which reads as a spec sheet to anyone
+// who is not already inside the subject.
 const TOOLS = [
   {
     href: "/converter",
     title: "Hijri ↔ Gregorian Converter",
-    description: "Bidirectional date conversion using real astronomical month boundaries.",
+    description:
+      "What was this date in the other calendar? Converts either way, using real astronomical month boundaries rather than a fixed arithmetic table.",
     icon: Calendar,
   },
   {
     href: "/hilal-visibility",
     title: "Hilal Visibility",
-    description: "Altitude, elongation, moon age and verdicts across three criteria, for any date and location.",
+    description:
+      "Can the new crescent be seen from here tonight? Gives the altitude, elongation and moon age, then the verdict from three different criteria.",
     icon: MoonStar,
   },
   {
     href: "/visibility-map",
     title: "Visibility Map",
-    description: "Indonesia-wide choropleth of calculated hilal visibility for a given evening.",
+    description:
+      "Where in Indonesia is the crescent visible on a given evening? A shaded map of the whole country for one date.",
     icon: Map,
   },
   {
     href: "/prayer-times",
     title: "Prayer Times",
-    description: "Daily fajr/sunrise/dhuhr/asr/maghrib/isha from solar position (Kemenag RI convention).",
+    description:
+      "When are today's prayers here? Fajr through isha, worked out from the sun's position (Kemenag RI convention).",
     icon: Sun,
   },
   {
     href: "/qibla",
     title: "Qibla Direction",
-    description: "Great-circle bearing and distance to the Kaaba from any coordinate.",
+    description:
+      "Which way is the Kaaba from here? The compass bearing to face, and how far away Mecca is.",
     icon: Compass,
   },
 ];
@@ -59,25 +69,35 @@ export default function HomePage() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="relative overflow-hidden rounded-3xl border border-neutral-200/70 px-6 py-12 dark:border-night-700/60 dark:bg-gradient-to-br dark:from-night-850 dark:to-night-900 sm:px-12 sm:py-16"
       >
-        <div className="relative flex flex-col items-start gap-6">
+        <div className="relative flex flex-col items-start gap-5">
+          {/* The eyebrow states the category, because nothing else on the page
+              can. A first-time visitor needs "what kind of thing is this" before
+              any claim about how it is built will mean anything to them. */}
           <div className="inline-flex items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1 text-2xs font-medium text-accent">
             <BrandMark className="size-4" />
-            Deterministic astronomy engine, not a black box
+            Islamic calendar &amp; astronomy calculator · Indonesia
           </div>
           <h1 className="max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
-            See <span className="bg-gradient-to-r from-gold-400 to-moon-500 bg-clip-text text-transparent">why</span>{" "}
-            a Hijri month starts when it does.
+            Hijri dates and prayer times, with the{" "}
+            <span className="bg-gradient-to-r from-gold-400 to-moon-500 bg-clip-text text-transparent">
+              astronomy shown
+            </span>
+            .
           </h1>
-          <p className="max-w-xl text-base text-ink-muted">
-            Falak computes Hijri dates, hilal visibility, prayer times, and qibla direction from real solar and
-            lunar position formulas — every output traceable to a verifiable calculation, never a black box.
+          {/* Specialist terms are glossed inline on first use. The visitor who
+              already knows them loses nothing; the one who does not can still
+              follow the sentence, which was not true before. */}
+          <p className="max-w-xl text-md text-ink-muted">
+            Falak works out when each Hijri month begins, whether the hilal — the young crescent moon — is
+            visible from where you are, when to pray, and which way the Kaaba lies. Every answer opens up to
+            show the altitude, elongation and timings it came from.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
               href="/hilal-visibility"
               className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-gold-400 to-gold-600 px-5 py-2.5 text-sm font-medium text-night-950 shadow-md shadow-gold-500/20 transition-all hover:shadow-lg hover:shadow-gold-500/30"
             >
-              Check hilal visibility
+              Check tonight&apos;s hilal
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
@@ -87,6 +107,17 @@ export default function HomePage() {
               Convert a date
             </Link>
           </div>
+          {/* The three things a stranger wants to know before clicking, and
+              which the page previously never answered: what it costs, whether
+              they have to sign up, and where their location data goes. */}
+          <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
+            {["Free to use", "No account needed", "Calculated in your browser"].map((fact) => (
+              <li key={fact} className="flex items-center gap-1.5">
+                <Check className="size-3.5 shrink-0 text-verdict-positive" strokeWidth={2.5} />
+                {fact}
+              </li>
+            ))}
+          </ul>
         </div>
       </motion.section>
 
