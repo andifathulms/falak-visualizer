@@ -74,6 +74,55 @@ export function altitudeDeg(
   return Math.asin(Math.max(-1, Math.min(1, sinAlt))) / DEG;
 }
 
+/**
+ * Geocentric altitude -> topocentric altitude, i.e. what an observer on the
+ * Earth's surface sees rather than what a hypothetical observer at the Earth's
+ * centre would (Meeus Ch. 40).
+ *
+ * This matters for exactly one body: the Moon. Its horizontal parallax is about
+ * 0.95-1.02 deg, so a geocentric altitude overstates what anyone can actually
+ * see by nearly a degree near the horizon - which is the entire range hilal
+ * criteria operate in. For the Sun the same correction is 8.8 arcsec and is
+ * left unapplied.
+ *
+ * The shift is `asin(sin(pi) * cos(alt))`, which depends on the topocentric
+ * altitude it is solving for; one refinement pass is enough, since the residual
+ * after it is well under an arcsecond for lunar parallax.
+ *
+ * Deliberately omitted: the observer's height above sea level and the Earth's
+ * flattening (Meeus' rho*sin(phi') / rho*cos(phi') terms). Both change the
+ * result by well under an arcminute at hilal altitudes, and including them
+ * would require an elevation input the app does not collect.
+ */
+export function topocentricAltitudeDeg(
+  geocentricAltitudeDeg: number,
+  horizontalParallaxDeg: number,
+): number {
+  const piRad = horizontalParallaxDeg * DEG;
+  let alt = geocentricAltitudeDeg * DEG;
+  for (let i = 0; i < 2; i += 1) {
+    const shift = Math.asin(Math.max(-1, Math.min(1, Math.sin(piRad) * Math.cos(alt))));
+    alt = geocentricAltitudeDeg * DEG - shift;
+  }
+  return alt / DEG;
+}
+
+/**
+ * The geocentric altitude at which the Moon's upper limb appears to touch the
+ * horizon: Meeus' h0 = 0.7275 * pi - 0.5667 deg (Ch. 15).
+ *
+ * The -0.8333 deg constant used for the Sun is wrong for the Moon on two counts
+ * - it assumes a body with no meaningful parallax, and it bakes in the Sun's
+ * semidiameter. For the Moon the parallax term dominates and flips the sign: h0
+ * lands around +0.12 deg, so moonset happens measurably earlier than a
+ * solar-style threshold would place it. That difference propagates straight
+ * into lag time and into the wujudul hilal verdict, which is a comparison of
+ * moonset against sunset.
+ */
+export function moonStandardAltitudeDeg(horizontalParallaxDeg: number): number {
+  return 0.7275 * horizontalParallaxDeg - 0.5667;
+}
+
 /** instant -> [raDeg, decDeg] */
 export type PositionFunc = (instant: Instant) => [number, number];
 

@@ -15,7 +15,13 @@ import math
 from dataclasses import dataclass
 
 from . import conjunction, lunar, solar
-from ._horizon import altitude_deg, equatorial_from_ecliptic, find_horizon_crossing
+from ._horizon import (
+    altitude_deg,
+    equatorial_from_ecliptic,
+    find_horizon_crossing,
+    moon_standard_altitude_deg,
+    topocentric_altitude_deg,
+)
 from .timescale import julian_day
 
 
@@ -64,7 +70,19 @@ def compute_hilal_observation(date: _dt.date, lat_deg: float, lon_deg: float) ->
     if sunset is None:
         raise ValueError(f"no sunset found for {date} at ({lat_deg}, {lon_deg})")
 
-    moonset = find_horizon_crossing(date, lat_deg, lon_deg, _moon_ra_dec, -0.8333, rising=False)
+    # Moonset uses the Moon's own standard altitude, not the Sun's -0.8333.
+    # Parallax varies by ~1e-4 deg/hour, so evaluating it at sunset rather than
+    # iterating to the crossing instant is accurate to far better than the
+    # bisection tolerance.
+    moon_parallax_at_sunset = lunar.lunar_position(sunset).horizontal_parallax_deg
+    moonset = find_horizon_crossing(
+        date,
+        lat_deg,
+        lon_deg,
+        _moon_ra_dec,
+        moon_standard_altitude_deg(moon_parallax_at_sunset),
+        rising=False,
+    )
 
     conj = conjunction.previous_conjunction(sunset)
 
@@ -73,9 +91,22 @@ def compute_hilal_observation(date: _dt.date, lat_deg: float, lon_deg: float) ->
     moon_ra, moon_dec = _moon_ra_dec(sunset)
 
     jd = julian_day(sunset)
-    moon_alt = altitude_deg(moon_ra, moon_dec, lat_deg, lon_deg, jd)
+    # Topocentric, because that is what every criterion below is defined
+    # against: MABIMS 2021's 3 deg is a topocentric altitude, and Odeh's ARCV
+    # is explicitly a topocentric arc of vision. Feeding either a geocentric
+    # altitude overstates it by close to a degree - an order of magnitude more
+    # than the margins these thresholds are decided by.
+    moon_alt = topocentric_altitude_deg(
+        altitude_deg(moon_ra, moon_dec, lat_deg, lon_deg, jd),
+        moon.horizontal_parallax_deg,
+    )
     sun_alt = altitude_deg(sun_ra, sun_dec, lat_deg, lon_deg, jd)
 
+    # Geocentric, and deliberately so. Whether MABIMS' 6.4 deg elongation is
+    # topocentric or geocentric is genuinely unsettled - PBNU has argued for the
+    # topocentric reading, and practice differs across MABIMS members - so this
+    # keeps the conventional geocentric value and states the choice in the UI
+    # rather than silently picking a side. The difference is ~0.1-0.2 deg.
     elongation = _elongation_deg(sun_ra, sun_dec, moon_ra, moon_dec)
 
     moon_age_hours = (sunset - conj).total_seconds() / 3600.0
@@ -138,12 +169,15 @@ def hilal_trajectory(
         t = sunset + _dt.timedelta(minutes=offset)
         sun_ra, sun_dec = _sun_ra_dec(t)
         moon_ra, moon_dec = _moon_ra_dec(t)
+        moon_parallax = lunar.lunar_position(t).horizontal_parallax_deg
         jd = julian_day(t)
         points.append(
             TrajectoryPoint(
                 time=t,
                 minutes_from_sunset=offset,
-                moon_altitude_deg=altitude_deg(moon_ra, moon_dec, lat_deg, lon_deg, jd),
+                moon_altitude_deg=topocentric_altitude_deg(
+                    altitude_deg(moon_ra, moon_dec, lat_deg, lon_deg, jd), moon_parallax
+                ),
                 sun_altitude_deg=altitude_deg(sun_ra, sun_dec, lat_deg, lon_deg, jd),
                 elongation_deg=_elongation_deg(sun_ra, sun_dec, moon_ra, moon_dec),
             )

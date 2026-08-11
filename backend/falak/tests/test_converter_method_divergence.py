@@ -16,19 +16,42 @@ def test_month_start_date_for_method_matches_mabims_baseline():
         ) == converter.month_start_date(hijri_year, hijri_month, *JAKARTA)
 
 
-def test_all_methods_agree_on_syawal_1445h():
-    """Publicly reported Kemenag hisab figures for 2024-04-09 evening
-    (eve of 1 Syawal 1445H) show all three criteria met (test_visibility.py).
-    The month-start search should therefore land on 2024-04-10 for every
-    method, not just MABIMS."""
-    for method in converter.MONTH_START_METHODS:
+def test_syawal_1445h_odeh_diverges_from_kemenag_by_one_day():
+    """
+    Kemenag declared 1 Syawal 1445H on 2024-04-10, on the MABIMS criterion.
+    Wujudul hilal and MABIMS both reproduce that date. Odeh does not - it
+    classifies the 2024-04-09 evening as marginal (see test_visibility.py) and
+    so lands a day later.
+
+    This test previously asserted that all three methods agreed on 2024-04-10.
+    That was true only while moon altitude was computed geocentrically, which
+    overstated it by ~1 deg and pushed Odeh's v-value over its optical-aid
+    boundary. With the topocentric altitude the criteria are actually defined
+    against, the divergence is real and is pinned here deliberately: a criterion
+    disagreeing with the official determination is the product's subject matter,
+    not a regression.
+    """
+    for method in ("wujudul_hilal", "mabims_2021"):
         assert converter.month_start_date_for_method(
             1445, 10, method, *JAKARTA
         ) == datetime.date(2024, 4, 10)
 
+    assert converter.month_start_date_for_method(
+        1445, 10, "odeh", *JAKARTA
+    ) == datetime.date(2024, 4, 11)
+
 
 def test_odeh_visible_optical_aid_still_counts_as_month_start():
-    obs = converter.visibility.compute_hilal_observation(datetime.date(2024, 4, 9), *JAKARTA)
+    """Eve of 1 Ramadhan 1444H, which Odeh classifies as visible_optical_aid -
+    a positive verdict short of naked-eye visibility, which must still start
+    the month."""
+    obs = converter.visibility.compute_hilal_observation(datetime.date(2023, 3, 22), *JAKARTA)
+    assert (
+        converter.visibility.odeh_criterion(
+            obs.moon_altitude_deg, obs.elongation_deg, obs.crescent_width_arcmin
+        )
+        == "visible_optical_aid"
+    )
     assert converter._is_visible_for_method(obs, "odeh") is True
 
 

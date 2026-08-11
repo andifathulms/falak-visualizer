@@ -10,7 +10,13 @@
  * produced a verdict (CLAUDE.md: "every verdict must be inspectable").
  */
 import { previousConjunction } from "./conjunction";
-import { altitudeDeg, equatorialFromEcliptic, findHorizonCrossing } from "./horizon";
+import {
+  altitudeDeg,
+  equatorialFromEcliptic,
+  findHorizonCrossing,
+  moonStandardAltitudeDeg,
+  topocentricAltitudeDeg,
+} from "./horizon";
 import { illuminatedFraction, lunarPosition } from "./lunar";
 import { obliquityOfEcliptic, solarPosition } from "./solar";
 import { julianDay } from "./timescale";
@@ -24,7 +30,10 @@ import {
   type PlainDate,
 } from "./time";
 
-/** Apparent altitude at which the Sun's/Moon's upper limb touches the horizon. */
+/**
+ * Apparent altitude at which the Sun's upper limb touches the horizon.
+ * The Moon gets its own parallax-dependent value - see moonStandardAltitudeDeg.
+ */
 const HORIZON_ALTITUDE_DEG = -0.8333;
 
 export function sunRaDec(instant: Instant): [number, number] {
@@ -89,12 +98,17 @@ export function computeHilalObservation(
     throw new Error(`no sunset found for ${date.year}-${date.month}-${date.day} at (${latDeg}, ${lonDeg})`);
   }
 
+  // Moonset uses the Moon's own standard altitude, not the Sun's -0.8333.
+  // Parallax varies by ~1e-4 deg/hour, so evaluating it at sunset rather than
+  // iterating to the crossing instant is accurate to far better than the
+  // bisection tolerance.
+  const moonParallaxAtSunset = lunarPosition(sunset).horizontalParallaxDeg;
   const moonset = findHorizonCrossing(
     date,
     latDeg,
     lonDeg,
     moonRaDec,
-    HORIZON_ALTITUDE_DEG,
+    moonStandardAltitudeDeg(moonParallaxAtSunset),
     false,
   );
 
@@ -105,9 +119,22 @@ export function computeHilalObservation(
   const [moonRa, moonDec] = moonRaDec(sunset);
 
   const jd = julianDay(sunset);
-  const moonAltitude = altitudeDeg(moonRa, moonDec, latDeg, lonDeg, jd);
+  // Topocentric, because that is what every criterion below is defined
+  // against: MABIMS 2021's 3 deg is a topocentric altitude, and Odeh's ARCV is
+  // explicitly a topocentric arc of vision. Feeding either a geocentric
+  // altitude overstates it by close to a degree - an order of magnitude more
+  // than the margins these thresholds are decided by.
+  const moonAltitude = topocentricAltitudeDeg(
+    altitudeDeg(moonRa, moonDec, latDeg, lonDeg, jd),
+    moon.horizontalParallaxDeg,
+  );
   const sunAltitude = altitudeDeg(sunRa, sunDec, latDeg, lonDeg, jd);
 
+  // Geocentric, and deliberately so. Whether MABIMS' 6.4 deg elongation is
+  // topocentric or geocentric is genuinely unsettled - PBNU has argued for the
+  // topocentric reading, and practice differs across MABIMS members - so this
+  // keeps the conventional geocentric value and states the choice in the UI
+  // rather than silently picking a side. The difference is ~0.1-0.2 deg.
   const elongation = elongationDeg(sunRa, sunDec, moonRa, moonDec);
 
   const moonAgeHours = (sunset - conjunction) / HOUR_US;
@@ -174,11 +201,15 @@ export function hilalTrajectory(
     const t = sunset + quantizeToMicrosecond(offset * MINUTE_US);
     const [sunRa, sunDec] = sunRaDec(t);
     const [moonRa, moonDec] = moonRaDec(t);
+    const moonParallax = lunarPosition(t).horizontalParallaxDeg;
     const jd = julianDay(t);
     points.push({
       time: t,
       minutesFromSunset: offset,
-      moonAltitudeDeg: altitudeDeg(moonRa, moonDec, latDeg, lonDeg, jd),
+      moonAltitudeDeg: topocentricAltitudeDeg(
+        altitudeDeg(moonRa, moonDec, latDeg, lonDeg, jd),
+        moonParallax,
+      ),
       sunAltitudeDeg: altitudeDeg(sunRa, sunDec, latDeg, lonDeg, jd),
       elongationDeg: elongationDeg(sunRa, sunDec, moonRa, moonDec),
     });

@@ -65,6 +65,51 @@ def altitude_deg(ra_deg: float, dec_deg: float, lat_deg: float, lon_east_deg: fl
     return math.asin(max(-1.0, min(1.0, sin_alt))) / _DEG
 
 
+def topocentric_altitude_deg(geocentric_altitude_deg: float, horizontal_parallax_deg: float) -> float:
+    """
+    Geocentric altitude -> topocentric altitude, i.e. what an observer on the
+    Earth's surface sees rather than what a hypothetical observer at the
+    Earth's centre would (Meeus Ch. 40).
+
+    This matters for exactly one body: the Moon. Its horizontal parallax is
+    about 0.95-1.02 deg, so a geocentric altitude overstates what anyone can
+    actually see by nearly a degree near the horizon - which is the entire
+    range hilal criteria operate in. For the Sun the same correction is 8.8
+    arcsec and is left unapplied.
+
+    The shift is `asin(sin(pi) * cos(alt))`, which depends on the topocentric
+    altitude it is solving for; one refinement pass is enough, since the
+    residual after it is well under an arcsecond for lunar parallax.
+
+    Deliberately omitted: the observer's height above sea level and the
+    Earth's flattening (Meeus' rho*sin(phi') / rho*cos(phi') terms). Both
+    change the result by well under an arcminute at hilal altitudes, and
+    including them would require an elevation input the app does not collect.
+    """
+    pi_rad = horizontal_parallax_deg * _DEG
+    alt = geocentric_altitude_deg * _DEG
+    for _ in range(2):
+        shift = math.asin(max(-1.0, min(1.0, math.sin(pi_rad) * math.cos(alt))))
+        alt = geocentric_altitude_deg * _DEG - shift
+    return alt / _DEG
+
+
+def moon_standard_altitude_deg(horizontal_parallax_deg: float) -> float:
+    """
+    The geocentric altitude at which the Moon's upper limb appears to touch the
+    horizon: Meeus' h0 = 0.7275 * pi - 0.5667 deg (Ch. 15).
+
+    The -0.8333 deg constant used for the Sun is wrong for the Moon on two
+    counts - it assumes a body with no meaningful parallax, and it bakes in the
+    Sun's semidiameter. For the Moon the parallax term dominates and flips the
+    sign: h0 lands around +0.12 deg, so moonset happens measurably earlier than
+    a solar-style threshold would place it. That difference propagates straight
+    into lag time and into the wujudul hilal verdict, which is a comparison of
+    moonset against sunset.
+    """
+    return 0.7275 * horizontal_parallax_deg - 0.5667
+
+
 PositionFunc = Callable[[_dt.datetime], tuple[float, float]]  # dt -> (ra_deg, dec_deg)
 
 
