@@ -124,8 +124,6 @@ export default function ConverterPage() {
 
       <HisabDisclaimer />
 
-      <HowMonthsWork />
-
       <Card className="p-5">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="inline-flex rounded-xl border border-neutral-300 p-1 dark:border-night-600/50">
@@ -212,6 +210,11 @@ export default function ConverterPage() {
           </Button>
         </form>
       </Card>
+
+      {/* Below the form, not above it. The premise still arrives before any
+          result, but the control the reader came for is the first thing they
+          can reach rather than being pushed off the screen by an explanation. */}
+      <HowMonthsWork />
 
       {error && <ErrorBanner message={error} />}
 

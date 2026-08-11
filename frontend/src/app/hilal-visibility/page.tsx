@@ -220,8 +220,6 @@ export default function HilalVisibilityPage() {
 
       <HisabDisclaimer />
 
-      <HowMonthsWork />
-
       <Card className="p-5">
         <form
           onSubmit={handleSubmit}
@@ -237,6 +235,9 @@ export default function HilalVisibilityPage() {
           </Button>
         </form>
       </Card>
+
+      {/* Below the form, not above it - see the note in converter/page.tsx. */}
+      <HowMonthsWork />
 
       {error && <ErrorBanner message={error} />}
 
