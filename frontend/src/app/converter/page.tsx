@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeftRight, Calendar } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
-import { CalculationPanel } from "@/components/CalculationPanel";
 import { DerivationTrace } from "@/components/DerivationTrace";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
@@ -37,15 +36,6 @@ const HIJRI_MONTHS = [
 ];
 
 const MONTH_OPTIONS = HIJRI_MONTHS.map((name, i) => ({ value: String(i + 1), label: name }));
-
-const METHOD_LABELS: Record<string, string> = {
-  mabims_2021: "MABIMS 2021",
-};
-
-const DIRECTION_LABELS: Record<string, string> = {
-  gregorian_to_hijri: "Gregorian → Hijri",
-  hijri_to_gregorian: "Hijri → Gregorian",
-};
 
 export default function ConverterPage() {
   const [direction, setDirection] = useState<"gregorian_to_hijri" | "hijri_to_gregorian">(
@@ -248,12 +238,6 @@ export default function ConverterPage() {
                   </strong>
                 </p>
               )}
-              <CalculationPanel
-                rows={[
-                  ["Method", METHOD_LABELS[result.method] ?? result.method],
-                  ["Direction", DIRECTION_LABELS[result.direction] ?? result.direction],
-                ]}
-              />
               {result.derivation ? (
                 <DerivationTrace derivation={result.derivation} />
               ) : (
