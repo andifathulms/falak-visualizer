@@ -5,13 +5,23 @@ import { motion } from "framer-motion";
 export function HilalMoon({
   illuminationFraction,
   visible,
+  size = 140,
 }: {
   illuminationFraction: number;
   visible: boolean;
+  /**
+   * Rendered size in px. A real size rather than a CSS transform on the caller:
+   * `scale()` shrinks the pixels but not the layout box, so a scaled-down
+   * crescent still reserved its full width and squeezed whatever sat beside it
+   * at narrow viewports.
+   */
+  size?: number;
 }) {
-  const size = 140;
   const center = size / 2;
-  const r = size / 2 - 18;
+  // Proportional inset rather than a fixed 18px: at the default 140 this is
+  // 17.9, i.e. the rendering that already shipped, but it now holds its
+  // proportions at any size instead of eating the whole radius at small ones.
+  const r = size / 2 - size * 0.128;
   // Purely illustrative crescent thickness - not a precision phase render,
   // the exact illumination number is shown numerically alongside this.
   const shift = r * (1.9 - Math.min(illuminationFraction, 0.15) * 4);

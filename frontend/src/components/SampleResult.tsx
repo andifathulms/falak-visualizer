@@ -74,11 +74,14 @@ export function SampleResult() {
         <p className="text-xs text-ink-muted">{EXAMPLE.when}</p>
       </div>
 
-      <div className="mt-4 flex items-center gap-4">
-        <div className="shrink-0 scale-[0.62] -my-4 -ml-4">
-          <HilalMoon illuminationFraction={EXAMPLE.illumination} visible />
+      {/* Stacks below sm. Inside the hero card at a 320px viewport there is
+          only about 200px of usable width, which a side-by-side crescent and a
+          two-column metric grid cannot share without the labels shredding. */}
+      <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="shrink-0 self-center sm:self-auto">
+          <HilalMoon illuminationFraction={EXAMPLE.illumination} visible size={88} />
         </div>
-        <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-3">
+        <dl className="grid w-full flex-1 grid-cols-2 gap-x-4 gap-y-3">
           {EXAMPLE.metrics.map((m) => (
             <div key={m.label}>
               <dt className="text-2xs text-ink-muted">{m.label}</dt>
