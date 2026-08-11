@@ -8,6 +8,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
+import { Select } from "@/components/ui/Select";
+import { ConventionNote, CONVENTION_OPTIONS, DEFAULT_CONVENTION } from "@/components/ConventionNote";
 import { LocationPicker } from "@/components/LocationPicker";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { PrintButton } from "@/components/PrintButton";
@@ -40,6 +42,7 @@ const PRAYERS = [
 ];
 
 export default function PrayerTimesPage() {
+  const [convention, setConvention] = useState(DEFAULT_CONVENTION);
   const [view, setView] = useState<"daily" | "monthly">("daily");
 
   const [date, setDate] = useState("");
@@ -67,7 +70,7 @@ export default function PrayerTimesPage() {
     setMonthLoading(true);
     setMonthError(null);
     try {
-      const r = await fetchPrayerTimesMonth({ year: monthYear, month, lat, lon, convention: "Kemenag RI" });
+      const r = await fetchPrayerTimesMonth({ year: monthYear, month, lat, lon, convention });
       setMonthResult(r);
     } catch (err) {
       setMonthError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
@@ -93,14 +96,17 @@ export default function PrayerTimesPage() {
   );
   const displayTimeZone = timeZone ?? "UTC";
 
-  async function compute(d: string, la: number, lo: number) {
+  // `conv` is passed rather than read from state: the permalink effect calls
+  // this in the same tick it calls setConvention, so state would still hold the
+  // previous value and a shared link would silently compute the wrong angles.
+  async function compute(d: string, la: number, lo: number, conv: string = convention) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const r = await fetchPrayerTimes({ date: d, lat: la, lon: lo, convention: "Kemenag RI" });
+      const r = await fetchPrayerTimes({ date: d, lat: la, lon: lo, convention: conv });
       setResult(r);
-      writeQueryParams({ date: d, lat: la, lon: lo });
+      writeQueryParams({ date: d, lat: la, lon: lo, convention: conv });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
@@ -113,11 +119,20 @@ export default function PrayerTimesPage() {
     const qDate = params.get("date");
     const qLat = params.get("lat");
     const qLon = params.get("lon");
+    const qConvention = params.get("convention");
+    // An unrecognised convention in a hand-edited URL falls back to the default
+    // rather than erroring - but only after being checked against the engine's
+    // own list, never trusted as-is.
+    const convFromUrl =
+      qConvention && CONVENTION_OPTIONS.some((o) => o.value === qConvention)
+        ? qConvention
+        : DEFAULT_CONVENTION;
     if (qDate && qLat && qLon) {
       setDate(qDate);
       setLat(Number(qLat));
       setLon(Number(qLon));
-      compute(qDate, Number(qLat), Number(qLon));
+      setConvention(convFromUrl);
+      compute(qDate, Number(qLat), Number(qLon), convFromUrl);
     } else {
       setDate(todayIso());
     }
@@ -134,7 +149,7 @@ export default function PrayerTimesPage() {
       <PageHeader
         icon={Sun}
         title="Prayer Times"
-        description="Kemenag RI convention (fajr 20°, isha 18°, Shafi'i shadow-length asr) — computed from solar position for any coordinate and date, shown in the local time zone for that location."
+        description="Computed from solar position for any coordinate and date, shown in the local time zone for that location. Dhuhr, asr and maghrib come from the sun; fajr and isha depend on a twilight angle that organisations set differently."
       />
 
       <div className="no-print inline-flex rounded-xl border border-neutral-300 p-1 dark:border-night-600/50">
@@ -158,11 +173,17 @@ export default function PrayerTimesPage() {
       {view === "daily" ? (
         <>
           <Card className="p-5 no-print">
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-4">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <Field label="Date">
                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClasses} />
               </Field>
               <LocationPicker lat={lat} lon={lon} onChange={(newLat, newLon) => { setLat(newLat); setLon(newLon); }} />
+              <Select
+                label="Convention"
+                value={convention}
+                onChange={setConvention}
+                options={CONVENTION_OPTIONS}
+              />
               <Button type="submit" loading={loading} className="w-full">
                 {!loading && <Search className="size-4" />}
                 {loading ? "Computing…" : "Compute"}
@@ -199,6 +220,7 @@ export default function PrayerTimesPage() {
                   </motion.div>
                 ))}
               </div>
+              <ConventionNote convention={convention} />
               <div className="no-print flex flex-wrap gap-3">
                 <CopyLinkButton />
                 <PrintButton label="Print / Save as PDF" />
@@ -209,7 +231,7 @@ export default function PrayerTimesPage() {
       ) : (
         <>
           <Card className="p-5 no-print">
-            <form onSubmit={loadMonth} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-4">
+            <form onSubmit={loadMonth} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <Field label="Year">
                 <input
                   type="number"
@@ -229,6 +251,12 @@ export default function PrayerTimesPage() {
                 />
               </Field>
               <LocationPicker lat={lat} lon={lon} onChange={(newLat, newLon) => { setLat(newLat); setLon(newLon); }} />
+              <Select
+                label="Convention"
+                value={convention}
+                onChange={setConvention}
+                options={CONVENTION_OPTIONS}
+              />
               <Button type="submit" loading={monthLoading} className="w-full">
                 {!monthLoading && <Search className="size-4" />}
                 {monthLoading ? "Loading…" : "Load month"}
@@ -250,6 +278,7 @@ export default function PrayerTimesPage() {
                 </div>
               </div>
               <Table columns={monthColumns} rows={monthResult.days} rowKey={(d) => d.date} />
+              <ConventionNote convention={convention} />
             </Card>
           )}
         </>
