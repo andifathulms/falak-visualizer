@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   CartesianGrid,
@@ -34,6 +34,7 @@ import { formatMargin, MODEL_CAVEATS } from "@/lib/falak/tolerance";
 import { CRITERION_CITATIONS } from "@/lib/falak/citations";
 import { CitationList } from "@/components/CitationList";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
+import { resolveTimeZone } from "@/lib/timezone";
 
 const CRITERIA = [
   {
@@ -52,6 +53,28 @@ const CRITERIA = [
     rule: "Continuous classification (ARCV vs. crescent width)",
   },
 ];
+
+function formatLocalTime(iso: string | null, timeZone: string) {
+  if (!iso) return "\u2014";
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone });
+}
+
+function formatLocalDateTime(iso: string | null, timeZone: string) {
+  if (!iso) return "\u2014";
+  const d = new Date(iso);
+  return `${d.toLocaleDateString([], { day: "2-digit", month: "short", timeZone })} ${d.toLocaleTimeString(
+    [],
+    { hour: "2-digit", minute: "2-digit", timeZone },
+  )}`;
+}
+
+function utcTime(iso: string | null) {
+  return iso ? `${new Date(iso).toISOString().slice(11, 16)}Z` : "\u2014";
+}
+
+function utcDateTime(iso: string | null) {
+  return iso ? `${new Date(iso).toISOString().slice(0, 16).replace("T", " ")}Z` : "\u2014";
+}
 
 export default function HilalVisibilityPage() {
   const [date, setDate] = useState("");
@@ -113,6 +136,14 @@ export default function HilalVisibilityPage() {
         { label: "Crescent width", value: `${obs.crescent_width_arcmin.toFixed(2)}'`, icon: Sparkles },
       ]
     : [];
+
+  // Sunset is the most checkable number on this page - it is the one a reader
+  // can verify by looking outside - and it was rendered in UTC, seven hours off
+  // for the primary audience. Local is now primary and UTC is kept alongside
+  // rather than replaced: the engine works in UTC, permalinks are shared across
+  // zones, and a reader comparing against an almanac needs it.
+  const timeZone = useMemo(() => resolveTimeZone(lat, lon), [lat, lon]);
+  const displayTimeZone = timeZone ?? "UTC";
 
   // The headline reports MABIMS, so it has to be able to report the same three
   // states the MABIMS card below can. Before this it was a binary on
@@ -180,11 +211,20 @@ export default function HilalVisibilityPage() {
                   ? "MABIMS 2021 lands within this engine's own tolerance here, so it does not resolve — see the margin in the comparison below"
                   : "per MABIMS 2021 — see comparison below, criteria can disagree"}
               </p>
-              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-ink-muted sm:justify-start dark:text-ink-muted">
-                <Sunset className="size-3.5 text-gold-500" />
-                Sunset {new Date(obs.sunset_time_utc).toISOString().slice(11, 16)} UTC · Moonset{" "}
-                {obs.moonset_time_utc ? new Date(obs.moonset_time_utc).toISOString().slice(11, 16) : "—"} UTC ·
-                Conjunction {new Date(obs.conjunction_time_utc).toISOString().slice(0, 16).replace("T", " ")} UTC
+              <div className="mt-3 flex flex-col items-center gap-1 text-xs text-ink-muted sm:items-start">
+                <div className="flex items-center gap-2">
+                  <Sunset className="size-3.5 text-gold-500" />
+                  Sunset {formatLocalTime(obs.sunset_time_utc, displayTimeZone)} · Moonset{" "}
+                  {formatLocalTime(obs.moonset_time_utc, displayTimeZone)} · Conjunction{" "}
+                  {formatLocalDateTime(obs.conjunction_time_utc, displayTimeZone)}
+                </div>
+                <div className="pl-[22px] text-2xs">
+                  {timeZone
+                    ? `Local time for this location (${timeZone}).`
+                    : "Time zone lookup failed for this location, so these are UTC."}{" "}
+                  In UTC: sunset {utcTime(obs.sunset_time_utc)}, moonset {utcTime(obs.moonset_time_utc)},
+                  conjunction {utcDateTime(obs.conjunction_time_utc)}.
+                </div>
               </div>
             </div>
           </Card>
