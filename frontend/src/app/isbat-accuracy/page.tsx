@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileWarning, History, Search } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -14,6 +14,7 @@ import { ISBAT_RECORDS } from "@/lib/falak/isbat";
 import { ApiError, fetchIsbatAccuracy, HilalMethod, IsbatAccuracyResult, IsbatComparisonRecord } from "@/lib/api";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 import { ROUTES } from "@/lib/routes";
+import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 const METHODS: { key: HilalMethod; label: string }[] = [
   { key: "wujudul_hilal", label: "Wujudul Hilal" },
@@ -53,12 +54,20 @@ export default function IsbatAccuracyPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function load(e?: React.FormEvent) {
+  useEffect(() => {
+    const q = readQueryParams().get("hijri_year") ?? "";
+    setHijriYear(q);
+    load(undefined, q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function load(e?: React.FormEvent, y: string = hijriYear) {
     e?.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const r = await fetchIsbatAccuracy(hijriYear ? { hijri_year: Number(hijriYear) } : {});
+      const r = await fetchIsbatAccuracy(y ? { hijri_year: Number(y) } : {});
+      writeQueryParams({ hijri_year: y || undefined });
       setResult(r);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");

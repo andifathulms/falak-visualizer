@@ -18,6 +18,7 @@ import { INDONESIAN_CITIES } from "@/lib/locations";
 import indonesiaGeo from "@/lib/geo/indonesia.geo.json";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 import { ROUTES } from "@/lib/routes";
+import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 const LAT_RANGE: [number, number] = [-11, 6];
 const LON_RANGE: [number, number] = [95, 141];
@@ -119,7 +120,20 @@ export default function VisibilityMapPage() {
   const svgWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const params = readQueryParams();
+    const qDate = params.get("date");
+    const qMethod = params.get("method");
+    if (qDate) {
+      const m = qMethod && METHOD_OPTIONS.some((o) => o.value === qMethod) ? qMethod : method;
+      setDate(qDate);
+      setMethod(m);
+      // Deliberately does NOT auto-run: the grid is 3,255 point calculations
+      // across several workers, so a restored link sets the controls and lets
+      // the reader press the button rather than committing their device to it.
+      return;
+    }
     setDate(todayIso());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const xScale = useMemo(() => d3.scaleLinear().domain(LON_RANGE).range([0, WIDTH]), []);
@@ -144,15 +158,19 @@ export default function VisibilityMapPage() {
   const indonesiaPath = useMemo(() => geoPath(INDONESIA_FEATURE) ?? "", [geoPath]);
   const neighboursPath = useMemo(() => geoPath(NEIGHBOURS_FEATURE) ?? "", [geoPath]);
 
-  async function load(e?: React.FormEvent) {
+  // Parameters are passed rather than read from state: the restore effect calls
+  // this in the same tick it sets them, so state would still hold the defaults
+  // and a shared link would compute the wrong grid.
+  async function load(e?: React.FormEvent, d: string = date, m: string = method) {
     e?.preventDefault();
     setLoading(true);
     setError(null);
     setHover(null);
     setProgress({ completed: 0, total: GRID_POINT_COUNT });
     try {
-      const r = await fetchVisibilityGrid({ date, method }, setProgress);
+      const r = await fetchVisibilityGrid({ date: d, method: m }, setProgress);
       setResult(r);
+      writeQueryParams({ date: d, method: m });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to compute the visibility grid.");
     } finally {

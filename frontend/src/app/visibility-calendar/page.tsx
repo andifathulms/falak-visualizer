@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Search } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
@@ -17,6 +17,7 @@ import { isVisible } from "@/lib/verdict";
 import { verdictLabel } from "@/lib/verdictLabels";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 import { ROUTES } from "@/lib/routes";
+import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 const METHOD_OPTIONS = [
   { value: "mabims_2021", label: "MABIMS 2021" },
@@ -33,14 +34,35 @@ export default function VisibilityCalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const params = readQueryParams();
+    const qYear = params.get("hijri_year");
+    if (!qYear) return;
+    const y = Number(qYear);
+    const m = (params.get("method") as HilalMethod | null) ?? method;
+    const la = Number(params.get("lat") ?? lat);
+    const lo = Number(params.get("lon") ?? lon);
+    setHijriYear(y);
+    setMethod(m);
+    setLat(la);
+    setLon(lo);
+    compute(y, m, la, lo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    await compute(hijriYear, method, lat, lon);
+  }
+
+  async function compute(y: number, m: HilalMethod, la: number, lo: number) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const r = await fetchVisibilityCalendar({ hijri_year: hijriYear, method, lat, lon });
+      const r = await fetchVisibilityCalendar({ hijri_year: y, method: m, lat: la, lon: lo });
       setResult(r);
+      writeQueryParams({ hijri_year: y, method: m, lat: la, lon: lo });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
     } finally {
