@@ -123,18 +123,53 @@ export default function HilalVisibilityPage() {
     await compute(date, lat, lon);
   }
 
+  // Every number gets a definition and, crucially, a note of which criterion
+  // consumes it. Six identically-styled cards gave a reader no way to tell
+  // which three decided the verdict and which two decide nothing at all.
   const stats = obs
     ? [
-        { label: "Moon altitude", value: `${obs.moon_altitude_deg.toFixed(2)}°`, icon: Gauge },
-        { label: "Elongation", value: `${obs.elongation_deg.toFixed(2)}°`, icon: Ruler },
-        { label: "Moon age", value: `${obs.moon_age_hours.toFixed(1)} h`, icon: Clock3 },
-        { label: "Illumination", value: `${(obs.illumination_fraction * 100).toFixed(2)}%`, icon: Percent },
+        {
+          label: "Moon altitude",
+          value: `${obs.moon_altitude_deg.toFixed(2)}°`,
+          icon: Gauge,
+          what: "How far above the horizon the Moon sits at sunset.",
+          usedBy: "Used by MABIMS 2021 and Odeh",
+        },
+        {
+          label: "Elongation",
+          value: `${obs.elongation_deg.toFixed(2)}°`,
+          icon: Ruler,
+          what: "The angle between the Moon and the Sun as seen from Earth — how far the Moon has pulled away from the glare.",
+          usedBy: "Used by MABIMS 2021",
+        },
+        {
+          label: "Moon age",
+          value: `${obs.moon_age_hours.toFixed(1)} h`,
+          icon: Clock3,
+          what: "Time since conjunction.",
+          usedBy: "Decides nothing here — the pre-2021 MABIMS rule required 8 hours; the 2021 rule dropped it",
+        },
+        {
+          label: "Illumination",
+          value: `${(obs.illumination_fraction * 100).toFixed(2)}%`,
+          icon: Percent,
+          what: "Fraction of the Moon's disc lit from our viewpoint.",
+          usedBy: "Decides nothing — shown for a sense of scale",
+        },
         {
           label: "Lag time",
           value: obs.lag_time_minutes != null ? `${obs.lag_time_minutes.toFixed(1)} min` : "—",
           icon: Timer,
+          what: "How long the Moon stays up after the Sun sets. Negative means it sets first, so there is no window to look in.",
+          usedBy: "Used by Wujudul Hilal",
         },
-        { label: "Crescent width", value: `${obs.crescent_width_arcmin.toFixed(2)}'`, icon: Sparkles },
+        {
+          label: "Crescent width",
+          value: `${obs.crescent_width_arcmin.toFixed(2)}'`,
+          icon: Sparkles,
+          what: "Thickness of the lit arc, in arcminutes. A very thin crescent is faint no matter how high it is.",
+          usedBy: "Used by Odeh",
+        },
       ]
     : [];
 
@@ -232,7 +267,12 @@ export default function HilalVisibilityPage() {
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-3 text-md font-semibold">Observational numbers</h2>
+            <h2 className="mb-1 text-md font-semibold">Observational numbers</h2>
+            <p className="mb-3 text-sm text-ink-muted">
+              Everything measured at the moment of sunset on this evening. Four of these six feed a
+              criterion below; the other two are context, and are labelled as such — a number on
+              screen is not evidence that anything used it.
+            </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {stats.map((stat, i) => (
                 <motion.div
@@ -247,6 +287,8 @@ export default function HilalVisibilityPage() {
                     {stat.label}
                   </div>
                   <div className="mt-1 font-mono text-lg">{stat.value}</div>
+                  <p className="mt-1.5 text-2xs text-ink-muted">{stat.what}</p>
+                  <p className="mt-1 text-2xs font-medium text-accent">{stat.usedBy}</p>
                 </motion.div>
               ))}
             </div>
