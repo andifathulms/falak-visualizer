@@ -196,7 +196,7 @@ export function criterionMargin(
       margin,
       tolerance: ENGINE_TOLERANCE.altitudeDeg,
       unit: "deg",
-      binding: `v = ${v.toFixed(2)}, nearest boundary ${nearest.name} at ${nearest.at}`,
+      binding: `Odeh's v = ${v.toFixed(2)} (how far above the faintest crescent ever recorded at this width); nearest grade boundary "${nearest.name}" at ${nearest.at}`,
     };
   }
 

@@ -37,21 +37,31 @@ import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { resolveTimeZone } from "@/lib/timezone";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 
+// Each criterion states its rule AND why that rule - what question the
+// arithmetic is standing in for. Citing a threshold answers "who says so";
+// these answer "why this number", which is the part a reader needs in order to
+// judge a disagreement rather than just observe one.
 const CRITERIA = [
   {
     key: "wujudul_hilal" as const,
     name: "Wujudul Hilal",
-    rule: "Conjunction before sunset, moonset after sunset",
+    rule: "Conjunction before sunset, and moonset after sunset",
+    why:
+      "Asks whether the crescent EXISTS above the horizon, not whether anyone could see it. If the Moon sets before the Sun it is already gone during the only window it could be observed in, so lag time is the whole test.",
   },
   {
     key: "mabims_2021" as const,
     name: "MABIMS 2021",
-    rule: "Altitude ≥ 3°, elongation ≥ 6.4°",
+    rule: "Altitude ≥ 3° AND elongation ≥ 6.4°",
+    why:
+      "Two conditions because they ask different things. Altitude asks whether the Moon is high enough to still be up in a dark enough sky. Elongation asks whether it has pulled far enough from the Sun to be lit at all — below roughly 6.4°, the Danjon limit, the crescent is too thin to be seen however high it sits. Both must hold; a comfortable altitude cannot rescue a crescent that physically is not there.",
   },
   {
     key: "odeh" as const,
     name: "Odeh",
-    rule: "Continuous classification (ARCV vs. crescent width)",
+    rule: "Continuous v-value from arc of vision and crescent width",
+    why:
+      "Not a threshold but a distance. Odeh fitted a curve to 737 recorded observations of the faintest crescents actually seen at each width; v is how far above that curve this evening sits. Positive and large means comfortably seen before, near zero means at the edge of what anyone has ever reported, which is why it returns four grades rather than yes or no.",
   },
 ];
 
@@ -430,7 +440,8 @@ export default function HilalVisibilityPage() {
                         {undecided ? "Too close to call" : verdictLabel(verdict)}
                       </Badge>
                     </div>
-                    <p className="mt-1.5 text-sm text-ink-muted">{c.rule}</p>
+                    <p className="mt-1.5 font-mono text-2xs text-foreground">{c.rule}</p>
+                    <p className="mt-1.5 text-sm text-ink-muted">{c.why}</p>
                     {/* The margin is the point of this whole panel: a verdict
                         without it reads as settled when it may have been decided
                         by a hundredth of a degree. */}
