@@ -47,7 +47,7 @@ export default function RootLayout({
         */}
         <footer className="relative mx-auto max-w-6xl px-4 pb-10 pt-4 sm:px-6">
           <div className="flex flex-col items-center gap-5 border-t border-neutral-200/70 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8 dark:border-night-700/60">
-            <p className="max-w-md text-center text-xs text-neutral-400 dark:text-neutral-600 sm:text-left">
+            <p className="max-w-md text-center text-xs text-ink-muted sm:text-left">
               Falak is a hisab (calculation) tool, not a substitute for official sidang isbat
               determination.
             </p>

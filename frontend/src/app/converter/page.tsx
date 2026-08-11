@@ -138,8 +138,8 @@ export default function ConverterPage() {
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                   direction === value
-                    ? "bg-gold-500/15 text-gold-600 dark:text-gold-400"
-                    : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200",
+                    ? "bg-gold-500/15 text-accent"
+                    : "text-ink-muted hover:text-foreground",
                 )}
               >
                 {label}

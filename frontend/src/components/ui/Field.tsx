@@ -9,7 +9,7 @@ export function Field({
 }: { label: string; children: ReactNode } & LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label className={cn("block text-sm", className)} {...props}>
-      <span className="mb-1.5 block font-medium text-neutral-600 dark:text-neutral-400">{label}</span>
+      <span className="mb-1.5 block font-medium text-ink-muted">{label}</span>
       {children}
     </label>
   );

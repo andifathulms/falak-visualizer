@@ -44,8 +44,8 @@ function linkClasses(active: boolean) {
   return cn(
     "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors",
     active
-      ? "bg-gold-500/10 text-gold-600 dark:text-gold-400"
-      : "text-neutral-600 hover:bg-neutral-500/10 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100",
+      ? "bg-gold-500/10 text-accent"
+      : "text-ink-muted hover:bg-neutral-500/10 hover:text-foreground",
   );
 }
 
@@ -96,7 +96,7 @@ export function NavBar() {
                           className={cn(
                             "flex items-center gap-2 px-3 py-2",
                             hover && "bg-gold-500/10",
-                            active && "text-gold-600 dark:text-gold-400",
+                            active && "text-accent",
                           )}
                         >
                           <link.icon className="size-4 shrink-0" strokeWidth={2} />
@@ -129,7 +129,7 @@ export function NavBar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-500/10 md:hidden dark:text-neutral-300"
+          className="rounded-lg p-2 text-ink-muted hover:bg-neutral-500/10 md:hidden"
           aria-label="Toggle navigation"
         >
           {open ? <X className="size-5" /> : <MenuIcon className="size-5" />}
@@ -148,8 +148,8 @@ export function NavBar() {
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
                   active
-                    ? "bg-gold-500/10 text-gold-600 dark:text-gold-400"
-                    : "text-neutral-600 dark:text-neutral-400",
+                    ? "bg-gold-500/10 text-accent"
+                    : "text-ink-muted",
                 )}
               >
                 <link.icon className="size-4" strokeWidth={2} />
@@ -159,7 +159,7 @@ export function NavBar() {
           })}
 
           <div className="mt-1.5 border-t border-neutral-200/70 pt-1.5 dark:border-night-700/60">
-            <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+            <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-ink-muted">
               Analysis
             </p>
             {ANALYSIS_LINKS.map((link) => {
@@ -172,8 +172,8 @@ export function NavBar() {
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
                     active
-                      ? "bg-gold-500/10 text-gold-600 dark:text-gold-400"
-                      : "text-neutral-600 dark:text-neutral-400",
+                      ? "bg-gold-500/10 text-accent"
+                      : "text-ink-muted",
                   )}
                 >
                   <link.icon className="size-4" strokeWidth={2} />
@@ -190,7 +190,7 @@ export function NavBar() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-600 dark:text-neutral-400"
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-ink-muted"
               >
                 <FileCode2 className="size-4" strokeWidth={2} />
                 API Docs

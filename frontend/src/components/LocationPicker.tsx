@@ -73,9 +73,9 @@ export function LocationPicker({
                   <Listbox.Button
                     className={cn(inputClasses, "relative flex w-full items-center gap-2 pl-9 text-left")}
                   >
-                    <MapPin className="pointer-events-none absolute left-3 size-4 text-neutral-400" />
+                    <MapPin className="pointer-events-none absolute left-3 size-4 text-ink-muted" />
                     <span className="block truncate">{buttonLabel}</span>
-                    <ChevronsUpDown className="ml-auto size-4 shrink-0 text-neutral-400" />
+                    <ChevronsUpDown className="ml-auto size-4 shrink-0 text-ink-muted" />
                   </Listbox.Button>
                   <Transition
                     as={Fragment}
@@ -92,7 +92,7 @@ export function LocationPicker({
                             cn(
                               "flex cursor-pointer items-center gap-2 px-3 py-2",
                               active && "bg-gold-500/10",
-                              selected && "text-gold-600 dark:text-gold-400",
+                              selected && "text-accent",
                             )
                           }
                         >
@@ -111,7 +111,7 @@ export function LocationPicker({
                           cn(
                             "flex cursor-pointer items-center gap-2 px-3 py-2",
                             active && "bg-gold-500/10",
-                            selected && "text-gold-600 dark:text-gold-400",
+                            selected && "text-accent",
                           )
                         }
                       >
@@ -134,7 +134,7 @@ export function LocationPicker({
             onClick={useMyLocation}
             disabled={locating}
             title="Use my current location"
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 px-3 text-sm font-medium text-neutral-600 transition-colors hover:border-gold-500/50 hover:text-gold-600 disabled:opacity-60 dark:border-night-600/50 dark:text-neutral-400 dark:hover:text-gold-400"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 px-3 text-sm font-medium text-ink-muted transition-colors hover:border-gold-500/50 hover:text-accent disabled:opacity-60 dark:border-night-600/50"
           >
             {locating ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4" />}
             <span className="hidden sm:inline">My location</span>
@@ -147,7 +147,7 @@ export function LocationPicker({
           <p
             className={cn(
               "absolute left-0 top-full mt-1.5 text-xs",
-              geoError ? "text-red-500 dark:text-red-400" : "text-neutral-500 dark:text-neutral-400",
+              geoError ? "text-verdict-negative" : "text-ink-muted",
             )}
           >
             {geoError ?? `Using your device location: ${lat.toFixed(4)}, ${lon.toFixed(4)}`}

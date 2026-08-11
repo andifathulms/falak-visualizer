@@ -146,8 +146,8 @@ export default function PrayerTimesPage() {
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors",
               view === v
-                ? "bg-gold-500/15 text-gold-600 dark:text-gold-400"
-                : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200",
+                ? "bg-gold-500/15 text-accent"
+                : "text-ink-muted hover:text-foreground",
             )}
           >
             {v}
@@ -174,7 +174,7 @@ export default function PrayerTimesPage() {
 
           {result && (
             <div className="print-area space-y-3">
-              <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+              <div className="flex items-center gap-1.5 text-xs text-ink-muted">
                 <Clock className="size-3.5" />
                 Local time for this location: {displayTimeZone}
                 {!timeZone && " (time zone lookup failed, showing UTC instead)"}
@@ -188,10 +188,10 @@ export default function PrayerTimesPage() {
                     transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
                   >
                     <Card className="flex flex-col items-center gap-2 p-4 text-center transition-transform hover:-translate-y-0.5">
-                      <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-gold-600 dark:text-gold-400">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-accent">
                         <p.icon className="size-5" strokeWidth={1.8} />
                       </div>
-                      <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{p.label}</div>
+                      <div className="text-xs font-medium text-ink-muted">{p.label}</div>
                       <div className="font-mono text-lg font-semibold">
                         {formatTime(result[p.key], displayTimeZone)}
                       </div>
@@ -241,7 +241,7 @@ export default function PrayerTimesPage() {
           {monthResult && (
             <Card className="print-area p-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="flex items-center gap-1.5 text-xs text-ink-muted">
                   <Clock className="size-3.5" />
                   Local time for this location: {displayMonthTimeZone}
                 </div>

@@ -107,13 +107,13 @@ export default function VisibilityCalendarPage() {
               >
                 <div className="text-sm font-medium">{month.hijri_month_name}</div>
                 {month.error ? (
-                  <p className="mt-1 text-xs text-neutral-400">unresolved</p>
+                  <p className="mt-1 text-xs text-ink-muted">unresolved</p>
                 ) : (
                   <>
-                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{month.date}</p>
+                    <p className="mt-1 text-xs text-ink-muted">{month.date}</p>
                     <p
                       className={`mt-2 text-xs font-medium ${
-                        visible ? "text-moon-600 dark:text-moon-400" : "text-neutral-500 dark:text-neutral-400"
+                        visible ? "text-verdict-positive" : "text-ink-muted"
                       }`}
                     >
                       {String(month.verdict)}

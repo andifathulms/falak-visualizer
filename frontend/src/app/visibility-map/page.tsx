@@ -430,18 +430,18 @@ export default function VisibilityMapPage() {
                   <div className="font-semibold">
                     {isVisiblePoint(hover.point) ? "Likely visible here" : "Not visible here"}
                   </div>
-                  <div className="mt-1 text-neutral-500 dark:text-neutral-400">
+                  <div className="mt-1 text-ink-muted">
                     Moon altitude {hover.point.moon_altitude_deg.toFixed(1)}°, elongation{" "}
                     {hover.point.elongation_deg.toFixed(1)}°
                   </div>
-                  <div className="mt-0.5 text-neutral-400 dark:text-neutral-500">
+                  <div className="mt-0.5 text-ink-muted">
                     {hover.point.lat.toFixed(2)}, {hover.point.lon.toFixed(2)}
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-ink-muted">
               {/* Swatches mirror the marks' shapes, not just their colours, so
                   the legend reads the same way the map does. */}
               <div className="flex flex-wrap items-center gap-4">

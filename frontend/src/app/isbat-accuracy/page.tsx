@@ -23,7 +23,7 @@ function MatchCell({ record, method }: { record: IsbatComparisonRecord; method: 
   const match = record.matches[method];
   if (predicted === undefined) {
     return (
-      <span className="text-neutral-400" title={record.errors[method]}>
+      <span className="text-ink-muted" title={record.errors[method]}>
         unresolved
       </span>
     );
@@ -71,7 +71,7 @@ export default function IsbatAccuracyPage() {
     {
       key: "source",
       header: "Source",
-      className: "max-w-xs whitespace-normal text-xs text-neutral-500 dark:text-neutral-400",
+      className: "max-w-xs whitespace-normal text-xs text-ink-muted",
       render: (r) => (
         <div className="flex flex-col gap-1">
           <span>{r.source_note}</span>
@@ -119,7 +119,7 @@ export default function IsbatAccuracyPage() {
       {error && <ErrorBanner message={error} />}
 
       {result && result.records.length === 0 && (
-        <Card className="p-5 text-center text-sm text-neutral-500 dark:text-neutral-400">
+        <Card className="p-5 text-center text-sm text-ink-muted">
           No isbat records seeded yet.
         </Card>
       )}

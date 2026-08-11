@@ -60,13 +60,13 @@ export function MakerSignature() {
 
   return (
     <div className="flex flex-col items-center gap-2 sm:items-end">
-      <p className="text-xs text-neutral-400 dark:text-neutral-600">
+      <p className="text-xs text-ink-muted">
         Designed &amp; built by{" "}
         <a
           href={MAKER.portfolio}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-neutral-600 underline decoration-neutral-300 underline-offset-2 transition-colors hover:text-gold-600 hover:decoration-gold-500 dark:text-neutral-300 dark:decoration-night-600 dark:hover:text-gold-400"
+          className="text-foreground underline decoration-neutral-300 underline-offset-2 transition-colors hover:text-accent hover:decoration-gold-500 dark:decoration-night-600"
         >
           {MAKER.name}
         </a>{" "}
@@ -82,7 +82,7 @@ export function MakerSignature() {
               rel="noopener noreferrer"
               aria-label={link.label}
               title={link.label}
-              className="flex rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-500/10 hover:text-neutral-700 dark:text-neutral-600 dark:hover:text-neutral-200"
+              className="flex rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-neutral-500/10 hover:text-foreground"
             >
               {link.icon}
             </a>

@@ -19,12 +19,12 @@ export function PageHeader({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="flex items-start gap-3"
     >
-      <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-gold-600 dark:text-gold-400">
+      <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400/20 to-moon-500/20 text-accent">
         <Icon className="size-5" strokeWidth={1.8} />
       </div>
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
+        <p className="mt-1 text-sm text-ink-muted">{description}</p>
       </div>
     </motion.div>
   );

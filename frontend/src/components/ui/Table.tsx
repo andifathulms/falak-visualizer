@@ -25,7 +25,7 @@ export function Table<T>({
               <th
                 key={col.key}
                 className={cn(
-                  "whitespace-nowrap px-3 py-2 font-medium text-neutral-500 dark:text-neutral-400",
+                  "whitespace-nowrap px-3 py-2 font-medium text-ink-muted",
                   col.className,
                 )}
               >

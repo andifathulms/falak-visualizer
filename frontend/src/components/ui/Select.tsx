@@ -30,7 +30,7 @@ export function Select({
         <div className="relative">
           <Listbox.Button className={cn(inputClasses, "relative flex w-full items-center text-left")}>
             <span className="block truncate">{selected?.label ?? value}</span>
-            <ChevronsUpDown className="ml-auto size-4 shrink-0 text-neutral-400" />
+            <ChevronsUpDown className="ml-auto size-4 shrink-0 text-ink-muted" />
           </Listbox.Button>
           <Transition
             as={Fragment}
@@ -47,7 +47,7 @@ export function Select({
                     cn(
                       "flex cursor-pointer items-center gap-2 px-3 py-2",
                       active && "bg-gold-500/10",
-                      selected && "text-gold-600 dark:text-gold-400",
+                      selected && "text-accent",
                     )
                   }
                 >

@@ -3,7 +3,7 @@ import { TriangleAlert } from "lucide-react";
 export function HisabDisclaimer() {
   return (
     <div className="flex gap-3 rounded-xl border border-gold-500/30 bg-gold-500/[0.07] px-4 py-3.5 text-sm text-neutral-700 dark:text-neutral-300">
-      <TriangleAlert className="mt-0.5 size-4 shrink-0 text-gold-600 dark:text-gold-400" strokeWidth={2} />
+      <TriangleAlert className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2} />
       <p>
         <strong className="font-semibold text-neutral-900 dark:text-neutral-100">
           Hisab only, not an official determination.

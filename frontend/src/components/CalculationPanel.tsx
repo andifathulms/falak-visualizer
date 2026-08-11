@@ -19,7 +19,7 @@ export function CalculationPanel({ rows }: { rows: Array<[string, string | numbe
           {open ? "Hide calculation" : "Show calculation"}
         </span>
         <ChevronDown
-          className="size-4 text-neutral-400 transition-transform duration-300"
+          className="size-4 text-ink-muted transition-transform duration-300"
           style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         />
       </button>
@@ -34,7 +34,7 @@ export function CalculationPanel({ rows }: { rows: Array<[string, string | numbe
             <dl className="grid grid-cols-1 gap-x-6 gap-y-2 border-t border-neutral-200 px-4 py-3 text-sm sm:grid-cols-2 dark:border-night-700/60">
               {rows.map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-4 sm:justify-start">
-                  <dt className="text-neutral-500 dark:text-neutral-400">{label}</dt>
+                  <dt className="text-ink-muted">{label}</dt>
                   <dd className="font-mono text-neutral-900 dark:text-neutral-100">{value}</dd>
                 </div>
               ))}

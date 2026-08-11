@@ -150,16 +150,16 @@ export default function HilalVisibilityPage() {
                 className={
                   isVisible(obs.criteria.mabims_2021)
                     ? "text-2xl font-semibold bg-gradient-to-r from-gold-400 to-moon-500 bg-clip-text text-transparent"
-                    : "text-2xl font-semibold text-neutral-500 dark:text-neutral-400"
+                    : "text-2xl font-semibold text-ink-muted"
                 }
               >
                 {isVisible(obs.criteria.mabims_2021) ? "Hilal likely visible" : "Hilal not established"}
               </div>
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="mt-1 text-sm text-ink-muted">
                 {(obs.illumination_fraction * 100).toFixed(2)}% illuminated · per MABIMS 2021 — see comparison
                 below, criteria can disagree
               </p>
-              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-500 sm:justify-start dark:text-neutral-400">
+              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-ink-muted sm:justify-start dark:text-ink-muted">
                 <Sunset className="size-3.5 text-gold-500" />
                 Sunset {new Date(obs.sunset_time_utc).toISOString().slice(11, 16)} UTC · Moonset{" "}
                 {obs.moonset_time_utc ? new Date(obs.moonset_time_utc).toISOString().slice(11, 16) : "—"} UTC ·
@@ -179,7 +179,7 @@ export default function HilalVisibilityPage() {
                   transition={{ duration: 0.25, delay: i * 0.04 }}
                   className="rounded-xl border border-neutral-200 p-3 dark:border-night-700/60"
                 >
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                  <div className="flex items-center gap-1.5 text-xs text-ink-muted">
                     <stat.icon className="size-3.5" strokeWidth={1.8} />
                     {stat.label}
                   </div>
@@ -191,7 +191,7 @@ export default function HilalVisibilityPage() {
 
           <Card className="p-5">
             <h2 className="mb-1 font-medium">Around sunset</h2>
-            <p className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="mb-3 text-xs text-ink-muted">
               Moon altitude and elongation for the hour spanning sunset — not just the sunset-instant numbers above.
             </p>
             <div className="h-64 w-full">
@@ -255,12 +255,12 @@ export default function HilalVisibilityPage() {
                       <span className="text-sm font-medium">{c.name}</span>
                       <Badge tone={isVisible(verdict) ? "positive" : "neutral"}>{String(verdict)}</Badge>
                     </div>
-                    <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">{c.rule}</p>
+                    <p className="mt-1.5 text-xs text-ink-muted">{c.rule}</p>
                   </motion.div>
                 );
               })}
             </div>
-            <p className="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="mt-4 text-xs text-ink-muted">
               These criteria can and do disagree — that is expected, not a bug. This tool does not advocate for one
               method.
             </p>
