@@ -2,7 +2,21 @@ import { ImageResponse } from "next/og";
 import { SITE } from "@/lib/routes";
 
 /**
- * The share card, generated at build time.
+ * SOURCE FOR public/og-card.png. Not part of the build.
+ *
+ * To regenerate: copy this file to src/app/opengraph-image.tsx, run the static
+ * export, copy out/opengraph-image to public/og-card.png, then remove it from
+ * src/app again.
+ *
+ * Why it is not left in src/app as a route: Next emits the file-convention
+ * image with no extension, and GitHub Pages serves an extensionless file as
+ * application/octet-stream - verified against the live host. Most link
+ * unfurlers reject a non-image content type, so the preview failed silently,
+ * which is the worst way for this to fail. A committed .png in public/ gets the
+ * right content type and matches how this repo already handles its icons:
+ * generate once, commit the artefact.
+ *
+ * The share card.
  *
  * The previous og:image was the 512x512 PWA icon, which forced a small square
  * "summary" card. A 1200x630 image is what unlocks the large-format preview

@@ -46,15 +46,21 @@ export const metadata: Metadata = {
     description: HOME_DESCRIPTION,
     url: absoluteUrl("/"),
     locale: "en",
-    // No images here: app/opengraph-image.tsx supplies the 1200x630 card and
-    // Next attaches it to every route that does not override it. Naming one
-    // explicitly would shadow the generated card with the small square icon.
+    images: [
+      {
+        url: absoluteUrl("/og-card.png"),
+        width: 1200,
+        height: 630,
+        alt: `${SITE.name} share card`,
+      },
+    ],
   },
   twitter: {
     // large card, now that there is a 1200x630 image behind it
     card: "summary_large_image",
     title: `${SITE.name} — ${SITE.tagline}`,
     description: HOME_DESCRIPTION,
+    images: [absoluteUrl("/og-card.png")],
   },
   // Stated explicitly because Next emits the auto-generated manifest link
   // without the basePath: on a project Pages site that resolves to the origin

@@ -14,15 +14,17 @@ import { ROUTES, SITE, absoluteUrl, metaDescription, type RouteKey } from "@/lib
  * permalinked calculations - and every one of those links previously pasted
  * into a chat as a bare URL with no title, description or image.
  *
- * The share image comes from app/opengraph-image.tsx, which next/og renders to
- * a 1200x630 PNG during the static export and Next attaches to every route.
- * Nothing here names an image, because naming one would shadow it.
+ * The share image is public/og-card.png, a 1200x630 card generated once by
+ * scripts/og-card.source.tsx and committed. It is named explicitly because a
+ * file-convention opengraph-image emits without a .png extension, and GitHub
+ * Pages then serves it as application/octet-stream, which unfurlers reject.
  */
 export function routeMetadata(key: RouteKey): Metadata {
   const route = ROUTES[key];
   const url = absoluteUrl(route.path);
   const description = metaDescription(route.description);
   const title = `${route.title} — ${SITE.name}`;
+  const image = absoluteUrl("/og-card.png");
   return {
     title,
     description,
@@ -34,13 +36,13 @@ export function routeMetadata(key: RouteKey): Metadata {
       description,
       url,
       locale: "en",
-      // Image intentionally omitted - app/opengraph-image.tsx provides the
-      // 1200x630 card for every route. Setting one here would replace it.
+      images: [{ url: image, width: 1200, height: 630, alt: `${SITE.name} share card` }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [image],
     },
   };
 }
