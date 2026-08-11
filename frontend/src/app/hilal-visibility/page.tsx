@@ -154,7 +154,7 @@ export default function HilalVisibilityPage() {
               <div
                 className={
                   isVisible(obs.criteria.mabims_2021)
-                    ? "text-2xl font-semibold bg-gradient-to-r from-gold-400 to-moon-500 bg-clip-text text-transparent"
+                    ? "text-2xl font-semibold text-gradient-accent"
                     : "text-2xl font-semibold text-ink-muted"
                 }
               >

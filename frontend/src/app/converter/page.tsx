@@ -222,14 +222,14 @@ export default function ConverterPage() {
               {result.direction === "gregorian_to_hijri" ? (
                 <p className="text-lg">
                   {result.input_date} corresponds to{" "}
-                  <strong className="bg-gradient-to-r from-gold-500 to-moon-500 bg-clip-text text-transparent">
+                  <strong className="text-gradient-accent">
                     {result.hijri_day} {result.hijri_month_name} {result.hijri_year}H
                   </strong>
                 </p>
               ) : (
                 <p className="text-lg">
                   {result.hijri_day} {HIJRI_MONTHS[result.hijri_month - 1]} {result.hijri_year}H corresponds to{" "}
-                  <strong className="bg-gradient-to-r from-gold-500 to-moon-500 bg-clip-text text-transparent">
+                  <strong className="text-gradient-accent">
                     {result.gregorian_date}
                   </strong>
                 </p>

@@ -40,6 +40,13 @@
   --accent-solid: #d9a83e;
   --accent-on-solid: #05070d; /*  9.2:1 on accent-solid */
 
+  /* Endpoints for .text-gradient-accent. Only ever applied in dark mode, where
+     both clear AA against the card surface (10.7:1 and 7.3:1); against a white
+     card the same two measure 1.7:1 and 2.5:1, which is why light mode gets a
+     solid colour instead. */
+  --accent-gradient-from: #e8c164;
+  --accent-gradient-to: #4fb3a6;
+
   /* --- Verdict tones ------------------------------------------------------ */
   --verdict-positive: #1f7a6e; /*  4.8:1 */
   --verdict-negative: #c92a2a; /*  5.1:1 */
@@ -128,6 +135,31 @@ h3 {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Emphasis for the app's headline outputs - the converted date, the hilal
+     verdict, the hero.
+     Gradient-clipped text cannot be given a contrast ratio the way a colour
+     can, and the gold-to-teal pair these used measures 1.7:1 to 2.5:1 against a
+     white card. That is the most emphasised text in the app rendered as its
+     least readable. The gradient survives in dark mode, where the same
+     endpoints clear 7:1, and light mode falls back to the solid accent token
+     that was measured for exactly this job. */
+  .text-gradient-accent {
+    color: var(--accent-text);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .text-gradient-accent {
+      color: transparent;
+      background-image: linear-gradient(
+        to right,
+        var(--accent-gradient-from),
+        var(--accent-gradient-to)
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
   }
 
   .glass-card {

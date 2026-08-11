@@ -85,7 +85,7 @@ export default function HomePage() {
             </div>
             <h1 className="max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
               Hijri dates and prayer times, with the{" "}
-              <span className="bg-gradient-to-r from-gold-400 to-moon-500 bg-clip-text text-transparent">
+              <span className="text-gradient-accent">
                 astronomy shown
               </span>
               .
