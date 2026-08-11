@@ -116,7 +116,8 @@ export default function MethodDivergencePage() {
 
       {result && (
         <Card className="p-5">
-          <Table columns={columns} rows={result.months} rowKey={(m) => String(m.hijri_month)} />
+          <Table columns={columns} rows={result.months}
+            caption={`Hijri year ${result.hijri_year}: the Gregorian start date each criterion resolves for every month, and whether they agree.`} rowKey={(m) => String(m.hijri_month)} />
         </Card>
       )}
     </div>

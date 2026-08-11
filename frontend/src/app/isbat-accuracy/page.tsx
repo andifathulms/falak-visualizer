@@ -163,6 +163,7 @@ export default function IsbatAccuracyPage() {
           <Table
             columns={columns}
             rows={result.records}
+            caption="Announced sidang isbat dates compared against what each hisab criterion predicts, evaluated for Jakarta."
             rowKey={(r) => `${r.hijri_year}-${r.hijri_month}`}
           />
         </Card>

@@ -279,7 +279,8 @@ export default function PrayerTimesPage() {
                   <PrintButton />
                 </div>
               </div>
-              <Table columns={monthColumns} rows={monthResult.days} rowKey={(d) => d.date} />
+              <Table columns={monthColumns} rows={monthResult.days}
+            caption={`Daily prayer times for month ${monthResult.month} of ${monthResult.year}, ${convention} convention, in local time.`} rowKey={(d) => d.date} />
               <ConventionNote convention={convention} />
             </Card>
           )}

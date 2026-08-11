@@ -162,11 +162,21 @@ export default function HijriArchivePage() {
 
           <Card className="overflow-x-auto p-5">
             <table className="w-full min-w-[36rem] text-left text-sm">
+              <caption className="sr-only">
+                Hijri year {result.hijri_year}: the Gregorian start date of each month under each of
+                the three criteria, with its offset in days from MABIMS 2021.
+              </caption>
               <thead>
                 <tr className="border-b border-neutral-200 dark:border-night-700/60">
-                  <th className="whitespace-nowrap px-3 py-2 font-medium text-ink-muted">Month</th>
+                  <th scope="col" className="whitespace-nowrap px-3 py-2 font-medium text-ink-muted">
+                    Month
+                  </th>
                   {METHODS.map((m) => (
-                    <th key={m.key} className="whitespace-nowrap px-3 py-2 font-medium text-ink-muted">
+                    <th
+                      key={m.key}
+                      scope="col"
+                      className="whitespace-nowrap px-3 py-2 font-medium text-ink-muted"
+                    >
                       {m.label}
                     </th>
                   ))}
@@ -186,10 +196,10 @@ export default function HijriArchivePage() {
                       !row.unanimous && "bg-gold-500/[0.06]",
                     )}
                   >
-                    <td className="whitespace-nowrap px-3 py-2">
+                    <th scope="row" className="whitespace-nowrap px-3 py-2 font-normal">
                       <span className="font-medium">{row.month_name}</span>{" "}
                       <span className="text-2xs text-ink-muted">{row.month}</span>
-                    </td>
+                    </th>
                     {METHODS.map((m) => {
                       const start = row.starts[m.key];
                       const offset = row.offsets[m.key];
