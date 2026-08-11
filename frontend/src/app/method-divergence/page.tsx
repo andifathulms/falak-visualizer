@@ -20,6 +20,7 @@ import {
 } from "@/lib/api";
 import { DEFAULT_CITY } from "@/lib/locations";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { ROUTES } from "@/lib/routes";
 
 const METHODS: { key: HilalMethod; label: string }[] = [
   { key: "wujudul_hilal", label: "Wujudul Hilal" },
@@ -90,8 +91,8 @@ export default function MethodDivergencePage() {
       <ResultAnnouncer message={result ? `Comparison ready for ${result.hijri_year} Hijri, ${result.months.length} months.` : null} />
       <PageHeader
         icon={GitCompareArrows}
-        title="Method Divergence"
-        description="Which months of a Hijri year do the three criteria disagree on? A month-by-month agree/differ readout with each criterion's resolved date. For how far apart they land, and what that does to the rest of the year, use the Hijri Year Archive."
+        title={ROUTES["method-divergence"].title}
+        description={ROUTES["method-divergence"].description}
       />
 
       <HisabDisclaimer />

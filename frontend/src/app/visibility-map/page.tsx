@@ -17,6 +17,7 @@ import { todayIso } from "@/lib/date";
 import { INDONESIAN_CITIES } from "@/lib/locations";
 import indonesiaGeo from "@/lib/geo/indonesia.geo.json";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { ROUTES } from "@/lib/routes";
 
 const LAT_RANGE: [number, number] = [-11, 6];
 const LON_RANGE: [number, number] = [95, 141];
@@ -204,8 +205,8 @@ export default function VisibilityMapPage() {
       <ResultAnnouncer message={result ? `Map ready. ${summary ?? ""}` : null} />
       <PageHeader
         icon={Map}
-        title="Visibility Map (Indonesia)"
-        description="Calculated hilal visibility across a 0.5° lat/lon grid — 3,255 locations, computed in your browser when you press Load grid."
+        title={ROUTES["visibility-map"].title}
+        description={ROUTES["visibility-map"].description}
       />
 
       <HisabDisclaimer />

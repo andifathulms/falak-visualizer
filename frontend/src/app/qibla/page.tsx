@@ -14,6 +14,7 @@ import { DEFAULT_CITY } from "@/lib/locations";
 import { resolveTimeZone } from "@/lib/timezone";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { ROUTES } from "@/lib/routes";
 
 function CompassDial({ bearingDeg }: { bearingDeg: number }) {
   const size = 240;
@@ -169,8 +170,8 @@ export default function QiblaPage() {
       <ResultAnnouncer message={result ? `Qibla bearing ${result.bearing_deg.toFixed(1)} degrees, ${Math.round(result.distance_km)} kilometres to the Kaaba.` : null} />
       <PageHeader
         icon={CompassIcon}
-        title="Qibla Direction"
-        description="The compass bearing to face from any coordinate, and how far Mecca is. From Indonesia the answer is roughly west-north-west rather than due west — the shortest path over a sphere is a great circle, which curves north on a flat map, so following a due-west line would miss Mecca by hundreds of kilometres."
+        title={ROUTES["qibla"].title}
+        description={ROUTES["qibla"].description}
       />
 
       <Card className="p-5">

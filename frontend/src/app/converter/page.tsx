@@ -19,6 +19,7 @@ import { ApiError, convertDate, ConvertResult } from "@/lib/api";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 import { HowMonthsWork } from "@/components/HowMonthsWork";
+import { ROUTES } from "@/lib/routes";
 
 const HIJRI_MONTHS = [
   "Muharram",
@@ -127,8 +128,8 @@ export default function ConverterPage() {
       <ResultAnnouncer message={result ? (result.direction === "gregorian_to_hijri" ? `Converted. ${result.input_date} is ${result.hijri_day} ${result.hijri_month_name} ${result.hijri_year} Hijri.` : `Converted. ${result.hijri_day} ${HIJRI_MONTHS[result.hijri_month - 1]} ${result.hijri_year} Hijri is ${result.gregorian_date}.`) : null} />
       <PageHeader
         icon={Calendar}
-        title="Hijri ↔ Gregorian Converter"
-        description="MABIMS-2021 method (Indonesia's current standard) — computed from real ijtimak + visibility, not a tabular lookup."
+        title={ROUTES["converter"].title}
+        description={ROUTES["converter"].description}
       />
 
       <HisabDisclaimer />

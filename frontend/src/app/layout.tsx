@@ -3,7 +3,17 @@ import localFont from "next/font/local";
 import { MakerSignature } from "@/components/MakerSignature";
 import { MotionProvider } from "@/components/MotionProvider";
 import { NavBar } from "@/components/NavBar";
+import { SITE, absoluteUrl } from "@/lib/routes";
 import "./globals.css";
+
+/**
+ * The home page's description, kept here beside the metadata that uses it
+ * because the landing page has no PageHeader to source it from - its equivalent
+ * copy is the hero lead, which is marked up as part of the hero rather than as
+ * a reusable string.
+ */
+const HOME_DESCRIPTION =
+  "Work out when each Hijri month begins, whether the hilal is visible from where you are, when to pray, and which way the Kaaba lies — with the altitude, elongation and timings behind every answer.";
 
 // One family, one file. Geist Mono used to be loaded here too and was consumed
 // by nothing: tailwind.config declares only `fontFamily.display`, so every
@@ -16,9 +26,37 @@ const geistSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Falak — Hijri Calendar & Islamic Astronomy Visualizer",
-  description:
-    "Deterministic, auditable Hijri calendar conversion, hilal visibility, prayer times, and qibla direction.",
+  // metadataBase lets the per-route canonical and Open Graph URLs resolve
+  // absolutely; og:url and og:image reject relative paths.
+  metadataBase: new URL(`${SITE.origin}${SITE.basePath}/`),
+  title: {
+    // Routes supply their own full title; this is the fallback and the home page.
+    default: `${SITE.name} — ${SITE.tagline}`,
+    template: `%s`,
+  },
+  description: HOME_DESCRIPTION,
+  alternates: { canonical: absoluteUrl("/") },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: HOME_DESCRIPTION,
+    url: absoluteUrl("/"),
+    images: [
+      {
+        url: absoluteUrl("/icons/falak-512.png"),
+        width: 512,
+        height: 512,
+        alt: `${SITE.name} icon`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: HOME_DESCRIPTION,
+    images: [absoluteUrl("/icons/falak-512.png")],
+  },
   // Stated explicitly because Next emits the auto-generated manifest link
   // without the basePath: on a project Pages site that resolves to the origin
   // root and 404s, so Chrome never reads the manifest and never offers to

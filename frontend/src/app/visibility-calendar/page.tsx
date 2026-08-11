@@ -16,6 +16,7 @@ import { DEFAULT_CITY } from "@/lib/locations";
 import { isVisible } from "@/lib/verdict";
 import { verdictLabel } from "@/lib/verdictLabels";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { ROUTES } from "@/lib/routes";
 
 const METHOD_OPTIONS = [
   { value: "mabims_2021", label: "MABIMS 2021" },
@@ -52,8 +53,8 @@ export default function VisibilityCalendarPage() {
       <ResultAnnouncer message={result ? `Calendar ready for ${result.hijri_year} Hijri, ${result.months.length} months.` : null} />
       <PageHeader
         icon={CalendarDays}
-        title="Visibility Calendar"
-        description="A 12-month view of hilal-visibility conditions for a Hijri year, under a single method at a time - see the whole year instead of one date at a time."
+        title={ROUTES["visibility-calendar"].title}
+        description={ROUTES["visibility-calendar"].description}
       />
 
       <HisabDisclaimer />

@@ -38,6 +38,7 @@ import { resolveTimeZone } from "@/lib/timezone";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
 import { HowMonthsWork } from "@/components/HowMonthsWork";
 import { CriterionHistory } from "@/components/CriterionHistory";
+import { ROUTES } from "@/lib/routes";
 
 // Each criterion states its rule AND why that rule - what question the
 // arithmetic is standing in for. Citing a threshold answers "who says so";
@@ -214,8 +215,8 @@ export default function HilalVisibilityPage() {
       <ResultAnnouncer message={obs ? `Result ready. ${headlineUndecided ? "Too close to call under MABIMS 2021" : headlineVisible ? "Hilal likely visible" : "Hilal not established"}. Moon altitude ${obs.moon_altitude_deg.toFixed(2)} degrees, elongation ${obs.elongation_deg.toFixed(2)} degrees.` : null} />
       <PageHeader
         icon={MoonStar}
-        title="Hilal Visibility"
-        description="Numeric conditions at sunset on the given evening (intended for the 29th of a Hijri month), classified against three criteria side by side."
+        title={ROUTES["hilal-visibility"].title}
+        description={ROUTES["hilal-visibility"].description}
       />
 
       <HisabDisclaimer />

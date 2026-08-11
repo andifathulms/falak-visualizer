@@ -17,6 +17,7 @@ import { DEFAULT_CITY } from "@/lib/locations";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { cn } from "@/lib/cn";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { ROUTES } from "@/lib/routes";
 
 // Column order is fixed with MABIMS in the middle because every offset is
 // measured against it: putting the baseline between the two comparisons makes
@@ -84,8 +85,8 @@ export default function HijriArchivePage() {
       <ResultAnnouncer message={result ? `Year ${result.hijri_year} Hijri ready. ${result.unanimous_months} of 12 months agreed across all three criteria; ${result.diverging_months} decided by the criterion.` : null} />
       <PageHeader
         icon={CalendarRange}
-        title="Hijri Year Archive"
-        description="How far apart do the three criteria land across a Hijri year, and how much of the calendar does that move? Shows each month's start under every criterion with its offset in days from MABIMS 2021, plus a count of how many months the criterion actually decided. For a plain agree/differ readout, use Method Divergence."
+        title={ROUTES["hijri-archive"].title}
+        description={ROUTES["hijri-archive"].description}
       />
 
       <Card className="p-5 no-print">

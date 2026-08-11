@@ -27,6 +27,7 @@ import { todayIso } from "@/lib/date";
 import { resolveTimeZone } from "@/lib/timezone";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { ROUTES } from "@/lib/routes";
 
 function formatTime(iso: string | null, timeZone: string) {
   if (!iso) return "—";
@@ -150,8 +151,8 @@ export default function PrayerTimesPage() {
       <ResultAnnouncer message={result ? `Prayer times ready for ${result.date}, ${convention} convention.` : null} />
       <PageHeader
         icon={Sun}
-        title="Prayer Times"
-        description="Computed from solar position for any coordinate and date, shown in the local time zone for that location. Dhuhr, asr and maghrib come from the sun; fajr and isha depend on a twilight angle that organisations set differently."
+        title={ROUTES["prayer-times"].title}
+        description={ROUTES["prayer-times"].description}
       />
 
       <div className="no-print inline-flex rounded-xl border border-neutral-300 p-1 dark:border-night-600/50">

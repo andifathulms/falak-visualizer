@@ -13,6 +13,7 @@ import { Table, TableColumn } from "@/components/ui/Table";
 import { ISBAT_RECORDS } from "@/lib/falak/isbat";
 import { ApiError, fetchIsbatAccuracy, HilalMethod, IsbatAccuracyResult, IsbatComparisonRecord } from "@/lib/api";
 import { ResultAnnouncer } from "@/components/ResultAnnouncer";
+import { ROUTES } from "@/lib/routes";
 
 const METHODS: { key: HilalMethod; label: string }[] = [
   { key: "wujudul_hilal", label: "Wujudul Hilal" },
@@ -96,8 +97,8 @@ export default function IsbatAccuracyPage() {
       <ResultAnnouncer message={result ? `${result.count} isbat ${result.count === 1 ? "record" : "records"} loaded.` : null} />
       <PageHeader
         icon={History}
-        title="Isbat Accuracy"
-        description="How often does each hisab method match the real Kemenag sidang isbat announcement? Compared against actual historical records, not this app's own engine. Predictions are evaluated for Jakarta; sidang isbat is a national determination, so a criterion can miss simply because the deciding evening looked different elsewhere in the archipelago — and because isbat can weigh rukyat testimony no calculation anticipates."
+        title={ROUTES["isbat-accuracy"].title}
+        description={ROUTES["isbat-accuracy"].description}
       />
 
       <HisabDisclaimer />
