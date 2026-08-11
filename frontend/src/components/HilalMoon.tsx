@@ -26,7 +26,16 @@ export function HilalMoon({
       transition={{ type: "spring", stiffness: 90, damping: 14, delay: 0.1 }}
       className="relative flex items-center justify-center"
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+      {/* Decorative: the illumination fraction and the verdict this drawing
+          depicts are both stated as text immediately beside it, so announcing
+          the graphic as well would repeat them. */}
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="overflow-visible"
+        aria-hidden="true"
+      >
         <defs>
           <radialGradient id="hilal-face" cx="35%" cy="35%" r="70%">
             <stop offset="0%" stopColor={visible ? "#f8e6b8" : "#c7cbd6"} />

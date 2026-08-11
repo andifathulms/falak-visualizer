@@ -18,11 +18,18 @@ import { HilalMoon } from "@/components/HilalMoon";
  * this component computes nothing, fetches nothing and takes no input. That is
  * deliberate on two counts. It keeps the landing page free of a calculation in
  * its render path, and it keeps the app's rule against unflagged placeholder
- * values intact: these numbers are never presented as a live result. The panel
- * is labelled "Example" in the header, captioned as illustrative underneath,
- * and marked aria-hidden so a screen reader is not handed a set of plausible
- * figures with no way to tell they are fictional. The adjacent call to action
- * is what leads to a real, computed answer.
+ * values intact: these numbers are never presented as a live result.
+ *
+ * This panel was originally aria-hidden, on the reasoning that a screen reader
+ * should not be handed plausible figures with no cue they are fictional. The
+ * concern was right and the remedy was too blunt - it removed the landing
+ * page's only demonstration of what the app produces from anyone using a screen
+ * reader, which is half the argument the page is making.
+ *
+ * Instead the "example" framing is now part of the content rather than a purely
+ * visual eyebrow: a heading names it, and the caption stating that the figures
+ * are illustrative is read as part of the same region. Sighted users see the
+ * label; everyone else now hears it.
  *
  * A marginal night was chosen on purpose: it is the case where the three
  * criteria disagree, which is the single most informative thing about the
@@ -46,17 +53,22 @@ const EXAMPLE = {
 };
 
 export function SampleResult() {
+  const headingId = "sample-result-heading";
   return (
-    <motion.div
+    // A <section> with an accessible name is a named region natively, so no
+    // role is needed to make this findable and identifiable.
+    <motion.section
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
-      aria-hidden
+      aria-labelledby={headingId}
       className="glass-card w-full rounded-2xl p-5 shadow-sm shadow-black/5 dark:shadow-black/30"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-2xs font-medium uppercase tracking-wide text-ink-muted">Example</p>
+          <h2 id={headingId} className="text-2xs font-medium uppercase tracking-wide text-ink-muted">
+            Example result <span className="sr-only">— illustrative figures, not a live calculation</span>
+          </h2>
           <p className="mt-0.5 text-sm font-semibold">{EXAMPLE.place}</p>
         </div>
         <p className="text-xs text-ink-muted">{EXAMPLE.when}</p>
@@ -88,6 +100,6 @@ export function SampleResult() {
       <p className="mt-4 text-2xs text-ink-muted">
         Illustrative figures, not a live calculation. A marginal night — the criteria disagree.
       </p>
-    </motion.div>
+    </motion.section>
   );
 }
