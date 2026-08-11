@@ -24,7 +24,18 @@ export function Table<T>({
   caption: string;
 }) {
   return (
-    <div className="overflow-x-auto">
+    // tabIndex makes the scroll container reachable, so a keyboard user can
+    // actually pan a table that is wider than the viewport - at 320px or 200%
+    // zoom several columns sit off-screen with no other way to reach them
+    // (WCAG 2.1.1). role="region" plus the name is what stops that tab stop
+    // being an unexplained one; it is the one case with no native equivalent,
+    // since HTML has no scrollable-region element.
+    <div
+      className="overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-solid)]"
+      tabIndex={0}
+      role="region"
+      aria-label={caption}
+    >
       <table className="w-full min-w-max text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>

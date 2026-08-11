@@ -160,7 +160,15 @@ export default function HijriArchivePage() {
             </p>
           </Card>
 
-          <Card className="overflow-x-auto p-5">
+          {/* Same reasoning as ui/Table: a 36rem-minimum table needs a
+              keyboard-reachable scroll container, or its right-hand columns are
+              unreachable without a pointer. */}
+          <Card
+            className="overflow-x-auto p-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-solid)]"
+            tabIndex={0}
+            role="region"
+            aria-label={`Hijri year ${result.hijri_year} month starts by criterion`}
+          >
             <table className="w-full min-w-[36rem] text-left text-sm">
               <caption className="sr-only">
                 Hijri year {result.hijri_year}: the Gregorian start date of each month under each of
