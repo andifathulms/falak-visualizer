@@ -14,17 +14,15 @@ import { ROUTES, SITE, absoluteUrl, metaDescription, type RouteKey } from "@/lib
  * permalinked calculations - and every one of those links previously pasted
  * into a chat as a bare URL with no title, description or image.
  *
- * The image is the existing 512px PWA icon. Not a purpose-made share card:
- * generating one per route needs a rendering step this build does not have, and
- * a real icon beats a missing preview.
+ * The share image comes from app/opengraph-image.tsx, which next/og renders to
+ * a 1200x630 PNG during the static export and Next attaches to every route.
+ * Nothing here names an image, because naming one would shadow it.
  */
 export function routeMetadata(key: RouteKey): Metadata {
   const route = ROUTES[key];
   const url = absoluteUrl(route.path);
   const description = metaDescription(route.description);
   const title = `${route.title} — ${SITE.name}`;
-  const image = absoluteUrl("/icons/falak-512.png");
-
   return {
     title,
     description,
@@ -35,13 +33,14 @@ export function routeMetadata(key: RouteKey): Metadata {
       title,
       description,
       url,
-      images: [{ url: image, width: 512, height: 512, alt: `${SITE.name} icon` }],
+      locale: "en",
+      // Image intentionally omitted - app/opengraph-image.tsx provides the
+      // 1200x630 card for every route. Setting one here would replace it.
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: [image],
     },
   };
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { MakerSignature } from "@/components/MakerSignature";
 import { MotionProvider } from "@/components/MotionProvider";
+import { StructuredData } from "@/components/StructuredData";
 import { NavBar } from "@/components/NavBar";
 import { SITE, absoluteUrl } from "@/lib/routes";
 import "./globals.css";
@@ -26,9 +27,11 @@ const geistSans = localFont({
 });
 
 export const metadata: Metadata = {
-  // metadataBase lets the per-route canonical and Open Graph URLs resolve
-  // absolutely; og:url and og:image reject relative paths.
-  metadataBase: new URL(`${SITE.origin}${SITE.basePath}/`),
+  // Origin only, WITHOUT the basePath. Next already prefixes basePath onto
+  // file-convention assets like opengraph-image, so including it here produced
+  // /falak-visualizer/falak-visualizer/opengraph-image. Canonicals are
+  // unaffected because absoluteUrl() builds them as complete strings.
+  metadataBase: new URL(SITE.origin),
   title: {
     // Routes supply their own full title; this is the fallback and the home page.
     default: `${SITE.name} — ${SITE.tagline}`,
@@ -42,20 +45,16 @@ export const metadata: Metadata = {
     title: `${SITE.name} — ${SITE.tagline}`,
     description: HOME_DESCRIPTION,
     url: absoluteUrl("/"),
-    images: [
-      {
-        url: absoluteUrl("/icons/falak-512.png"),
-        width: 512,
-        height: 512,
-        alt: `${SITE.name} icon`,
-      },
-    ],
+    locale: "en",
+    // No images here: app/opengraph-image.tsx supplies the 1200x630 card and
+    // Next attaches it to every route that does not override it. Naming one
+    // explicitly would shadow the generated card with the small square icon.
   },
   twitter: {
-    card: "summary",
+    // large card, now that there is a 1200x630 image behind it
+    card: "summary_large_image",
     title: `${SITE.name} — ${SITE.tagline}`,
     description: HOME_DESCRIPTION,
-    images: [absoluteUrl("/icons/falak-512.png")],
   },
   // Stated explicitly because Next emits the auto-generated manifest link
   // without the basePath: on a project Pages site that resolves to the origin
@@ -74,6 +73,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} relative min-h-screen bg-night-sky antialiased`}
       >
+        <StructuredData />
         <MotionProvider>
           {/*
             Bypass block (WCAG 2.4.1). The landmarks below already let screen
