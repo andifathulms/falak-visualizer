@@ -55,12 +55,6 @@ export const ROUTES = {
     description:
       "A 12-month view of hilal-visibility conditions for a Hijri year, under a single method at a time - see the whole year instead of one date at a time.",
   },
-  "method-divergence": {
-    path: "/method-divergence",
-    title: "Method Divergence",
-    description:
-      "Which months of a Hijri year do the three criteria disagree on? A month-by-month agree/differ readout with each criterion's resolved date. For how far apart they land, and what that does to the rest of the year, use the Hijri Year Archive.",
-  },
   "isbat-accuracy": {
     path: "/isbat-accuracy",
     title: "Isbat Accuracy",
@@ -71,7 +65,7 @@ export const ROUTES = {
     path: "/hijri-archive",
     title: "Hijri Year Archive",
     description:
-      "How far apart do the three criteria land across a Hijri year, and how much of the calendar does that move? Shows each month's start under every criterion with its offset in days from MABIMS 2021, plus a count of how many months the criterion actually decided. For a plain agree/differ readout, use Method Divergence.",
+      "How far apart do the three criteria land across a Hijri year, and how much of the calendar does that move? Shows each month's start under every criterion, whether they agree, and each one's offset in days from MABIMS 2021, plus a count of how many months the criterion actually decided.",
   },
 } as const satisfies Record<string, RouteMeta>;
 

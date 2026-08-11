@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarRange, Search } from "lucide-react";
+import { CalendarRange, Equal, GitCompareArrows, Search } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
+import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, inputClasses } from "@/components/ui/Field";
@@ -189,6 +190,13 @@ export default function HijriArchivePage() {
                       {m.label}
                     </th>
                   ))}
+                  {/* The one thing Method Divergence showed that this table did
+                      not: an explicit per-month readout rather than only a
+                      highlighted row. Neither outcome is scored - see the note
+                      on tones in the retired page's history. */}
+                  <th scope="col" className="whitespace-nowrap px-3 py-2 font-medium text-ink-muted">
+                    Criteria
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -233,6 +241,19 @@ export default function HijriArchivePage() {
                         </td>
                       );
                     })}
+                    <td className="whitespace-nowrap px-3 py-2">
+                      {Object.keys(row.errors).length > 0 ? (
+                        <Badge tone="indeterminate">Unresolved</Badge>
+                      ) : row.unanimous ? (
+                        <Badge tone="neutral" icon={Equal}>
+                          Agree
+                        </Badge>
+                      ) : (
+                        <Badge tone="neutral" icon={GitCompareArrows}>
+                          Differ
+                        </Badge>
+                      )}
+                    </td>
                   </motion.tr>
                 ))}
               </tbody>

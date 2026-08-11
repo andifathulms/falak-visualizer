@@ -1,129 +1,52 @@
 "use client";
 
-import { useState } from "react";
-import { Equal, GitCompareArrows } from "lucide-react";
-import { HisabDisclaimer } from "@/components/HisabDisclaimer";
-import { ErrorBanner } from "@/components/ErrorBanner";
+import { useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
-import { LocationPicker } from "@/components/LocationPicker";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Field, inputClasses } from "@/components/ui/Field";
-import { Badge } from "@/components/ui/Badge";
-import { Table, TableColumn } from "@/components/ui/Table";
-import {
-  ApiError,
-  fetchMethodDivergence,
-  HilalMethod,
-  MethodDivergenceMonth,
-  MethodDivergenceResult,
-} from "@/lib/api";
-import { DEFAULT_CITY } from "@/lib/locations";
-import { ResultAnnouncer } from "@/components/ResultAnnouncer";
-import { ROUTES } from "@/lib/routes";
+import { GitCompareArrows } from "lucide-react";
 
-const METHODS: { key: HilalMethod; label: string }[] = [
-  { key: "wujudul_hilal", label: "Wujudul Hilal" },
-  { key: "mabims_2021", label: "MABIMS 2021" },
-  { key: "odeh", label: "Odeh" },
-];
+/**
+ * Retired. Method Divergence and the Hijri Year Archive both took a Hijri year
+ * and a location and returned twelve months by three criteria; the archive was
+ * always a strict superset (day offsets, a unanimity count) and now carries the
+ * per-month agree/differ readout that was this page's only unique output.
+ *
+ * The route is kept rather than deleted because permalinks to it exist and a
+ * static host has no server-side redirect to offer. It forwards on mount and
+ * carries the query string through, so a bookmarked ?hijri_year=1447 lands on
+ * the same year in the archive.
+ *
+ * The visible link is not a fallback for slow JavaScript - it is what a reader
+ * with JS disabled, or a crawler, gets instead of a blank page. The route's
+ * canonical points at the archive so search engines consolidate rather than
+ * indexing a redirect.
+ */
+export default function MethodDivergenceRedirect() {
+  const router = useRouter();
 
-export default function MethodDivergencePage() {
-  const [hijriYear, setHijriYear] = useState(1446);
-  const [lat, setLat] = useState(DEFAULT_CITY.lat);
-  const [lon, setLon] = useState(DEFAULT_CITY.lon);
-  const [result, setResult] = useState<MethodDivergenceResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const r = await fetchMethodDivergence({ hijri_year: hijriYear, lat, lon });
-      setResult(r);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const columns: TableColumn<MethodDivergenceMonth>[] = [
-    { key: "month", header: "Month", render: (m) => m.hijri_month_name },
-    ...METHODS.map(({ key, label }): TableColumn<MethodDivergenceMonth> => ({
-      key,
-      header: label,
-      render: (m) =>
-        m.start_dates[key] ?? (
-<span className="text-ink-muted">
-            unresolved
-            {m.errors?.[key] ? (
-              <span className="mt-0.5 block text-2xs">{m.errors?.[key]}</span>
-            ) : null}
-          </span>
-        ),
-    })),
-    {
-      key: "diverges",
-      header: "Diverges",
-      // Neither outcome is scored. Disagreement between criteria is expected
-      // and is what this page exists to display (PRD Sec. 7); rendering it in
-      // the negative tone while agreement got the positive one framed a
-      // diverging month as a fault and a unanimous one as correct, which is
-      // the app taking the side it says it does not take. Both are neutral,
-      // and the two are told apart by their words and icons instead.
-      render: (m) =>
-        m.diverges === null ? (
-          <Badge tone="indeterminate">Unresolved</Badge>
-        ) : m.diverges ? (
-          <Badge tone="neutral" icon={GitCompareArrows}>Methods differ</Badge>
-        ) : (
-          <Badge tone="neutral" icon={Equal}>Methods agree</Badge>
-        ),
-    },
-  ];
+  useEffect(() => {
+    const query = typeof window === "undefined" ? "" : window.location.search;
+    router.replace(`/hijri-archive/${query}`);
+  }, [router]);
 
   return (
     <div className="space-y-6">
-      <ResultAnnouncer message={result ? `Comparison ready for ${result.hijri_year} Hijri, ${result.months.length} months.` : null} />
       <PageHeader
         icon={GitCompareArrows}
-        title={ROUTES["method-divergence"].title}
-        description={ROUTES["method-divergence"].description}
+        title="Method Divergence has moved"
+        description="This view is now part of the Hijri Year Archive, which shows the same month-by-month agreement plus how many days apart the criteria land."
       />
-
-      <HisabDisclaimer />
-
       <Card className="p-5">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="Hijri year">
-            <input
-              type="number"
-              value={hijriYear}
-              onChange={(e) => setHijriYear(Number(e.target.value))}
-              className={inputClasses}
-            />
-          </Field>
-          <LocationPicker lat={lat} lon={lon} onChange={(newLat, newLon) => { setLat(newLat); setLon(newLon); }} />
-          <div className="sm:col-span-2">
-            <Button type="submit" loading={loading}>
-              {loading ? "Comparing…" : "Compare methods"}
-            </Button>
-          </div>
-        </form>
+        <p className="text-sm">
+          Taking you to the{" "}
+          <Link href="/hijri-archive/" className="font-medium text-accent underline underline-offset-2">
+            Hijri Year Archive
+          </Link>
+          . Your year and location carry over.
+        </p>
       </Card>
-
-      {error && <ErrorBanner message={error} />}
-
-      {result && (
-        <Card className="p-5">
-          <Table columns={columns} rows={result.months}
-            caption={`Hijri year ${result.hijri_year}: the Gregorian start date each criterion resolves for every month, and whether they agree.`} rowKey={(m) => String(m.hijri_month)} />
-        </Card>
-      )}
     </div>
   );
 }
