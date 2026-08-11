@@ -215,8 +215,9 @@ export default function HijriArchivePage() {
                       return (
                         <td key={m.key} className="whitespace-nowrap px-3 py-2">
                           {err ? (
-                            <span className="text-verdict-negative" title={err}>
+                            <span className="text-verdict-negative">
                               unresolved
+                              <span className="mt-0.5 block text-2xs font-normal">{err}</span>
                             </span>
                           ) : (
                             <>

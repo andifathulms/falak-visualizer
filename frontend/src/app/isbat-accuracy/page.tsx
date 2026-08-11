@@ -25,8 +25,9 @@ function MatchCell({ record, method }: { record: IsbatComparisonRecord; method: 
   const match = record.matches[method];
   if (predicted === undefined) {
     return (
-      <span className="text-ink-muted" title={record.errors[method]}>
+<span className="text-ink-muted">
         unresolved
+        {record.errors[method] ? <span className="mt-0.5 block text-2xs">{record.errors[method]}</span> : null}
       </span>
     );
   }

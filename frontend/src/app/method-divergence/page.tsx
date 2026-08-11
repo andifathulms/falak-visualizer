@@ -57,8 +57,11 @@ export default function MethodDivergencePage() {
       header: label,
       render: (m) =>
         m.start_dates[key] ?? (
-          <span className="text-ink-muted" title={m.errors?.[key]}>
+<span className="text-ink-muted">
             unresolved
+            {m.errors?.[key] ? (
+              <span className="mt-0.5 block text-2xs">{m.errors?.[key]}</span>
+            ) : null}
           </span>
         ),
     })),
