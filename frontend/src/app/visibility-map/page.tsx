@@ -166,7 +166,10 @@ export default function VisibilityMapPage() {
     if (points.length === 0) return [];
     return LABEL_CITIES.map((city) => {
       const nearest = nearestPoint(city.lat, city.lon, points);
-      return { city, visible: nearest ? isVisiblePoint(nearest) : null };
+      // The nearest point itself is kept, not just its verdict: the city table
+      // below is the keyboard and screen reader route to the per-location
+      // numbers that were otherwise only reachable by hovering a grid square.
+      return { city, visible: nearest ? isVisiblePoint(nearest) : null, nearest };
     });
   }, [points]);
 
@@ -442,6 +445,62 @@ export default function VisibilityMapPage() {
                 </div>
               )}
             </div>
+
+            {/* Keyboard, screen reader and touch route to the per-location
+                figures. The 3,000 grid squares carry their numbers on
+                onMouseMove alone, and making each one a tab stop would be a
+                3,000-stop tab sequence - worse than useless. These ten cities
+                are already the map's landmarks, already computed, and give
+                every user the same kind of answer the tooltip gives a mouse. */}
+            <details className="mt-3 rounded-xl border border-neutral-200 px-3.5 py-2.5 text-sm dark:border-night-700/60">
+              <summary className="cursor-pointer list-none font-medium [&::-webkit-details-marker]:hidden">
+                Results by city{" "}
+                <span className="font-normal text-ink-muted underline decoration-dotted underline-offset-2">
+                  ({cityMarkers.length} locations)
+                </span>
+              </summary>
+              <div className="mt-2.5 overflow-x-auto">
+                <table className="w-full min-w-max text-left text-xs">
+                  <caption className="sr-only">
+                    Calculated hilal visibility at the nearest grid point to each labelled city, with
+                    the moon altitude and elongation there.
+                  </caption>
+                  <thead>
+                    <tr className="border-b border-neutral-200 dark:border-night-700/60">
+                      <th scope="col" className="px-3 py-2 font-medium text-ink-muted">City</th>
+                      <th scope="col" className="px-3 py-2 font-medium text-ink-muted">Verdict</th>
+                      <th scope="col" className="px-3 py-2 font-medium text-ink-muted">Altitude</th>
+                      <th scope="col" className="px-3 py-2 font-medium text-ink-muted">Elongation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cityMarkers.map(({ city, visible, nearest }) => (
+                      <tr
+                        key={city.name}
+                        className="border-b border-neutral-100 last:border-0 dark:border-night-700/40"
+                      >
+                        <th scope="row" className="whitespace-nowrap px-3 py-1.5 font-normal">
+                          {city.name}
+                        </th>
+                        <td className="whitespace-nowrap px-3 py-1.5">
+                          {visible === null
+                            ? "unresolved"
+                            : visible
+                              ? "Likely visible"
+                              : "Not visible"}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-1.5 font-mono tabular-nums">
+                          {nearest ? `${nearest.moon_altitude_deg.toFixed(1)}°` : "—"}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-1.5 font-mono tabular-nums">
+                          {nearest ? `${nearest.elongation_deg.toFixed(1)}°` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-ink-muted">
               {/* Swatches mirror the marks' shapes, not just their colours, so
