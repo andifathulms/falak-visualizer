@@ -1,17 +1,33 @@
-import { cn } from "@/lib/cn";
+import type { LucideIcon } from "lucide-react";
 import { Check, CircleDashed, HelpCircle, X } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 type Tone = "positive" | "neutral" | "negative" | "indeterminate";
 
-export function Badge({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+/**
+ * `icon` overrides the tone's default glyph. It exists for the case where two
+ * badges must be told apart without either being scored - two outcomes that are
+ * both legitimately neutral, where colour would editorialise but a shared icon
+ * would make them look identical.
+ */
+export function Badge({
+  tone,
+  icon,
+  children,
+}: {
+  tone: Tone;
+  icon?: LucideIcon;
+  children: React.ReactNode;
+}) {
   const Icon =
-    tone === "positive"
+    icon ??
+    (tone === "positive"
       ? Check
       : tone === "negative"
         ? X
         : tone === "indeterminate"
           ? CircleDashed
-          : HelpCircle;
+          : HelpCircle);
   return (
     <span
       className={cn(

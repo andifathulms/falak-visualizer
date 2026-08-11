@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GitCompareArrows } from "lucide-react";
+import { Equal, GitCompareArrows } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
@@ -64,13 +64,19 @@ export default function MethodDivergencePage() {
     {
       key: "diverges",
       header: "Diverges",
+      // Neither outcome is scored. Disagreement between criteria is expected
+      // and is what this page exists to display (PRD Sec. 7); rendering it in
+      // the negative tone while agreement got the positive one framed a
+      // diverging month as a fault and a unanimous one as correct, which is
+      // the app taking the side it says it does not take. Both are neutral,
+      // and the two are told apart by their words and icons instead.
       render: (m) =>
         m.diverges === null ? (
-          <Badge tone="neutral">unresolved</Badge>
+          <Badge tone="indeterminate">Unresolved</Badge>
         ) : m.diverges ? (
-          <Badge tone="negative">Diverges</Badge>
+          <Badge tone="neutral" icon={GitCompareArrows}>Methods differ</Badge>
         ) : (
-          <Badge tone="positive">Agree</Badge>
+          <Badge tone="neutral" icon={Equal}>Methods agree</Badge>
         ),
     },
   ];
