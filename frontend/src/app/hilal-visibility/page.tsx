@@ -30,6 +30,8 @@ import { DEFAULT_CITY } from "@/lib/locations";
 import { todayIso } from "@/lib/date";
 import { isVisible } from "@/lib/verdict";
 import { formatMargin, MODEL_CAVEATS } from "@/lib/falak/tolerance";
+import { CRITERION_CITATIONS } from "@/lib/falak/citations";
+import { CitationList } from "@/components/CitationList";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 
 const CRITERIA = [
@@ -270,6 +272,7 @@ export default function HilalVisibilityPage() {
                     {/* The margin is the point of this whole panel: a verdict
                         without it reads as settled when it may have been decided
                         by a hundredth of a degree. */}
+                    <CitationList keys={CRITERION_CITATIONS[c.key] ?? []} />
                     {m && (
                       <p className="mt-2 border-t border-neutral-200 pt-2 text-2xs text-ink-muted dark:border-night-700/60">
                         {formatMargin(m) ? (
