@@ -42,6 +42,10 @@ const ANALYSIS_LINKS = [
   { href: "/hijri-archive", label: "By how much (year archive)", icon: CalendarRange },
 ];
 
+// Static rather than useId: it is referenced by aria-controls on a button that
+// renders before the panel exists, and there is only ever one nav on a page.
+const MOBILE_MENU_ID = "main-menu";
+
 function linkClasses(active: boolean) {
   return cn(
     "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -132,14 +136,22 @@ export function NavBar() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="rounded-lg p-2 text-ink-muted hover:bg-neutral-500/10 md:hidden"
-          aria-label="Toggle navigation"
+          // "Toggle navigation" named the control but never said which way it
+          // was toggled. aria-expanded carries the state, so the label can drop
+          // the word toggle and just name the thing.
+          aria-label="Main menu"
+          aria-expanded={open}
+          aria-controls={MOBILE_MENU_ID}
         >
           {open ? <X className="size-5" /> : <MenuIcon className="size-5" />}
         </button>
       </nav>
 
       {open && (
-        <div className="border-t border-neutral-200/70 px-4 py-2 md:hidden dark:border-night-700/60">
+        <div
+          id={MOBILE_MENU_ID}
+          className="border-t border-neutral-200/70 px-4 py-2 md:hidden dark:border-night-700/60"
+        >
           {PRIMARY_LINKS.map((link) => {
             const active = pathname === link.href;
             return (

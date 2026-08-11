@@ -1,17 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Calculator } from "lucide-react";
 
 export function CalculationPanel({ rows }: { rows: Array<[string, string | number]> }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-neutral-200 dark:border-night-700/60">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        // Without these the button announces as "Show calculation, button" and
+        // never reports whether the panel is open or what it controls.
+        aria-expanded={open}
+        aria-controls={panelId}
         className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-500/5 dark:text-neutral-300"
       >
         <span className="flex items-center gap-2">
@@ -26,6 +31,7 @@ export function CalculationPanel({ rows }: { rows: Array<[string, string | numbe
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
+            id={panelId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
