@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { History, Search } from "lucide-react";
+import { FileWarning, History, Search } from "lucide-react";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { PageHeader } from "@/components/PageHeader";
@@ -91,9 +91,19 @@ export default function IsbatAccuracyPage() {
 
       <HisabDisclaimer />
 
-      <div className="flex gap-3 rounded-xl border border-red-300/50 bg-red-500/[0.05] px-4 py-3 text-sm text-red-700 dark:border-red-800/50 dark:text-red-300">
-        Records marked <Badge tone="neutral">Unverified</Badge> have not yet been confirmed against a primary
-        Kemenag source and should not be treated as confirmed historical fact.
+      {/* Informational, not an error. Every seeded record is currently
+          unverified, so a red alarm would put the whole dataset under a banner
+          reading "this is broken" when what it actually says is "the
+          provenance has not been double-checked yet" - and a warning that is
+          always on is a warning readers learn to skip. Matches the hisab
+          disclaimer's register, which is the same kind of caveat. */}
+      <div className="flex gap-3 rounded-xl border border-gold-500/30 bg-gold-500/[0.07] px-4 py-3 text-sm">
+        <FileWarning className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2} />
+        <p>
+          Records marked <Badge tone="indeterminate">Unverified</Badge> carry a citation to a primary Kemenag
+          press release, but a maintainer has not yet opened it and confirmed the date. Treat them as sourced,
+          not as confirmed historical fact.
+        </p>
       </div>
 
       <Card className="p-5">
