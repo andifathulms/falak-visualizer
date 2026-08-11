@@ -44,6 +44,13 @@ export function ConventionNote({ convention }: { convention: string }) {
         </span>
       </p>
       <p className="mt-1.5 text-sm text-ink-muted">
+        Asr is set by shadow length rather than by a clock because that is what can be observed
+        without one: as the sun descends, every object&apos;s shadow lengthens, and asr begins when a
+        shadow has grown by {c.asrShadowFactor === 1 ? "the object's own height" : "twice the object's height"}{" "}
+        beyond whatever it measured at noon. The factor is the point of disagreement between schools,
+        not the method.
+      </p>
+      <p className="mt-1.5 text-sm text-ink-muted">
         Only <span className="font-medium text-foreground">fajr</span> and{" "}
         <span className="font-medium text-foreground">isha</span> depend on this choice — they are
         defined by how far the sun has to be below the horizon, which is a convention rather than an

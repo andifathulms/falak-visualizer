@@ -170,7 +170,7 @@ export default function QiblaPage() {
       <PageHeader
         icon={CompassIcon}
         title="Qibla Direction"
-        description="Great-circle bearing and distance to the Kaaba (21.4225°N, 39.8262°E) from any coordinate."
+        description="The compass bearing to face from any coordinate, and how far Mecca is. From Indonesia the answer is roughly west-north-west rather than due west — the shortest path over a sphere is a great circle, which curves north on a flat map, so following a due-west line would miss Mecca by hundreds of kilometres."
       />
 
       <Card className="p-5">
