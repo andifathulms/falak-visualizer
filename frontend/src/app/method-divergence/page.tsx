@@ -86,7 +86,7 @@ export default function MethodDivergencePage() {
       <PageHeader
         icon={GitCompareArrows}
         title="Method Divergence"
-        description="Do Wujudul Hilal, MABIMS 2021, and Odeh agree on when each Hijri month starts? See it across a whole year, not one date at a time."
+        description="Which months of a Hijri year do the three criteria disagree on? A month-by-month agree/differ readout with each criterion's resolved date. For how far apart they land, and what that does to the rest of the year, use the Hijri Year Archive."
       />
 
       <HisabDisclaimer />

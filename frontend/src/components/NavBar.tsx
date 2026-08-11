@@ -37,9 +37,9 @@ const PRIMARY_LINKS = [
 // top-level nav grow unbounded as more analysis views get added.
 const ANALYSIS_LINKS = [
   { href: "/visibility-calendar", label: "Visibility Calendar", icon: CalendarDays },
-  { href: "/method-divergence", label: "Method Divergence", icon: GitCompareArrows },
+  { href: "/method-divergence", label: "Where methods differ", icon: GitCompareArrows },
   { href: "/isbat-accuracy", label: "Isbat Accuracy", icon: History },
-  { href: "/hijri-archive", label: "Hijri Year Archive", icon: CalendarRange },
+  { href: "/hijri-archive", label: "By how much (year archive)", icon: CalendarRange },
 ];
 
 function linkClasses(active: boolean) {

@@ -83,7 +83,7 @@ export default function HijriArchivePage() {
       <PageHeader
         icon={CalendarRange}
         title="Hijri Year Archive"
-        description="A full Hijri year resolved under all three criteria at once — not to look up one date, but to see how often the choice of criterion actually changes the calendar, and how a single shifted month moves everything after it."
+        description="How far apart do the three criteria land across a Hijri year, and how much of the calendar does that move? Shows each month's start under every criterion with its offset in days from MABIMS 2021, plus a count of how many months the criterion actually decided. For a plain agree/differ readout, use Method Divergence."
       />
 
       <Card className="p-5 no-print">
