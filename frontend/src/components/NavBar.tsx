@@ -7,6 +7,7 @@ import { Menu as HeadlessMenu, Transition } from "@headlessui/react";
 import {
   Calendar,
   CalendarDays,
+  CalendarRange,
   ChevronDown,
   Compass,
   FileCode2,
@@ -38,6 +39,7 @@ const ANALYSIS_LINKS = [
   { href: "/visibility-calendar", label: "Visibility Calendar", icon: CalendarDays },
   { href: "/method-divergence", label: "Method Divergence", icon: GitCompareArrows },
   { href: "/isbat-accuracy", label: "Isbat Accuracy", icon: History },
+  { href: "/hijri-archive", label: "Hijri Year Archive", icon: CalendarRange },
 ];
 
 function linkClasses(active: boolean) {

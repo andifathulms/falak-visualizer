@@ -35,6 +35,7 @@ import { qiblaDirection, rashdulQiblaEvents } from "./falak/qibla";
 import {
   daysInMonth,
   formatInstant,
+  daysBetween,
   formatPlainDate,
   parsePlainDate,
   type Instant,
@@ -594,4 +595,101 @@ export async function fetchIsbatAccuracy(params: {
 
   const records = selected.map((record) => compareRecord(record, lat, lon));
   return { count: records.length, records };
+}
+
+/** One Hijri month as resolved by every criterion, for the archive view. */
+export interface ArchiveMonth {
+  month: number;
+  month_name: string;
+  /** Gregorian start date per method, ISO. */
+  starts: Record<EngineHilalMethod, string>;
+  /** Days each method sits away from the MABIMS-2021 start. Zero when agreed. */
+  offsets: Record<EngineHilalMethod, number>;
+  /** True when every method resolved to the same Gregorian date. */
+  unanimous: boolean;
+  /** Per-method failures, never silently dropped. */
+  errors: Partial<Record<EngineHilalMethod, string>>;
+}
+
+export interface HijriYearArchive {
+  hijri_year: number;
+  months: ArchiveMonth[];
+  unanimous_months: number;
+  diverging_months: number;
+}
+
+/**
+ * A full Hijri year resolved under all three criteria.
+ *
+ * Composed here rather than in falak/archive.ts because archive.ts is a
+ * one-to-one port of archive.py and generates a single-method calendar; adding
+ * a multi-method variant there would mean changing the oracle and regenerating
+ * the vector suite to gain nothing the existing exports do not already provide.
+ *
+ * `onProgress` exists because this is the heaviest thing the app computes
+ * synchronously - 36 month-start searches, each solving a conjunction and
+ * evaluating candidate evenings. The caller yields between months so the page
+ * can paint, which is why this is async despite doing no I/O.
+ */
+export async function fetchHijriYearArchive(params: {
+  hijriYear: number;
+  lat: number;
+  lon: number;
+  onProgress?: (done: number, total: number) => void;
+}): Promise<HijriYearArchive> {
+  const year = requireNumber(params.hijriYear, "hijriYear");
+  const lat = requireNumber(params.lat, "lat");
+  const lon = requireNumber(params.lon, "lon");
+  if (!Number.isInteger(year) || year < 1 || year > 2000) {
+    throw new ApiError(`hijriYear '${year}' is out of the supported range (1-2000)`, 400);
+  }
+
+  const months: ArchiveMonth[] = [];
+  for (let month = 1; month <= 12; month += 1) {
+    const starts: Partial<Record<EngineHilalMethod, string>> = {};
+    const errors: Partial<Record<EngineHilalMethod, string>> = {};
+
+    for (const method of MONTH_START_METHODS) {
+      try {
+        starts[method] = formatPlainDate(monthStartDateForMethod(year, month, method, lat, lon));
+      } catch (error) {
+        // A criterion that cannot resolve a month is reported as such. It must
+        // not inherit another method's date, which would invent agreement.
+        errors[method] = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    const baseline = starts.mabims_2021;
+    const offsets: Partial<Record<EngineHilalMethod, number>> = {};
+    for (const method of MONTH_START_METHODS) {
+      const value = starts[method];
+      if (value !== undefined && baseline !== undefined) {
+        offsets[method] = daysBetween(parsePlainDate(baseline), parsePlainDate(value));
+      }
+    }
+
+    const resolved = Object.values(starts);
+    months.push({
+      month,
+      month_name: HIJRI_MONTH_NAMES[month - 1],
+      starts: starts as Record<EngineHilalMethod, string>,
+      offsets: offsets as Record<EngineHilalMethod, number>,
+      // Months where a criterion failed are not counted as unanimous - absence
+      // of a verdict is not agreement.
+      unanimous: resolved.length === MONTH_START_METHODS.length && new Set(resolved).size === 1,
+      errors,
+    });
+
+    params.onProgress?.(month, 12);
+    // Yield to the event loop so the caller's progress UI can paint.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  const unanimous = months.filter((m) => m.unanimous).length;
+  return {
+    hijri_year: year,
+    months,
+    unanimous_months: unanimous,
+    diverging_months: months.length - unanimous,
+  };
 }
