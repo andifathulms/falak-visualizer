@@ -43,6 +43,14 @@ export const CITATIONS = {
       "Sejarah dan Perkembangan Kriteria Hilal MABIMS dalam Penentuan Awal Bulan Hijriah, Direktorat Jenderal Bimbingan Masyarakat Islam, Kementerian Agama RI.",
     url: "https://bimasislam.kemenag.go.id/post/berita/-sejarah-dan-perkembangan-kriteria-hilal-mabims-dalam-penentuan-awal-bulan-hijriah",
   },
+  mabims_pre2021: {
+    label: "MABIMS 1992–2021",
+    reference:
+      "The criterion MABIMS used before 2021, commonly written 2-3-8: hilal altitude at least 2°, elongation at least 3°, and moon age at least 8 hours at sunset. In use from 1992 until the 2021 agreement replaced it.",
+    url: "https://bimasislam.kemenag.go.id/post/berita/-sejarah-dan-perkembangan-kriteria-hilal-mabims-dalam-penentuan-awal-bulan-hijriah",
+    note:
+      "Replaced because a 2° crescent with 3° elongation is so thin, and so close to the twilight glare, that it was very rarely actually sighted - the calculation kept declaring months that observers could not confirm.",
+  },
   odeh_2004: {
     label: "Odeh 2004",
     reference:
