@@ -50,18 +50,54 @@ const METHOD_OPTIONS = [
 // as visual anchors ("oh, that's where Jakarta is") so the abstract grid
 // reads as a map instead of a wall of squares - not every city, to avoid
 // crowding a 640x320 chart.
+// Chosen for geographic spread rather than population: the point is that any
+// part of the archipelago has a nearby anchor, so the grid reads as a map. The
+// previous ten left Kalimantan, central Sulawesi and Maluku with no label at
+// all, which made the middle of the map hard to orient in.
+//
+// The set is capped by label collisions, not by taste. Every candidate was
+// checked by projecting its label box into viewBox units and testing it against
+// the ones already placed; Semarang, Bandung, Mataram, Yogyakarta, Malang,
+// Batam and Bandar Lampung all overlap a neighbour that was already there and
+// are deliberately absent. Because the check is in viewBox space it holds at
+// every rendered size - the SVG scales, so the labels scale with it.
 const LABEL_CITY_NAMES = [
+  // Sumatra
   "Banda Aceh",
   "Medan",
+  "Padang",
+  "Palembang",
+  // Java
   "Jakarta",
   "Surabaya",
+  // Bali / Nusa Tenggara
   "Denpasar",
-  "Makassar",
-  "Manado",
   "Kupang",
+  // Kalimantan
+  "Pontianak",
+  "Balikpapan",
+  "Banjarmasin",
+  // Sulawesi
+  "Manado",
+  "Palu",
+  "Kendari",
+  "Makassar",
+  // Maluku
+  "Ternate",
   "Ambon",
+  // Papua
   "Jayapura",
 ];
+
+/**
+ * Cities whose label is drawn to the LEFT of their dot.
+ *
+ * Balikpapan sits on the west side of the Makassar Strait with Palu roughly
+ * three degrees east of it, so a right-hand label runs straight into Palu's
+ * dot. Flipping it is what lets Kalimantan have an east-coast anchor at all.
+ */
+const LABEL_LEFT = new Set(["Balikpapan"]);
+
 const LABEL_CITIES = INDONESIAN_CITIES.filter((c) => LABEL_CITY_NAMES.includes(c.name));
 
 // Real coastlines, extracted from Natural Earth at build time by
@@ -416,9 +452,11 @@ export default function VisibilityMapPage() {
                 {cityMarkers.map(({ city, visible }) => {
                   // Jayapura sits within a degree of the eastern edge, so a
                   // label drawn to its right runs off the map. Anything in the
-                  // last fifth of the width flips to the other side of its dot.
+                  // last fifth of the width flips to the other side of its dot,
+                  // as does anything in LABEL_LEFT, which flips to avoid
+                  // colliding with a neighbour rather than with the frame.
                   const cx = xScale(city.lon);
-                  const flip = cx > WIDTH * 0.8;
+                  const flip = cx > WIDTH * 0.8 || LABEL_LEFT.has(city.name);
                   return (
                     <g key={city.name}>
                       <circle
