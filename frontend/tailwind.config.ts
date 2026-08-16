@@ -1,7 +1,11 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: "media",
+  // DESIGN.md §2.5 / §9.1: a persisted, user-controlled toggle rather than
+  // OS-preference-only. The .dark class is set on <html> by a blocking
+  // inline script in the root layout (before paint, to avoid a flash) and by
+  // the ThemeToggle component thereafter.
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,14 +14,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-
-        // Semantic tokens. Prefer these over the raw ramps below for anything
-        // carrying text: each resolves to a per-mode value in globals.css that
-        // was measured at >= 4.5:1 against both that mode's page background and
-        // its card surface. The raw `gold`/`moon`/`neutral` ramps are fixed
-        // hexes and cannot make that guarantee in both modes at once.
+        // Semantic/role tokens (DESIGN.md §3.1). Every one resolves to a
+        // per-mode value in globals.css that was measured at >= 4.5:1 (text)
+        // or >= 3:1 (UI strokes) against both --surface-page and
+        // --surface-card - see the contrast table in MIGRATION.md. Prefer
+        // these over the raw `senja`/`ufuk`/`kertas`/`tinta`/`nila` ramps
+        // (added directly to globals.css, not yet exposed here) for anything
+        // carrying meaning: the ramps are fixed hexes and cannot make that
+        // guarantee in both modes at once.
+        surface: {
+          page: "var(--surface-page)",
+          card: "var(--surface-card)",
+        },
+        border: "var(--border)",
         ink: {
           DEFAULT: "var(--text-body)",
           muted: "var(--text-muted)",
@@ -28,10 +37,15 @@ const config: Config = {
           on: "var(--accent-on-solid)",
         },
         verdict: {
-          positive: "var(--verdict-positive)",
-          negative: "var(--verdict-negative)",
+          lit: "var(--verdict-lit)",
+          dark: "var(--verdict-dark)",
+          margin: "var(--verdict-margin)",
         },
 
+        // --- Superseded ramps -----------------------------------------------
+        // Not yet deleted: migration order (MIGRATION.md, DESIGN.md §9.10)
+        // removes these only once every component that references them has
+        // been restyled onto the tokens above. Do not add new usages.
         night: {
           950: "#05070d",
           900: "#0a0e1a",
@@ -121,7 +135,7 @@ const config: Config = {
         "night-sky":
           "radial-gradient(ellipse 80% 60% at 50% -20%, rgba(217,168,62,0.15), transparent), radial-gradient(ellipse 60% 50% at 90% 10%, rgba(79,179,166,0.12), transparent)",
         "grid-fade":
-          "linear-gradient(to bottom, transparent, var(--background) 90%)",
+          "linear-gradient(to bottom, transparent, var(--surface-page) 90%)",
       },
       keyframes: {
         "fade-in-up": {

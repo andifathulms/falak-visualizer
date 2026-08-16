@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { MakerSignature } from "@/components/MakerSignature";
 import { MotionProvider } from "@/components/MotionProvider";
 import { StructuredData } from "@/components/StructuredData";
 import { NavBar } from "@/components/NavBar";
+import { ThemeToggle, noFlashThemeScript } from "@/components/ThemeToggle";
 import { SITE, absoluteUrl } from "@/lib/routes";
 import "./globals.css";
 
@@ -79,8 +81,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} relative min-h-screen bg-night-sky antialiased`}
       >
+        {/* strategy="beforeInteractive": must run before first paint, or the
+            wrong theme flashes - see components/ThemeToggle.tsx. Next inlines
+            beforeInteractive scripts into <head> regardless of where the
+            component sits in the tree; only valid in the root layout. */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {noFlashThemeScript}
+        </Script>
         <StructuredData />
         <MotionProvider>
+          <ThemeToggle />
           {/*
             Bypass block (WCAG 2.4.1). The landmarks below already let screen
             reader users jump straight to <main>, but a sighted keyboard user
@@ -94,7 +104,7 @@ export default function RootLayout({
           */}
           <a
             href="#main"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-[var(--card)] focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--accent-solid)]"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-[var(--surface-card)] focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--accent-solid)]"
           >
             Skip to content
           </a>

@@ -3,72 +3,95 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------------------
-   Design tokens.
+   Design tokens — the "maghrib" palette (DESIGN.md §3.1).
 
-   Three scales - colour, type, space - defined once here and consumed through
-   tailwind.config.ts. Components reference the token, never a raw value, so a
-   change to contrast or rhythm is a one-line edit in this file.
+   Ramps first (no meaning of their own), role tokens second (what components
+   actually consume). Components must go through a role token, never a ramp
+   value directly - that indirection is what makes a contrast fix or a palette
+   swap a one-line edit here instead of a grep-and-replace across the app.
 
-   Every colour pair below was measured against the mode's own background AND
-   its card surface; the ratio in each comment is the worse of the two. The AA
-   floor for body text is 4.5:1 and nothing here ships under it.
-
-   Note that the muted/accent/verdict colours MUST be mode-dependent variables
-   rather than one fixed hex: with a #f7f7fb light ground and a #05070d dark
-   ground, no single mid-tone clears 4.5:1 against both. That is precisely the
-   job a token layer exists to do.
+   Every role-token pair below was measured against the mode's own
+   --surface-page AND --surface-card; the ratio in each comment is the worse of
+   the two, same method the previous token file used. Floors: 4.5:1 for text,
+   3:1 for large text and UI strokes (a focus ring, an icon standing alone
+   without text). Two values below were adjusted in *lightness only*, same hue,
+   after that check failed against the literal DESIGN.md hex - see the comment
+   on each. --border is the one pair that stays under the UI-stroke floor on
+   purpose: it is a passive card-edge divider, not a boundary a user needs to
+   perceive to operate anything (WCAG 1.4.11's own exemption for decorative
+   dividers), and forcing it to 3:1 would fight the deliberate "paper" subtlety
+   this palette is going for. The previous token file's --card-border sat at a
+   similarly low, unaudited ratio, so this is not a regression.
    --------------------------------------------------------------------------- */
 
 :root {
-  /* --- Surfaces ---------------------------------------------------------- */
-  --background: #f7f7fb;
-  --foreground: #12131a; /* 17.3:1 */
-  --card: #ffffff;
-  --card-border: #e5e5ee;
+  /* --- Ramps --------------------------------------------------------------
+     Dusk (indigo, cool - the sky above the horizon) */
+  --senja-900: #1a1330;
+  --senja-800: #241b3c;
+  --senja-700: #33274f;
+  --senja-600: #4a3a5e;
+  --senja-500: #6b5680;
 
-  /* --- Text tiers -------------------------------------------------------- */
-  --text-body: #12131a; /* 17.3:1 */
-  --text-muted: #5c6373; /*  5.6:1 - secondary prose, labels, footer */
+  /* Horizon ember (warm accent family) */
+  --ufuk-300: #f6d3a3;
+  --ufuk-400: #efb477;
+  --ufuk-500: #e8a05c;
+  --ufuk-600: #c97f3d;
+  --ufuk-700: #9b5e2a;
 
-  /* --- Accent (brand gold) ------------------------------------------------
-     Two roles, deliberately split. `accent-text` is the readable tier used for
-     any gold *lettering*; `accent-solid` is the saturated brand tone reserved
-     for fills and borders, where the 4.5:1 text floor does not apply. Light
-     mode previously used the solid tone for both, which is why every gold
-     label on the site sat at 3.0:1. */
-  --accent-text: #8d6420; /*  4.9:1 */
-  --accent-solid: #d9a83e;
-  --accent-on-solid: #05070d; /*  9.2:1 on accent-solid */
+  /* Paper (light-mode surfaces) */
+  --kertas-50: #fdfbf4;
+  --kertas-100: #faf6ec;
+  --kertas-200: #f2ebda;
+  --kertas-300: #e4d9c0;
 
-  /* Endpoints for .text-gradient-accent. Only ever applied in dark mode, where
-     both clear AA against the card surface (10.7:1 and 7.3:1); against a white
-     card the same two measure 1.7:1 and 2.5:1, which is why light mode gets a
-     solid colour instead. */
-  --accent-gradient-from: #e8c164;
-  --accent-gradient-to: #4fb3a6;
+  /* Ink (warm, not black) */
+  --tinta-900: #2a2318;
+  --tinta-600: #6a5f4e;
 
-  /* --- Verdict tones ------------------------------------------------------ */
-  --verdict-positive: #1f7a6e; /*  4.8:1 */
-  --verdict-negative: #c92a2a; /*  5.1:1 */
+  /* Indigo (secondary data series only) */
+  --nila-700: #2c5169;
+  --nila-600: #3e6e8e;
+  --nila-400: #6e8cae;
+
+  /* --- Role tokens, light (paper) ------------------------------------------ */
+  --surface-page: var(--kertas-100);
+  --surface-card: var(--kertas-50);
+  --border: var(--kertas-300); /* decorative divider - see note above, not a 3:1 pair */
+  --text-body: var(--tinta-900); /* 14.39:1 */
+  --text-muted: var(--tinta-600); /*  5.79:1 */
+  --accent-text: var(--ufuk-700); /*  4.83:1 */
+  /* DESIGN.md specifies --ufuk-500 here; measured 2.02:1 against
+     --surface-page, below the 3:1 UI-stroke floor this token needs as the
+     focus-ring colour (§2.5). Darkened within the same ufuk hue to 3.02:1;
+     the --ufuk-500 ramp step itself is untouched, this is a role-token-only
+     adjustment, same treatment the previous token file already used for
+     --accent-text (a different lightness per mode of one hue). */
+  --accent-solid: #d4771e; /*  3.02:1 vs surface, 4.78:1 under accent-on-solid */
+  --accent-on-solid: var(--tinta-900);
+  --verdict-lit: var(--ufuk-700); /*  4.83:1 */
+  --verdict-dark: var(--senja-600); /*  9.45:1 */
+  --verdict-margin: var(--nila-600); /*  5.09:1 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #05070d;
-    --foreground: #eceef5; /* 15.8:1 */
-    --card: #0e1425;
-    --card-border: #1b2440;
-
-    --text-body: #eceef5; /* 15.8:1 */
-    --text-muted: #98a1b5; /*  7.1:1 */
-
-    --accent-text: #e8c164; /* 10.7:1 */
-    --accent-solid: #d9a83e;
-    --accent-on-solid: #05070d;
-
-    --verdict-positive: #7dd3c8; /* 10.5:1 */
-    --verdict-negative: #f87171; /*  6.6:1 */
-  }
+:root.dark {
+  --surface-page: var(--senja-900);
+  --surface-card: var(--senja-800);
+  --border: var(--senja-700); /* decorative divider - see note above */
+  --text-body: var(--kertas-200); /* 13.62:1 */
+  --text-muted: #a99bb8; /*  6.22:1 */
+  --accent-text: var(--ufuk-400); /*  8.84:1 */
+  --accent-solid: var(--ufuk-500); /*  7.41:1 vs surface, 8.15:1 under accent-on-solid */
+  --accent-on-solid: var(--senja-900);
+  --verdict-lit: var(--ufuk-300); /* 11.38:1 */
+  /* DESIGN.md specifies --senja-500 here; measured 2.52:1 against
+     --surface-page, below the 4.5:1 text floor this token needs (it carries
+     the "not visible" / criterion-not-met word, not just a swatch). Lightened
+     within the same senja hue to 4.68:1; the --senja-500 ramp step itself is
+     untouched. */
+  --verdict-dark: #9682ab; /*  4.68:1 */
+  --verdict-margin: var(--nila-400); /*  4.65:1 */
 }
 
 /* ---------------------------------------------------------------------------
@@ -107,9 +130,9 @@
    MotionConfig in layout.tsx handles that side.
    --------------------------------------------------------------------------- */
 :root {
-  --duration-fast: 150ms;
-  --duration-base: 250ms;
-  --duration-slow: 400ms;
+  --duration-fast: 120ms; /* state changes - hover, toggle, focus (DESIGN.md §2.4) */
+  --duration-base: 240ms; /* element entrances, panel reveals */
+  --duration-slow: 900ms; /* reserved for the one orchestrated page-load moment, once per app */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -138,12 +161,12 @@
 }
 
 * {
-  border-color: var(--card-border);
+  border-color: var(--border);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--text-body);
+  background: var(--surface-page);
   /* The body floor, set once at the root rather than re-declared per component.
      Tailwind's own `text-sm` default is 14px; ours resolves to 16px via the
      token, so inherited prose is at the floor even where no size class is set. */
@@ -160,6 +183,17 @@ h3 {
   text-wrap: balance;
 }
 
+/* Quality floor (DESIGN.md §2.5): one global :focus-visible rule, applied to
+   every interactive element, in the accent colour. Replaces the two isolated
+   focus-visible utility classes that previously existed only on the
+   hijri-archive table wrapper and the shared Table component - this rule
+   supersedes both and covers everything else that was relying on browser
+   defaults (buttons, links, form controls, the SVG compass/map). */
+:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -167,27 +201,14 @@ h3 {
 
   /* Emphasis for the app's headline outputs - the converted date, the hilal
      verdict, the hero.
-     Gradient-clipped text cannot be given a contrast ratio the way a colour
-     can, and the gold-to-teal pair these used measures 1.7:1 to 2.5:1 against a
-     white card. That is the most emphasised text in the app rendered as its
-     least readable. The gradient survives in dark mode, where the same
-     endpoints clear 7:1, and light mode falls back to the solid accent token
-     that was measured for exactly this job. */
+     DESIGN.md §3.1 confines the app to exactly one gradient (the sky behind
+     HorizonInstrument) and removes the old gold-to-teal gradient headline
+     span (§8) as part of the home-page rebuild. Until that lands, this stays
+     a solid colour rather than a second gradient, so pages not yet migrated
+     that still reference this class don't end up carrying two "the" gradient
+     moments at once. */
   .text-gradient-accent {
     color: var(--accent-text);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .text-gradient-accent {
-      color: transparent;
-      background-image: linear-gradient(
-        to right,
-        var(--accent-gradient-from),
-        var(--accent-gradient-to)
-      );
-      -webkit-background-clip: text;
-      background-clip: text;
-    }
   }
 
   .glass-card {
@@ -195,15 +216,15 @@ h3 {
        stacking context, which traps any absolutely-positioned overlay
        inside it (e.g. a dropdown panel) so a later sibling card paints
        over it regardless of z-index. Solid tinted background instead. */
-    background: color-mix(in srgb, var(--card) 96%, transparent);
-    border: 1px solid var(--card-border);
+    background: color-mix(in srgb, var(--surface-card) 96%, transparent);
+    border: 1px solid var(--border);
   }
 
   .bg-shimmer {
     background-image: linear-gradient(
       110deg,
       transparent 40%,
-      color-mix(in srgb, var(--foreground) 8%, transparent) 50%,
+      color-mix(in srgb, var(--text-body) 8%, transparent) 50%,
       transparent 60%
     );
     background-size: 200% 100%;
@@ -267,7 +288,7 @@ h3 {
 }
 
 ::selection {
-  background: rgba(217, 168, 62, 0.35);
+  background: color-mix(in srgb, var(--accent-solid) 35%, transparent);
 }
 
 /* Print/PDF export: hide chrome (nav, forms, buttons) and show only the
