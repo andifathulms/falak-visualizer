@@ -6,6 +6,8 @@ import { MotionProvider } from "@/components/MotionProvider";
 import { StructuredData } from "@/components/StructuredData";
 import { NavBar } from "@/components/NavBar";
 import { ThemeToggle, noFlashThemeScript } from "@/components/ThemeToggle";
+import { ObservationProvider } from "@/components/ObservationProvider";
+import { ContextBar } from "@/components/ContextBar";
 import { SITE, absoluteUrl } from "@/lib/routes";
 import "./globals.css";
 
@@ -157,7 +159,16 @@ export default function RootLayout({
           </a>
           <div className="starfield" />
           <NavBar />
-          <main id="main" className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+          {/*
+            DESIGN.md §4.3/§9.4: place and date, persistent across every
+            route. Scoped to ContextBar + main (not NavBar, which doesn't
+            read it) - see ContextBar.tsx for the transitional note on why
+            this coexists with each old page's own location form for now.
+          */}
+          <ObservationProvider>
+            <ContextBar />
+            <main id="main" className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+          </ObservationProvider>
           {/*
             One seam only: a single rule above a bottom bar carrying both the
             hisab caveat and the byline. They sit opposite each other on desktop

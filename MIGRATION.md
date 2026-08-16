@@ -313,3 +313,95 @@ vitest tests pass (63 prior + 23 new, including cross-validation against
 all 195 real fixture observations), and the component was visually
 verified via rendered screenshots in both light and dark mode plus an
 interactive hover-linking screenshot - not just compiled.
+
+---
+
+## Step 4 — executed
+
+Scope, per §9.4: lift place and date to a provider, wire to URL query
+params and `localStorage`, render the bar in the root layout.
+
+**Logic lifted, not copied.** `LocationPicker.tsx`'s city-selection,
+geolocation, and custom-coordinate handling now lives in
+`ObservationProvider.tsx` (a React context + `useObservation()` hook);
+`LocationPicker.tsx` itself is untouched for now (`ContextBar.tsx` is a new,
+separate component - see the transitional note below on why the old
+component wasn't deleted or rewritten yet).
+
+**URL shape matches DESIGN.md's literal spec** (`?lat=&lon=&tz=&d=`) with
+one deliberate change: no separate location-label param. A shared link's
+friendly name (e.g. "Jakarta") is always re-derived from its coordinates
+(`matchCity` in `lib/observation.ts`) rather than stored as its own field,
+so a stale or hand-edited label can never disagree with the coordinates it
+sits next to. `tz` is written for transparency/debuggability of a shared
+link but never trusted back on read - it's always recomputed from lat/lon
+via the existing `resolveTimeZone`, so a stale or hand-edited `tz` param in
+a pasted URL can't silently override a correct derived value.
+
+**SSR-safe by construction, not by accident**: initial state is
+`defaultObservation()` (Jakarta + today), identical to what a static
+prerender produces; the real value (from the URL, then `localStorage`,
+then that same default) is applied in a `useEffect` after mount. This is
+the exact pattern `lib/permalink.ts`'s own header comment documents for
+the pages that already read the query string post-mount rather than
+during render, deliberately kept consistent rather than introducing a
+second SSR-safety pattern into the same codebase. Verified directly, not
+assumed: a fresh headless-browser load of a permalinked URL produced zero
+console errors, warnings, or hydration-related messages.
+
+**Screenshot- and interaction-verified**, not just compiled - rendered the
+real home page and `/converter` (still fully live, pre-migration) via a
+static build + headless browser, then drove it through actual pointer/
+keyboard events (Playwright's `fill()`, not manual DOM mutation, which
+turned out to matter - see below) to confirm: switching cities updates the
+URL and the live Hijri readout instantly; opening "Koordinat kustom…"
+reveals typeable lat/lon fields without disturbing the current place
+until the user actually types; typing custom coordinates updates the URL
+live; changing the date recomputes the Hijri equivalent with no submit
+button, and 2024-03-11 correctly resolves to "30 Sya'ban 1445H" - the day
+immediately before the engine's own documented anchor point (1 Ramadhan
+1445H = 2024-03-12, `converter.ts`'s own comment), a real-world
+correctness check that fell out of testing the UI rather than being
+constructed for it. A first pass using `element.value = ...` plus a
+manually dispatched `Event('input')` silently failed to trigger React's
+change handling (a known gap in that approach, since React's controlled-
+input tracking hooks the native property setter, not a bare dispatched
+event) - worth recording since it looked exactly like a real product bug
+(stale URL, stale Hijri label) until re-tested with genuine simulated
+input.
+
+**Transitional state, not a design intent**: mounting `ContextBar` in the
+root layout makes it appear on every route immediately, including all
+nine still-live pre-migration pages, each of which keeps its own separate
+`LocationPicker`-based form for now (confirmed side-by-side on
+`/converter`: both the new bar and the old form render correctly,
+independently, with no layout regression). DESIGN.md's "delete every
+per-page location form and submit button" (§4.3) is explicitly *not* done
+in this step - that deletion belongs to each page's absorption into
+`/hilal`, `/kalender`, `/langit` (§9.5-§9.7), where the page's internal
+state gets rewired to read `useObservation()` instead of holding its own
+copy. Doing that deletion now, before those routes exist, would strand
+users on the pages that are still each route's only way to compute
+anything.
+
+**NavBar intentionally not touched.** §4.3's last line ("Nav is three
+items. Delete the 'Analysis' dropdown.") describes the nav *after* `/hilal`,
+`/kalender`, `/langit` exist - collapsing it now would point the header at
+three routes that don't exist yet (they're built in steps 5-7), stranding
+navigation on every still-live page in between. Deferred to whichever of
+those steps makes the new nav's targets real, and flagged here so it isn't
+mistaken for an oversight.
+
+**Language**: new copy in `ContextBar` ("Lokasi saya", "Koordinat
+kustom…") is Indonesian per DESIGN.md §7's decided direction, scoped with
+its own `lang="id"` rather than flipping `<html lang>` - the document is
+still overwhelmingly English (every existing page's own content) until
+steps 5-8 rewrite it, and mislabeling the whole document would be worse
+than a correctly-scoped mixed-language page.
+
+Verified: `tsc --noEmit` clean, eslint clean, `next build`
+(`STATIC_EXPORT=1`) succeeds, all 96 vitest tests pass (86 prior + 10 new),
+and the provider/bar were checked via rendered screenshots and real
+Playwright-driven interaction (city switch, custom coordinates,
+geolocation button, live date recompute, permalink round-trip on fresh
+load, console/hydration check) - not just compiled.
