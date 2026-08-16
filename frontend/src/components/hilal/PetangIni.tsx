@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { HorizonInstrument } from "@/components/HorizonInstrument";
 import { CriterionHistory } from "@/components/CriterionHistory";
 import { CitationList } from "@/components/CitationList";
@@ -9,7 +7,9 @@ import { ErrorBanner } from "@/components/ErrorBanner";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useObservation } from "@/components/ObservationProvider";
-import { ApiError, fetchHilalVisibility, type HilalObservation } from "@/lib/api";
+import { useHilalVisibility } from "@/components/useHilalVisibility";
+import { useFirstEntranceAnimation } from "@/components/useFirstEntranceAnimation";
+import { motion } from "framer-motion";
 import { isVisible } from "@/lib/verdict";
 import { verdictLabel } from "@/lib/verdictLabels";
 import { formatMargin, MODEL_CAVEATS } from "@/lib/falak/tolerance";
@@ -63,30 +63,8 @@ function formatLocalTime(iso: string | null, timeZone: string) {
 
 export function PetangIni() {
   const { lat, lon, dateIso, timeZone } = useObservation();
-  const [obs, setObs] = useState<HilalObservation | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    fetchHilalVisibility({ date: dateIso, lat, lon })
-      .then((r) => {
-        if (cancelled) return;
-        setObs(r);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err instanceof ApiError ? err.message : "Perhitungan gagal.");
-        setObs(null);
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [dateIso, lat, lon]);
+  const { obs, error, loading } = useHilalVisibility(dateIso, lat, lon);
+  const animateEntrance = useFirstEntranceAnimation();
 
   const displayTimeZone = timeZone ?? "UTC";
   const headlineUndecided = obs?.margins?.mabims_2021?.verdict === "indeterminate";
@@ -123,6 +101,7 @@ export function PetangIni() {
                     ? "Hilal kemungkinan terlihat"
                     : "Hilal belum terpenuhi"
               }, menurut MABIMS 2021. Altitude ${obs.moon_altitude_deg.toFixed(1)} derajat, elongasi ${obs.elongation_deg.toFixed(1)} derajat.`}
+              animateEntrance={animateEntrance}
             />
             <p className="mt-4 font-display text-xl">
               {headlineUndecided ? (

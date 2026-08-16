@@ -742,3 +742,64 @@ and the finished `/langit` page verified with real data end to end
 (daily readout, monthly table load, qibla bearing/distance, Rashdul
 Qibla) plus a 375px mobile pass confirming the arc goes properly
 full-bleed there, same fix pattern as step 5's `HorizonInstrument`.
+
+---
+
+## Step 8 — executed
+
+Scope, per §9.8: rebuild `/` as the live instrument. Smaller than steps
+5-7 - no new signature component, entirely reuse of `HorizonInstrument`
+(step 3) and `ObservationProvider` (step 4) - but the step where the
+"one instrument, asked three questions" thesis actually becomes visible
+on the page most visitors land on first.
+
+**Two small hooks extracted, not duplicated**, once home gave the app a
+second real call site for logic that previously had exactly one:
+- `useHilalVisibility(dateIso, lat, lon)` - the same place+date ->
+  single-evening fetch `PetangIni` already had inline, now shared so the
+  two pages' error handling/cancellation can't quietly diverge.
+- `useFirstEntranceAnimation()` - DESIGN.md §3.3's "on first load of any
+  page, the sky settles... once per session" reveal.
+  `HorizonInstrument`'s `animateEntrance` prop existed since step 3 but
+  was never actually driven by anything until now. Deliberately shared
+  with `PetangIni`, not home-only: a permalink can land a visitor on
+  `/hilal` before they ever see `/`, and the orchestrated moment belongs
+  to whichever page is first in the session, not to home specifically.
+  Uses `sessionStorage` rather than a module-level flag, since each
+  route in a static export is its own HTML document and a module
+  variable would reset on every navigation. Verified directly, not
+  assumed: a real browser session shows the flag set after home loads
+  and unchanged (animation correctly suppressed) after navigating to
+  `/hilal`.
+
+**The four-value readout DESIGN.md's mockup shows separately from the
+instrument turned out to already exist** - `HorizonInstrument`'s own
+`<dl>` (altitude/elongation/moon age/lag, `showReadout`'s default) is
+exactly that row. No second readout built; the mockup's apparent
+separation is just how the drawing already lays itself out.
+
+**Verdict color, not verdict word, carries the headline** on home,
+matching DESIGN.md's own mockup text precisely (down to the degrees-and-
+minutes altitude format, "12°12'" not "12.2°") - the sentence states the
+altitude and lets `--verdict-lit`/plain colour on that number carry
+visible-vs-not, with the full verdict one click away via "Lihat
+perhitungan lengkap". Home does not restate the criteria comparison,
+`CriterionHistory`, or the derivation trace - all reachable from `/hilal`,
+which is the point of the three plain-text links replacing the deleted
+feature grid.
+
+**`SampleResult` deleted** per §8, confirmed to have exactly one call
+site (the old hero) before removal - the home page now shows real
+computed data, so a fictional example is no longer needed and would be a
+liability on a tool whose whole claim is verifiability, per DESIGN.md's
+own reasoning.
+
+Verified: `tsc --noEmit` clean, `eslint` clean across the full `src/`
+tree, `next build` (`STATIC_EXPORT=1`) succeeds for all 21 routes (home's
+own bundle dropped from the old hero+feature-grid+`SampleResult` weight
+to 2.54kB), all 117 vitest tests pass unchanged (no new geometry to
+test - this step is composition, not a new drawing), and the finished
+page checked via rendered screenshots (light/dark), a 375px mobile pass
+confirming the full-bleed instrument fix from step 5 carries over
+correctly, and a real two-page browser session confirming the once-per-
+session animation gate actually gates.
