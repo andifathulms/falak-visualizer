@@ -14,19 +14,29 @@
  * A label is a rendering of a verdict, never a substitute for it.
  */
 
-/** Every raw verdict value the engine can hand the UI, in any of its spellings. */
+/**
+ * Every raw verdict value the engine can hand the UI, in any of its
+ * spellings. Indonesian per DESIGN.md §7 - translated here rather than left
+ * for later despite most other display-only prose in the app still being
+ * English during this migration (MIGRATION.md's step 5 notes): this is a
+ * short, unambiguous lookup table, not nuanced explanatory prose, so the
+ * mistranslation risk that justified deferring longer copy doesn't apply,
+ * and it sits in the single most visible spot on every criteria comparison
+ * (the badges) - worth fixing now rather than shipping mixed-language
+ * badges on a page built to be read in Indonesian.
+ */
 const LABELS: Record<string, string> = {
   // Boolean criteria, in both the native and the Python-stringified spelling.
-  true: "Met",
-  false: "Not met",
-  True: "Met",
-  False: "Not met",
+  true: "Terpenuhi",
+  false: "Belum terpenuhi",
+  True: "Terpenuhi",
+  False: "Belum terpenuhi",
 
   // Odeh's continuous classification.
-  visible: "Visible",
-  visible_optical_aid: "Visible with optical aid",
+  visible: "Terlihat",
+  visible_optical_aid: "Terlihat dengan alat bantu",
   marginal: "Marginal",
-  not_visible: "Not visible",
+  not_visible: "Tidak terlihat",
 };
 
 /** Shown where a criterion produced no verdict at all. */

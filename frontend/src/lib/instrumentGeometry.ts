@@ -285,3 +285,38 @@ export function odehThresholdBand(crescentWidthArcmin: number | null): Threshold
 export function wujudulHilalMarkerBand(): ThresholdBand {
   return { key: "wujudul_hilal", label: "Wujudul hilal", minAltitudeDeg: null };
 }
+
+/** All three criteria's bands, in the order DESIGN.md §5.1's stacked comparison shows them. */
+export function allThresholdBands(crescentWidthArcmin: number | null): ThresholdBand[] {
+  return [wujudulHilalMarkerBand(), mabimsThresholdBand(), odehThresholdBand(crescentWidthArcmin)];
+}
+
+/**
+ * Shared snake_case shape across lib/api.ts's HilalObservation, its
+ * VisibilityGridResult points, and VisibilityCalendarResult months - the
+ * three places migration step 5 needs a HorizonReading from. A structural
+ * type, not an import from lib/api.ts, so this module doesn't take on a
+ * dependency the other direction.
+ */
+export interface ObservationLike {
+  moon_altitude_deg: number;
+  sun_altitude_deg: number;
+  elongation_deg: number;
+  moon_age_hours?: number;
+  illumination_fraction: number;
+  lag_time_minutes: number | null;
+  crescent_width_arcmin: number | null;
+}
+
+/** Maps an engine observation (however it reached the caller) onto HorizonInstrument's input shape. Pure field renaming, no computation. */
+export function horizonReadingFromObservation(obs: ObservationLike): HorizonReading {
+  return {
+    moonAltitudeDeg: obs.moon_altitude_deg,
+    sunAltitudeDeg: obs.sun_altitude_deg,
+    elongationDeg: obs.elongation_deg,
+    moonAgeHours: obs.moon_age_hours,
+    illuminationFraction: obs.illumination_fraction,
+    lagTimeMinutes: obs.lag_time_minutes,
+    crescentWidthArcmin: obs.crescent_width_arcmin,
+  };
+}

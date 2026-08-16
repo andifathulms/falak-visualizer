@@ -39,7 +39,7 @@ export function Table<T>({
       <table className="w-full min-w-max text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
-          <tr className="border-b border-neutral-200 dark:border-night-700/60">
+          <tr className="border-b border-border">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -60,7 +60,7 @@ export function Table<T>({
           {rows.map((row) => (
             <tr
               key={rowKey(row)}
-              className="border-b border-neutral-100 last:border-0 dark:border-night-700/40"
+              className="border-b border-border/60 last:border-0"
             >
               {columns.map((col) => (
                 <td key={col.key} className={cn("whitespace-nowrap px-3 py-2.5", col.className)}>

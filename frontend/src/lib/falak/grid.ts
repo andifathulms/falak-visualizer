@@ -31,6 +31,21 @@ export interface GridPoint {
   verdict: string;
   moon_altitude_deg: number;
   elongation_deg: number;
+  /**
+   * DESIGN.md's HorizonInstrument, shown at reduced size beside the
+   * Indonesia sweep for the hovered cell (migration step 5), needs the rest
+   * of the observation this function already computes below - not new
+   * astronomy, just returning more of the same object literal instead of
+   * discarding it. Confirmed against the golden-vector suite before adding:
+   * golden.test.ts's "visibility grid" describe block asserts against
+   * computeHilalObservation/verdictFor directly, never GridPoint's shape,
+   * so widening it here pins nothing new and breaks nothing existing.
+   */
+  sun_altitude_deg: number;
+  illumination_fraction: number;
+  lag_time_minutes: number | null;
+  crescent_width_arcmin: number;
+  moon_age_hours: number;
 }
 
 /**
@@ -117,6 +132,11 @@ export function computeGridSlice(
         verdict: verdictFor(observation, method),
         moon_altitude_deg: observation.moonAltitudeDeg,
         elongation_deg: observation.elongationDeg,
+        sun_altitude_deg: observation.sunAltitudeDeg,
+        illumination_fraction: observation.illuminationFraction,
+        lag_time_minutes: observation.lagTimeMinutes,
+        crescent_width_arcmin: observation.crescentWidthArcmin,
+        moon_age_hours: observation.moonAgeHours,
       });
     } catch {
       // No silent fallback: skip and count, don't fabricate a verdict.

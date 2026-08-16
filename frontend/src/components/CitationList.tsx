@@ -17,7 +17,7 @@ export function CitationList({ keys }: { keys: readonly CitationKey[] }) {
         return (
           <li key={key} className="text-2xs leading-relaxed text-ink-muted">
             {unsourced ? (
-              <span className="inline-flex items-center gap-1 font-medium text-foreground">
+              <span className="inline-flex items-center gap-1 font-medium text-ink">
                 <FileWarning className="size-3 shrink-0" strokeWidth={2} />
                 Citation needed
               </span>
@@ -32,7 +32,7 @@ export function CitationList({ keys }: { keys: readonly CitationKey[] }) {
                 <ExternalLink className="size-3 shrink-0" strokeWidth={2} />
               </a>
             ) : (
-              <span className="font-medium text-foreground">{c.label}</span>
+              <span className="font-medium text-ink">{c.label}</span>
             )}{" "}
             {c.reference}
             {"note" in c && c.note ? <span className="block mt-0.5 italic">{c.note}</span> : null}

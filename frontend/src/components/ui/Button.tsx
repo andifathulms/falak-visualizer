@@ -11,11 +11,13 @@ export function Button({ className, loading, variant = "primary", children, disa
   return (
     <button
       className={cn(
-        "relative inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60",
+        "relative inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-all duration-fast disabled:cursor-not-allowed disabled:opacity-60",
+        // Solid fill, not a gradient: DESIGN.md §3.1 confines the app to one
+        // gradient total (the sky behind HorizonInstrument).
         variant === "primary" &&
-          "bg-gradient-to-b from-gold-400 to-gold-600 text-night-950 shadow-md shadow-gold-500/20 hover:shadow-lg hover:shadow-gold-500/30 hover:brightness-105 active:scale-[0.98]",
+          "bg-accent-solid text-accent-on-solid shadow-md shadow-accent-solid/20 hover:brightness-105 active:scale-[0.98]",
         variant === "ghost" &&
-          "border border-night-600/30 bg-transparent text-foreground hover:bg-night-500/10 active:scale-[0.98]",
+          "border border-border bg-transparent text-ink hover:bg-accent-solid/10 active:scale-[0.98]",
         className,
       )}
       disabled={disabled || loading}

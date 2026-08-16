@@ -489,6 +489,11 @@ export interface VisibilityGridResult {
     verdict: string;
     moon_altitude_deg: number;
     elongation_deg: number;
+    sun_altitude_deg: number;
+    illumination_fraction: number;
+    lag_time_minutes: number | null;
+    crescent_width_arcmin: number;
+    moon_age_hours: number;
   }>;
 }
 

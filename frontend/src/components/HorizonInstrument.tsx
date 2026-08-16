@@ -64,6 +64,17 @@ export interface HorizonInstrumentProps {
   viewport?: InstrumentViewport;
   /** DESIGN.md §3.3: the one 900ms orchestrated reveal, once per session - the CALLER decides when that is (e.g. only on the first page that mounts an instrument each session), not this component. Defaults to a plain opacity-only entrance. */
   animateEntrance?: boolean;
+  /**
+   * The <dl> readout below the drawing. Default true for a full-size
+   * instrument (DESIGN.md §5.1: "The numeric readout beside it is a real
+   * <dl>, fully keyboard accessible"). Set false at miniature sizes (the
+   * Setahun grid, a reduced-size hover instrument) - found by rendering an
+   * actual Setahun preview: a 4-column numeric grid has no legible layout
+   * at ~150px wide, and DESIGN.md's own framing for that view ("twelve
+   * miniature instruments...not twelve cards of numbers") says the drawing
+   * should carry it at that scale, not a stat block bolted under it.
+   */
+  showReadout?: boolean;
   className?: string;
 }
 
@@ -73,6 +84,7 @@ export function HorizonInstrument({
   verdictSentence,
   viewport = DEFAULT_VIEWPORT,
   animateEntrance = false,
+  showReadout = true,
   className,
 }: HorizonInstrumentProps) {
   const uid = useId();
@@ -310,41 +322,44 @@ export function HorizonInstrument({
       </motion.svg>
 
       {/* Numeric readout - a real <dl>, fully keyboard accessible, hover-
-          and focus-linked to the drawing above (DESIGN.md §5.1). */}
-      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-        <InstrumentReadoutRow
-          rowKey="altitude"
-          label="Altitude"
-          value={formatDeg(reading.moonAltitudeDeg)}
-          highlighted={highlighted === "altitude"}
-          onEnter={() => highlight("altitude")}
-          onLeave={() => highlight(null)}
-        />
-        <InstrumentReadoutRow
-          rowKey="elongation"
-          label="Elongation"
-          value={formatDeg(reading.elongationDeg)}
-          highlighted={highlighted === "elongation"}
-          onEnter={() => highlight("elongation")}
-          onLeave={() => highlight(null)}
-        />
-        <InstrumentReadoutRow
-          rowKey="moonAge"
-          label="Moon age"
-          value={reading.moonAgeHours === undefined ? "—" : `${reading.moonAgeHours.toFixed(1)} h`}
-          highlighted={highlighted === "moonAge"}
-          onEnter={() => highlight("moonAge")}
-          onLeave={() => highlight(null)}
-        />
-        <InstrumentReadoutRow
-          rowKey="lag"
-          label="Lag time"
-          value={reading.lagTimeMinutes === null ? "no moonset" : formatMinutes(reading.lagTimeMinutes)}
-          highlighted={highlighted === "lag"}
-          onEnter={() => highlight("lag")}
-          onLeave={() => highlight(null)}
-        />
-      </dl>
+          and focus-linked to the drawing above (DESIGN.md §5.1). Omitted at
+          miniature sizes - see showReadout's doc comment. */}
+      {showReadout && (
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
+          <InstrumentReadoutRow
+            rowKey="altitude"
+            label="Altitude"
+            value={formatDeg(reading.moonAltitudeDeg)}
+            highlighted={highlighted === "altitude"}
+            onEnter={() => highlight("altitude")}
+            onLeave={() => highlight(null)}
+          />
+          <InstrumentReadoutRow
+            rowKey="elongation"
+            label="Elongation"
+            value={formatDeg(reading.elongationDeg)}
+            highlighted={highlighted === "elongation"}
+            onEnter={() => highlight("elongation")}
+            onLeave={() => highlight(null)}
+          />
+          <InstrumentReadoutRow
+            rowKey="moonAge"
+            label="Moon age"
+            value={reading.moonAgeHours === undefined ? "—" : `${reading.moonAgeHours.toFixed(1)} h`}
+            highlighted={highlighted === "moonAge"}
+            onEnter={() => highlight("moonAge")}
+            onLeave={() => highlight(null)}
+          />
+          <InstrumentReadoutRow
+            rowKey="lag"
+            label="Lag time"
+            value={reading.lagTimeMinutes === null ? "no moonset" : formatMinutes(reading.lagTimeMinutes)}
+            highlighted={highlighted === "lag"}
+            onEnter={() => highlight("lag")}
+            onLeave={() => highlight(null)}
+          />
+        </dl>
+      )}
     </div>
   );
 }

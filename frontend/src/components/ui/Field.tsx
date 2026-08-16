@@ -21,4 +21,4 @@ export function Field({
 // enough to visibly misalign a row of mixed input/button controls. Fixing
 // the height removes the discrepancy instead of trying to pad around it.
 export const inputClasses =
-  "block h-11 w-full rounded-lg border border-neutral-300 bg-white/80 px-3 py-2.5 text-sm text-neutral-900 shadow-sm outline-none transition-colors focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 dark:border-night-600/50 dark:bg-night-800/60 dark:text-neutral-100 dark:focus:border-gold-400";
+  "block h-11 w-full rounded-lg border border-border bg-surface-card px-3 py-2.5 text-sm text-ink shadow-sm outline-none transition-colors duration-fast focus:border-accent-solid focus:ring-2 focus:ring-accent-solid/20";

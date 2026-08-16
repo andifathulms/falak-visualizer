@@ -1,5 +1,43 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Makes a `var(--token)` colour support Tailwind's opacity-modifier syntax
+ * (`bg-accent-solid/10`).
+ *
+ * Found by rendering an actual page (migration step 5's Se-Indonesia sweep
+ * rendered solid black instead of a translucent tint): Tailwind v3 can only
+ * synthesize an opacity variant from a colour it can decompose into
+ * channels - a literal hex, or a `rgb(var(--x) / <alpha-value>)` triple. A
+ * plain `"var(--token)"` string is opaque to it, so every `/NN` modifier
+ * against one of these tokens was silently generating no CSS rule at all,
+ * across every step of this migration so far (Badge, ErrorBanner,
+ * HisabDisclaimer, ContextBar, ThemeToggle, and this file's own `bg-black/5`-
+ * style Tailwind-native usages were unaffected - only modifiers against the
+ * *custom* tokens defined below failed). Confirmed directly against the
+ * compiled CSS output, not assumed: `.bg-accent-solid{...}` existed,
+ * `.bg-accent-solid\/10{...}` did not.
+ *
+ * Tailwind does support a FUNCTION as a colour's theme value, receiving
+ * `opacityValue` when a modifier is present. Wiring that through
+ * `color-mix()` - already used by `.glass-card` in globals.css, so not a
+ * new browser-support bar for this project - fixes every existing and
+ * future `/NN` usage at the source, without changing how the underlying
+ * CSS custom properties are stored (they stay plain, valid hex strings,
+ * which every direct `var(--token)` reference elsewhere - inline SVG
+ * fills/strokes in HorizonInstrument.tsx and others - still depends on).
+ */
+// Tailwind's bundled types don't cover function-valued theme colours even
+// though the runtime (tailwindcss/src/util/withAlphaVariable and every core
+// colour Tailwind ships) supports them - the `as unknown as string` below is
+// working around a type-definition gap, not a real string.
+function withOpacity(cssVar: string): string {
+  const fn = ({ opacityValue }: { opacityValue?: string }): string =>
+    opacityValue === undefined
+      ? `var(${cssVar})`
+      : `color-mix(in srgb, var(${cssVar}) calc(${opacityValue} * 100%), transparent)`;
+  return fn as unknown as string;
+}
+
 const config: Config = {
   // DESIGN.md §2.5 / §9.1: a persisted, user-controlled toggle rather than
   // OS-preference-only. The .dark class is set on <html> by a blocking
@@ -23,23 +61,23 @@ const config: Config = {
         // carrying meaning: the ramps are fixed hexes and cannot make that
         // guarantee in both modes at once.
         surface: {
-          page: "var(--surface-page)",
-          card: "var(--surface-card)",
+          page: withOpacity("--surface-page"),
+          card: withOpacity("--surface-card"),
         },
-        border: "var(--border)",
+        border: withOpacity("--border"),
         ink: {
-          DEFAULT: "var(--text-body)",
-          muted: "var(--text-muted)",
+          DEFAULT: withOpacity("--text-body"),
+          muted: withOpacity("--text-muted"),
         },
         accent: {
-          DEFAULT: "var(--accent-text)",
-          solid: "var(--accent-solid)",
-          on: "var(--accent-on-solid)",
+          DEFAULT: withOpacity("--accent-text"),
+          solid: withOpacity("--accent-solid"),
+          on: withOpacity("--accent-on-solid"),
         },
         verdict: {
-          lit: "var(--verdict-lit)",
-          dark: "var(--verdict-dark)",
-          margin: "var(--verdict-margin)",
+          lit: withOpacity("--verdict-lit"),
+          dark: withOpacity("--verdict-dark"),
+          margin: withOpacity("--verdict-margin"),
         },
 
         // --- Superseded ramps -----------------------------------------------

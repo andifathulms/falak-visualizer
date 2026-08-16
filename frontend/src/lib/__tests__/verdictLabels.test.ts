@@ -5,15 +5,15 @@ import { isVisible } from "../verdict";
 
 describe("verdictLabel", () => {
   it("covers every spelling the engine can emit", () => {
-    expect(verdictLabel(true)).toBe("Met");
-    expect(verdictLabel(false)).toBe("Not met");
+    expect(verdictLabel(true)).toBe("Terpenuhi");
+    expect(verdictLabel(false)).toBe("Belum terpenuhi");
     // grid.ts stringifies booleans Python-style for the map payload.
-    expect(verdictLabel("True")).toBe("Met");
-    expect(verdictLabel("False")).toBe("Not met");
-    expect(verdictLabel("visible")).toBe("Visible");
-    expect(verdictLabel("visible_optical_aid")).toBe("Visible with optical aid");
+    expect(verdictLabel("True")).toBe("Terpenuhi");
+    expect(verdictLabel("False")).toBe("Belum terpenuhi");
+    expect(verdictLabel("visible")).toBe("Terlihat");
+    expect(verdictLabel("visible_optical_aid")).toBe("Terlihat dengan alat bantu");
     expect(verdictLabel("marginal")).toBe("Marginal");
-    expect(verdictLabel("not_visible")).toBe("Not visible");
+    expect(verdictLabel("not_visible")).toBe("Tidak terlihat");
   });
 
   it("passes an unrecognised verdict through rather than hiding it", () => {
@@ -37,6 +37,6 @@ describe("verdictLabel", () => {
     expect(isVisible("visible_optical_aid")).toBe(true);
     expect(isVisible("marginal")).toBe(false);
     expect(isVisible(true)).toBe(true);
-    expect(isVisible("Visible with optical aid")).toBe(false);
+    expect(isVisible("Terlihat dengan alat bantu")).toBe(false);
   });
 });

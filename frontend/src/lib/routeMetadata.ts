@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ROUTES, SITE, absoluteUrl, metaDescription, type RouteKey } from "@/lib/routes";
+import { ROUTES, SITE, absoluteUrl, metaDescription, type RouteKey, type RouteMeta } from "@/lib/routes";
 
 /**
  * Build a route's metadata from the same strings the page renders.
@@ -20,7 +20,12 @@ import { ROUTES, SITE, absoluteUrl, metaDescription, type RouteKey } from "@/lib
  * Pages then serves it as application/octet-stream, which unfurlers reject.
  */
 export function routeMetadata(key: RouteKey): Metadata {
-  const route = ROUTES[key];
+  // Cast to the shared interface, not a narrower per-key literal: ROUTES is
+  // `as const satisfies Record<...>` for the sake of each entry's literal
+  // `path`/`title` types elsewhere, but that same literal-preservation is
+  // why TS won't let a key-generic accessor read an optional field (like
+  // `locale`) that not every entry sets - RouteMeta is the actual contract.
+  const route = ROUTES[key] as RouteMeta;
   const url = absoluteUrl(route.path);
   const description = metaDescription(route.description);
   const title = `${route.title} — ${SITE.name}`;
@@ -35,7 +40,7 @@ export function routeMetadata(key: RouteKey): Metadata {
       title,
       description,
       url,
-      locale: "en",
+      locale: route.locale ?? "en",
       images: [{ url: image, width: 1200, height: 630, alt: `${SITE.name} share card` }],
     },
     twitter: {

@@ -66,10 +66,7 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
   const otherMet = conditionsFor(other, obs).every((c) => c.met);
 
   return (
-    <section
-      aria-labelledby="criterion-history"
-      className="rounded-xl border border-neutral-200 p-4 dark:border-night-700/60"
-    >
+    <section aria-labelledby="criterion-history" className="rounded-xl border border-border p-4">
       <h2 id="criterion-history" className="text-md font-semibold">
         The same evening, under a different rule
       </h2>
@@ -81,7 +78,7 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
       <div
         role="group"
         aria-label="Criterion to apply"
-        className="mt-3 inline-flex flex-wrap rounded-xl border border-neutral-300 p-1 dark:border-night-600/50"
+        className="mt-3 inline-flex flex-wrap rounded-xl border border-border p-1"
       >
         {(["current", "pre2021"] as const).map((k) => (
           <button
@@ -91,8 +88,8 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
             aria-pressed={rule === k}
             className={
               rule === k
-                ? "rounded-lg bg-gold-500/15 px-3 py-1.5 text-sm font-medium text-accent"
-                : "rounded-lg px-3 py-1.5 text-sm font-medium text-ink-muted hover:text-foreground"
+                ? "rounded-lg bg-accent-solid/15 px-3 py-1.5 text-sm font-medium text-accent"
+                : "rounded-lg px-3 py-1.5 text-sm font-medium text-ink-muted hover:text-ink"
             }
           >
             {RULES[k].label}
@@ -100,7 +97,7 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
         ))}
       </div>
 
-      <p className="mt-3 font-mono text-2xs text-foreground">{active.summary}</p>
+      <p className="mt-3 font-mono text-2xs text-ink">{active.summary}</p>
 
       <ul className="mt-2 space-y-1">
         {conditions.map((c) => (
@@ -113,7 +110,7 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
         ))}
       </ul>
 
-      <p className="mt-3 border-t border-neutral-200 pt-3 text-sm dark:border-night-700/60">
+      <p className="mt-3 border-t border-border pt-3 text-sm">
         Under this rule the crescent is{" "}
         <span className="font-semibold">{met ? "established" : "not established"}</span> on this
         evening.{" "}

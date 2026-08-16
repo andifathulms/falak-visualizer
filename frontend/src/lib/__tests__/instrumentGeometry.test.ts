@@ -10,6 +10,8 @@ import {
   mabimsThresholdBand,
   odehThresholdBand,
   wujudulHilalMarkerBand,
+  allThresholdBands,
+  horizonReadingFromObservation,
   DEFAULT_VIEWPORT,
   MOON_RADIUS,
   type HorizonReading,
@@ -281,6 +283,27 @@ describe("threshold bands", () => {
     // Guard against the fixture set silently losing coverage of either arm.
     expect(visibleChecked).toBeGreaterThan(0);
     expect(notVisibleChecked).toBeGreaterThan(0);
+  });
+});
+
+describe("allThresholdBands", () => {
+  it("returns wujudul hilal, MABIMS, then Odeh, in that order", () => {
+    const bands = allThresholdBands(0.9);
+    expect(bands.map((b) => b.key)).toEqual(["wujudul_hilal", "mabims_2021", "odeh"]);
+  });
+});
+
+describe("horizonReadingFromObservation", () => {
+  it("maps every real fixture observation's snake_case fields without loss", () => {
+    for (const o of OBSERVATIONS) {
+      const reading = horizonReadingFromObservation(o);
+      expect(reading.moonAltitudeDeg).toBe(o.moon_altitude_deg);
+      expect(reading.sunAltitudeDeg).toBe(o.sun_altitude_deg);
+      expect(reading.elongationDeg).toBe(o.elongation_deg);
+      expect(reading.illuminationFraction).toBe(o.illumination_fraction);
+      expect(reading.lagTimeMinutes).toBe(o.lag_time_minutes);
+      expect(reading.crescentWidthArcmin).toBe(o.crescent_width_arcmin);
+    }
   });
 });
 

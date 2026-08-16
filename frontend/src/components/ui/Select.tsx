@@ -46,7 +46,7 @@ export function Select({
                   className={({ active, selected }) =>
                     cn(
                       "flex cursor-pointer items-center gap-2 px-3 py-2",
-                      active && "bg-gold-500/10",
+                      active && "bg-accent-solid/10",
                       selected && "text-accent",
                     )
                   }

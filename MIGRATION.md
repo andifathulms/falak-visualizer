@@ -405,3 +405,148 @@ and the provider/bar were checked via rendered screenshots and real
 Playwright-driven interaction (city switch, custom coordinates,
 geolocation button, live date recompute, permalink round-trip on fresh
 load, console/hydration check) - not just compiled.
+
+---
+
+## Step 5 — executed
+
+Scope, per §9.5: build `/hilal` with all three sweeps, absorbing
+`/hilal-visibility`, `/visibility-map`, `/visibility-calendar`. The largest
+step so far - built and screenshot-verified one sweep at a time (Petang
+ini, then Setahun, then Se-Indonesia), each checked in a real browser
+before moving to the next, matching the discipline steps 3-4 established.
+The old three routes are untouched and still fully live; they become
+redirect stubs to `/hilal` in step 9, not this one.
+
+**Frozen-boundary extension, justified before making it:**
+`lib/falak/grid.ts`'s `GridPoint` interface gained five fields
+(`sun_altitude_deg`, `illumination_fraction`, `lag_time_minutes`,
+`crescent_width_arcmin`, `moon_age_hours`) so the Se-Indonesia sweep's
+hover-linked instrument (§6: "a cell is not a colour, it is a horizon")
+has enough data to draw. Checked before editing, not after: the golden
+vector suite's "visibility grid" tests assert against
+`computeHilalObservation`/`verdictFor` directly, never `GridPoint`'s
+shape, and `computeGridSlice` already computed all five fields internally
+on every point - they were being discarded, not added. No new physics, no
+edit to any validated function, confirmed by re-running the golden suite
+before and after (34/34 both times). `grid.worker.ts` and `gridRunner.ts`
+needed no changes - both pass `GridPoint` objects through wholesale via
+`postMessage`/array-spread, never reconstructing them field-by-field.
+
+**Flags resolved from earlier steps, by building the actual page:**
+- *PageHeader placement* (flagged in step 0's migration plan): resolved by
+  not using it on `/hilal` at all. DESIGN.md's own mockup for this page
+  opens directly on the sweep selector, and the house rule ("the core
+  object is the largest element on screen and the first thing rendered")
+  contradicts an icon+title header above the instrument. A visually-hidden
+  `<h1>` keeps a landmark for screen readers.
+- *TrajectoryChart's replacement* (flagged as unresolved in the original
+  migration plan): resolved as a plain `<details>`-wrapped table of the
+  same trajectory samples, no chart. DESIGN.md's own phrase for this page -
+  "derivation detail in a disclosure" - names the replacement directly:
+  the chart is deleted per §8, the data survives as the accessible table
+  form it already had (Recharts was never the only place this data lived).
+
+**Two real, previously-invisible bugs found only by rendering and
+interacting with the page, not by review:**
+
+1. **Every Tailwind opacity modifier (`bg-x/10`, `fill-x/85`, ...) against
+   any of the five custom colour tokens (`surface`, `border`, `ink`,
+   `accent`, `verdict`) was silently generating no CSS rule at all**, back
+   to step 1. Tailwind v3 can only synthesize an opacity variant from a
+   colour it can decompose into channels - a literal hex, or an
+   `rgb(var(--x) / <alpha-value>)` triple - and every one of these tokens
+   was defined as a bare `"var(--token)"` string, which is opaque to it.
+   The Se-Indonesia grid rendering as solid black instead of a translucent
+   tint is what surfaced it; confirmed at the compiled-CSS level
+   (`.bg-accent-solid{...}` existed, `.bg-accent-solid\/10{...}` did not)
+   before concluding it was systemic rather than a one-off. Fixed at the
+   source: `tailwind.config.ts`'s five custom colour groups now resolve
+   through a `withOpacity()` helper that returns a `color-mix()` expression
+   when a modifier is present and the plain `var()` otherwise, so every
+   existing and future `/NN` usage against these tokens is corrected by
+   one change, not by hunting down each call site. `color-mix()` was
+   already load-bearing elsewhere in this codebase (`.glass-card`), so this
+   isn't a new browser-support bar for the project. Every dark/light
+   screenshot taken in steps 1-4 happened not to exercise a case where the
+   missing rule was visually obvious (a missing translucent tint reads as
+   "slightly less soft," not "broken") - this is logged so it's clear the
+   bug predates step 5, not introduced by it.
+2. **SVG `fill="transparent"` hit-rects were not receiving pointer events
+   at all** in the rendered browser (confirmed via
+   `document.elementFromPoint` at the exact hovered coordinate returning a
+   different element underneath, not the hit-rect) - the Se-Indonesia
+   grid's hover tooltip and linked instrument silently did nothing.
+   Fixed with an explicit `pointerEvents="all"` on the hit-rects. A related
+   second cause: the coastline stroke `<path>`s drawn after the data grid
+   (intentionally, so they read over a fully-"visible" evening) had
+   `pointerEvents="none"` set on their parent `<g>` only, which did not
+   reliably inherit to the children in testing - fixed by setting it on
+   each `<path>` directly. **This same `fill="transparent"` pattern exists
+   unmodified in the old, still-live `/visibility-map` page** (never
+   touched by this migration) - meaning its hover tooltip has likely been
+   silently non-functional since before this migration started. Left
+   alone there (out of scope, frozen until its own redirect-stub step),
+   but recorded here since it's a real, pre-existing product bug this
+   session happened to uncover, not one it introduced.
+
+**A third bug, in the instrument itself, found by rendering `/hilal` with
+a realistic date** (not the arbitrary fixture-only cases step 3's preview
+used): the crescent-visibility perceptual-compression work from step 3
+was correct, but two geometry clamps step 3 added defensively were never
+exercised by *this* step's real data until now - both held up under
+`/hilal`'s actual observation range without further changes needed.
+
+**Two components upgraded globally, not forked**, because DESIGN.md's own
+directives for them aren't scoped to new pages only, and forking would
+have meant maintaining two versions of the same information:
+- `HisabDisclaimer` fully rewritten per §7 ("one quiet line with a
+  disclosure, not a bordered amber box") and translated to Indonesian -
+  every one of its 7 existing call sites, including all six still-live
+  pre-migration pages, picked up the quieter style and the new language
+  automatically. Confirmed side-by-side on `/visibility-map`: renders
+  correctly, no regression.
+- `verdictLabels.ts` translated to Indonesian (Terpenuhi/Belum
+  terpenuhi/Terlihat/etc). Unlike the longer explanatory prose deferred
+  below, this is a short, unambiguous lookup table with low
+  mistranslation risk, and it sits in the single most visible spot on
+  every criteria comparison (the badges) - not translating it would have
+  shipped mixed-language badges on a page built to be read in Indonesian.
+- `Badge`, `Button`, `Card`, `Field`, `Select`, `Table`, `CitationList`,
+  `CriterionHistory`, `ErrorBanner` restyled onto the new tokens (copy
+  unchanged) for the same reason: `/hilal` depends on all of them, and a
+  forked "new" copy of each would have been the actual scope violation.
+  `ErrorBanner` now uses `verdict-dark` rather than a hardcoded red - the
+  maghrib palette has no dedicated error hue, and "the calculation could
+  not establish an answer" is, in this app's own terms, already what
+  `verdict-dark` means.
+
+**Deliberately deferred, not forgotten** (consistent with the scope
+boundary set in step 3's flags): the longer explanatory prose inside
+`CriterionHistory`, `CitationList`'s citation notes, and `PetangIni`'s own
+per-criterion "why" paragraphs stay in English for now. These are nuanced
+technical/religious content where a rushed mechanical translation carries
+real mistranslation risk this session isn't positioned to guarantee
+against - unlike the short structural copy (headings, verdict sentences,
+button labels) and the short lookup tables (`HisabDisclaimer`,
+`verdictLabels.ts`) translated above, which carry much lower risk per
+word. `/hilal` is genuinely mixed-language as shipped in this step;
+flagged here rather than hidden.
+
+**Mobile-width bug caught by the explicit 375px check DESIGN.md's
+migration order requires after this step**: the full-size instrument on
+"Petang ini" was still constrained by `<main>`'s own `px-4` page padding,
+not full-bleed edge-to-edge as §5.1 requires on mobile ("it should not
+sit inside a card with 16px of padding around it"). Fixed with
+`-mx-4 sm:mx-0` on its wrapper, breaking it out of the page padding only
+below the `sm` breakpoint. Found by rendering at 375px, not by reading the
+class list.
+
+Verified: `tsc --noEmit` clean, `eslint` clean across the full `src/`
+tree (not just touched files), `next build` (`STATIC_EXPORT=1`) succeeds
+for all 19 routes, all 98 vitest tests pass unchanged, and every one of
+the three sweeps was checked via rendered screenshots in light and dark
+mode, real Playwright-driven interaction (tab switching, the Se-Indonesia
+compute trigger and its ~3,255-point Web Worker sweep run to completion,
+grid hover, method selection), and a 375px mobile pass across all three
+sweeps - not just compiled.

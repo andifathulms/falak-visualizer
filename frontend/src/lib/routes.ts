@@ -16,9 +16,21 @@ export interface RouteMeta {
   title: string;
   /** Rendered under the heading AND used, trimmed, as the meta description. */
   description: string;
+  /** Defaults to "en" (see routeMetadata.ts) - set per-route as each page's actual on-screen language changes (DESIGN.md §7's Indonesian-first redesign lands one page at a time). */
+  locale?: "en" | "id";
 }
 
 export const ROUTES = {
+  // New IA (DESIGN.md §4.1). Indonesian per §7 - unlike the entries below,
+  // which stay in English until each old route is absorbed and retired
+  // (MIGRATION.md).
+  "hilal": {
+    path: "/hilal",
+    title: "Hilal",
+    description:
+      "Apakah hilal terlihat malam ini? Satu tempat satu petang, satu petang se-Indonesia, atau satu tempat setahun penuh — satu perhitungan yang sama, dilihat dari tiga sisi.",
+    locale: "id",
+  },
   "converter": {
     path: "/converter",
     title: "Hijri ↔ Gregorian Converter",

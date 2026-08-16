@@ -12,7 +12,11 @@ export function ErrorBanner({ message }: { message: string }) {
       role="alert"
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-start gap-2.5 rounded-xl border border-red-300/50 bg-red-500/[0.07] px-4 py-3 text-sm text-red-700 dark:border-red-800/50 dark:text-red-300"
+      // No dedicated "error" hue in the maghrib palette (DESIGN.md §3.1) -
+      // reusing verdict-dark (the cool, "not established" tone) rather than
+      // introducing a fourth colour family for a state that is, in this
+      // app's own terms, "the calculation could not establish an answer".
+      className="flex items-start gap-2.5 rounded-xl border border-verdict-dark/30 bg-verdict-dark/[0.07] px-4 py-3 text-sm text-verdict-dark"
     >
       <CircleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={2} />
       {message}
