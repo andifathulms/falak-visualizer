@@ -14,6 +14,7 @@ import type { DayArcInput, PrayerKey } from "@/lib/dayArcGeometry";
 import { CONVENTIONS } from "@/lib/falak/prayerTimes";
 import { qiblaDirection } from "@/lib/falak/qibla";
 import { parsePlainDate } from "@/lib/falak/time";
+import { readQueryParams } from "@/lib/permalink";
 
 const PRAYER_ORDER: PrayerKey[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
 const PRAYER_LABEL: Record<PrayerKey, string> = {
@@ -53,6 +54,16 @@ export default function LangitPage() {
   const { lat, lon, dateIso, timeZone } = useObservation();
   const [convention, setConvention] = useState(DEFAULT_CONVENTION);
   const [view, setView] = useState<"daily" | "monthly">("daily");
+
+  // `?convention=` read once on mount (migration step 9): the redirect
+  // stub replacing /prayer-times needs a way to carry an old link's
+  // convention choice over, the same reasoning as /hilal's `?sweep=`.
+  useEffect(() => {
+    const qConvention = readQueryParams().get("convention");
+    if (qConvention && CONVENTION_OPTIONS.some((o) => o.value === qConvention)) {
+      setConvention(qConvention);
+    }
+  }, []);
 
   const [dayArc, setDayArc] = useState<DayArcInput | null>(null);
   const [dayArcError, setDayArcError] = useState<string | null>(null);

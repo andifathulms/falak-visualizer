@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PetangIni } from "@/components/hilal/PetangIni";
 import { Setahun } from "@/components/hilal/Setahun";
 import { SeIndonesia } from "@/components/hilal/SeIndonesia";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
+import { readQueryParams } from "@/lib/permalink";
 import type { HilalMethod } from "@/lib/api";
 
 /**
@@ -19,9 +20,12 @@ import type { HilalMethod } from "@/lib/api";
  * header above the instrument would contradict that. A visually-hidden h1
  * still gives screen reader users a landmark.
  *
- * The old three routes (/hilal-visibility, /visibility-map,
- * /visibility-calendar) are untouched and still live - they become
- * redirect stubs to this page in a later step (§9.9), not this one.
+ * `sweep`/`method` read `?sweep=&method=` once on mount (migration step
+ * 9): the redirect stubs replacing /visibility-map and
+ * /visibility-calendar need a way to land here on the right tab rather
+ * than always defaulting to "Petang ini" - without this, "existing
+ * permalinks must not break" (DESIGN.md §4.1) would hold only loosely,
+ * landing visitors on a different view than the one they linked to.
  */
 const SWEEPS = [
   { key: "petang" as const, label: "Petang ini" },
@@ -29,9 +33,25 @@ const SWEEPS = [
   { key: "setahun" as const, label: "Setahun" },
 ];
 
+function isSweepKey(value: string | null): value is "petang" | "indonesia" | "setahun" {
+  return value === "petang" || value === "indonesia" || value === "setahun";
+}
+
+function isHilalMethod(value: string | null): value is HilalMethod {
+  return value === "wujudul_hilal" || value === "mabims_2021" || value === "odeh";
+}
+
 export default function HilalPage() {
   const [sweep, setSweep] = useState<"petang" | "indonesia" | "setahun">("petang");
   const [method, setMethod] = useState<HilalMethod>("mabims_2021");
+
+  useEffect(() => {
+    const params = readQueryParams();
+    const qSweep = params.get("sweep");
+    const qMethod = params.get("method");
+    if (isSweepKey(qSweep)) setSweep(qSweep);
+    if (isHilalMethod(qMethod)) setMethod(qMethod);
+  }, []);
 
   return (
     <div lang="id" className="space-y-6">

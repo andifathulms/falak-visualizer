@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { routeMetadata } from "@/lib/routeMetadata";
+import { absoluteUrl } from "@/lib/routes";
 
-/**
- * Server layout wrapping a client page purely so this route can own its
- * metadata - a "use client" page cannot export it, so every route inherited the
- * root layout's single title and description before this. Renders nothing of
- * its own.
- */
-export const metadata: Metadata = routeMetadata("isbat-accuracy");
+export const metadata: Metadata = {
+  title: "Isbat Accuracy has moved — Falak",
+  description: "Isbat Accuracy is now part of Kalender.",
+  alternates: { canonical: absoluteUrl("/kalender") },
+  robots: { index: false, follow: true },
+};
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return children;

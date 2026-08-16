@@ -803,3 +803,78 @@ page checked via rendered screenshots (light/dark), a 375px mobile pass
 confirming the full-bleed instrument fix from step 5 carries over
 correctly, and a real two-page browser session confirming the once-per-
 session animation gate actually gates.
+
+## Step 9 — executed
+
+Redirect stubs for all nine retired routes (`/converter`,
+`/hilal-visibility`, `/visibility-map`, `/visibility-calendar`,
+`/hijri-archive`, `/isbat-accuracy`, `/prayer-times`, `/qibla`), plus
+re-pointing the existing `/method-divergence` stub (previously
+`→ /hijri-archive`, itself now retired) straight at `/kalender` so no
+redirect chain ever exists even transiently.
+
+**Query params preserved means intent preserved, not names forwarded.**
+`ObservationProvider`'s `lat`/`lon`/`d` contract doesn't match any old
+route's own param names (`date`, `year`, `hijri_year`, `method`,
+`convention`, `direction`, `hijri_month`, `hijri_day`) - a naive
+pass-through would land every old permalink on today's default instead
+of the date/place it actually linked to. `lib/legacyRedirects.ts` holds
+the shared translation helpers (`hijriYearToGregorianDate` - one read of
+the frozen engine's already-validated `hijriToGregorian`, `legacyLatLon`,
+`buildSearch`); each stub's `page.tsx` has its own small
+`resolveSearch(params)` matching its old route's actual shape. `/hilal`
+and `/langit` gained a one-time `useEffect` reading `?sweep=`/`?method=`
+and `?convention=` respectively via the existing `lib/permalink.ts`, so
+a redirect can land a reader on the right tab/convention rather than
+always the default.
+
+**A real bug, found the same way as every other one this migration
+turned up - by driving an actual browser, not by reading the diff.**
+The first `RedirectStub` implementation used `next/navigation`'s
+`router.replace()`. Playwright confirmed all nine stubs never actually
+navigated: every one settled back on its OWN old path, with the query
+string rewritten to `ObservationProvider`'s own default params (today's
+date, a default city) instead of the translated ones. Root cause:
+`ObservationProvider` is mounted in the root layout, so it runs on every
+route including these stubs; its post-hydrate effect calls
+`writeQueryParams` → `window.history.replaceState` directly against
+`window.location.pathname` at the moment it fires. That effect runs one
+render cycle after `RedirectStub`'s own effect (gated behind its own
+`hydrated` flag), and by then `router.replace()`'s client-side transition
+had not yet finished swapping `window.location.pathname` - so
+`ObservationProvider` read the OLD path, wrote a new query string onto
+it, and `router.replace()`'s pending transition never recovered. Fixed
+by switching `RedirectStub` to `window.location.replace()`, a real
+browser navigation no other component's effect can race or overwrite.
+Re-verified with Playwright across all nine translation cases: correct
+destination path, correct translated `d`/`lat`/`lon`/`sweep`/`method`/
+`convention`, no console errors, no hydration warnings.
+
+**Known, pre-existing characteristic, not a step-9 regression, flagged
+not fixed:** once landed on `/hilal` or `/langit`, `ObservationProvider`'s
+own URL-sync effect normalizes the address bar down to its own
+`lat`/`lon`/`d`/`tz` shape, dropping any `sweep`/`method`/`convention`
+param that isn't part of its model - a characteristic of the URL-sync
+built in step 4, not something step 9 introduced. Functionally harmless:
+`/hilal`'s and `/langit`'s own param-reading effects run one render cycle
+earlier (child effects fire before the ancestor `ObservationProvider`'s),
+so the right tab/convention is already applied to React state before the
+address bar gets normalized - confirmed via Playwright (correct tab
+active, correct data rendered, screenshot checked). The only cost is that
+re-copying the URL from the address bar after landing won't carry
+`sweep`/`method`/`convention` forward a second time. Worth a follow-up if
+"share this exact view" permalinks for those three params matter beyond
+what step 9 needed (a working one-time redirect), but out of this step's
+scope.
+
+`routes.ts`'s `ALL_PATHS` (sitemap) was left unchanged - the nine stubs
+follow the same precedent `/method-divergence` already set: retired
+routes are never listed for indexing (`layout.tsx` sets
+`robots: {index: false, follow: true}` and a `canonical` pointing at the
+new route on all nine), only the live IA appears in the sitemap.
+
+Verified: `tsc --noEmit` clean, `eslint` clean, all 117 vitest tests pass
+unchanged, `next build` (`STATIC_EXPORT=1`) succeeds for all 21 routes,
+and all nine redirects re-verified end-to-end with Playwright after the
+`window.location.replace()` fix - correct destination, correct
+translated params, no console errors.

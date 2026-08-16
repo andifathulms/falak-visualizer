@@ -1,261 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeftRight, Calendar } from "lucide-react";
-import { HisabDisclaimer } from "@/components/HisabDisclaimer";
-import { DerivationTrace } from "@/components/DerivationTrace";
-import { ErrorBanner } from "@/components/ErrorBanner";
-import { PageHeader } from "@/components/PageHeader";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Field, inputClasses } from "@/components/ui/Field";
-import { Select } from "@/components/ui/Select";
-import { CopyLinkButton } from "@/components/CopyLinkButton";
-import { cn } from "@/lib/cn";
-import { todayIso } from "@/lib/date";
-import { ApiError, convertDate, ConvertResult } from "@/lib/api";
-import { readQueryParams, writeQueryParams } from "@/lib/permalink";
-import { ResultAnnouncer } from "@/components/ResultAnnouncer";
-import { HowMonthsWork } from "@/components/HowMonthsWork";
-import { ROUTES } from "@/lib/routes";
+import { RedirectStub } from "@/components/RedirectStub";
+import { hijriYearToGregorianDate, buildSearch } from "@/lib/legacyRedirects";
+import { hijriToGregorian } from "@/lib/falak/converter";
+import { formatPlainDate } from "@/lib/falak/time";
+import { DEFAULT_CITY } from "@/lib/locations";
 
-const HIJRI_MONTHS = [
-  "Muharram",
-  "Safar",
-  "Rabi'ul Awwal",
-  "Rabi'ul Akhir",
-  "Jumadil Awwal",
-  "Jumadil Akhir",
-  "Rajab",
-  "Sya'ban",
-  "Ramadhan",
-  "Syawal",
-  "Dzulqa'dah",
-  "Dzulhijjah",
-];
+/**
+ * Retired (migration step 9): the converter's one job - "what Gregorian
+ * date is Hijri day X" - is now just one view of /kalender, which already
+ * shows the whole month's boundary next to it instead of a single date in
+ * isolation.
+ *
+ * The old converter never took a location (it always computed against
+ * Jakarta internally), so this stub does the same: hijri_year/month/day
+ * convert via DEFAULT_CITY, never forwarding a lat/lon the old page never
+ * had.
+ */
+function resolveSearch(params: URLSearchParams): string {
+  const direction = params.get("direction");
+  const date = params.get("date");
+  const hijriYear = params.get("hijri_year");
+  const hijriMonth = params.get("hijri_month");
+  const hijriDay = params.get("hijri_day");
 
-const MONTH_OPTIONS = HIJRI_MONTHS.map((name, i) => ({ value: String(i + 1), label: name }));
-
-export default function ConverterPage() {
-  const [direction, setDirection] = useState<"gregorian_to_hijri" | "hijri_to_gregorian">(
-    "gregorian_to_hijri",
-  );
-  const [date, setDate] = useState("");
-  const [hijriYear, setHijriYear] = useState(1445);
-  const [hijriMonth, setHijriMonth] = useState(9);
-  const [hijriDay, setHijriDay] = useState(1);
-  const [result, setResult] = useState<ConvertResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function compute(
-    dir: "gregorian_to_hijri" | "hijri_to_gregorian",
-    d: string,
-    y: number,
-    m: number,
-    day: number,
-  ) {
-    setLoading(true);
-    setError(null);
-    setResult(null);
+  if (direction === "hijri_to_gregorian" && hijriYear && hijriMonth && hijriDay) {
     try {
-      const r = await convertDate(
-        dir === "gregorian_to_hijri"
-          ? { direction: dir, date: d }
-          : { direction: dir, hijri_year: y, hijri_month: m, hijri_day: day },
+      const d = formatPlainDate(
+        hijriToGregorian(Number(hijriYear), Number(hijriMonth), Number(hijriDay), DEFAULT_CITY.lat, DEFAULT_CITY.lon),
       );
-      setResult(r);
-      writeQueryParams(
-        dir === "gregorian_to_hijri"
-          ? { direction: dir, date: d }
-          : { direction: dir, hijri_year: y, hijri_month: m, hijri_day: day },
-      );
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The calculation failed unexpectedly.");
-    } finally {
-      setLoading(false);
+      return buildSearch({ d });
+    } catch {
+      return "";
     }
   }
-
-  useEffect(() => {
-    const params = readQueryParams();
-    const qDirection = params.get("direction");
-    if (qDirection === "gregorian_to_hijri" && params.get("date")) {
-      const qDate = params.get("date")!;
-      setDirection(qDirection);
-      setDate(qDate);
-      compute(qDirection, qDate, hijriYear, hijriMonth, hijriDay);
-    } else if (qDirection === "hijri_to_gregorian" && params.get("hijri_year")) {
-      const y = Number(params.get("hijri_year"));
-      const m = Number(params.get("hijri_month") ?? hijriMonth);
-      const day = Number(params.get("hijri_day") ?? hijriDay);
-      setDirection(qDirection);
-      setHijriYear(y);
-      setHijriMonth(m);
-      setHijriDay(day);
-      compute(qDirection, date, y, m, day);
-    } else {
-      // Convert today on arrival rather than showing an empty form. With the
-      // derivation now attached to every result, a first-time visitor lands on a
-      // complete worked example - real conjunction, real evenings tested, real
-      // numbers - and can then change the date rather than having to guess what
-      // to ask before the page will teach them anything.
-      const today = todayIso();
-      setDate(today);
-      compute("gregorian_to_hijri", today, hijriYear, hijriMonth, hijriDay);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    await compute(direction, date, hijriYear, hijriMonth, hijriDay);
+  if (date) return buildSearch({ d: date });
+  if (hijriYear) {
+    const d = hijriYearToGregorianDate(Number(hijriYear), DEFAULT_CITY.lat, DEFAULT_CITY.lon);
+    return buildSearch({ d: d ?? undefined });
   }
+  return "";
+}
 
-  return (
-    <div className="space-y-6">
-      <ResultAnnouncer message={result ? (result.direction === "gregorian_to_hijri" ? `Converted. ${result.input_date} is ${result.hijri_day} ${result.hijri_month_name} ${result.hijri_year} Hijri.` : `Converted. ${result.hijri_day} ${HIJRI_MONTHS[result.hijri_month - 1]} ${result.hijri_year} Hijri is ${result.gregorian_date}.`) : null} />
-      <PageHeader
-        icon={Calendar}
-        title={ROUTES["converter"].title}
-        description={ROUTES["converter"].description}
-      />
-
-      <HisabDisclaimer />
-
-      <Card className="p-5">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="inline-flex rounded-xl border border-neutral-300 p-1 dark:border-night-600/50">
-            {(
-              [
-                ["gregorian_to_hijri", "Gregorian → Hijri"],
-                ["hijri_to_gregorian", "Hijri → Gregorian"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setDirection(value)}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  direction === value
-                    ? "bg-gold-500/15 text-accent"
-                    : "text-ink-muted hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            {direction === "gregorian_to_hijri" ? (
-              <motion.div
-                key="g2h"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Field label="Gregorian date">
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className={inputClasses}
-                  />
-                </Field>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="h2g"
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.2 }}
-                className="grid grid-cols-3 gap-3"
-              >
-                <Field label="Hijri year">
-                  <input
-                    type="number"
-                    value={hijriYear}
-                    onChange={(e) => setHijriYear(Number(e.target.value))}
-                    className={inputClasses}
-                  />
-                </Field>
-                <Select
-                  label="Month"
-                  value={String(hijriMonth)}
-                  onChange={(v) => setHijriMonth(Number(v))}
-                  options={MONTH_OPTIONS}
-                />
-                <Field label="Day">
-                  <input
-                    type="number"
-                    min={1}
-                    max={30}
-                    value={hijriDay}
-                    onChange={(e) => setHijriDay(Number(e.target.value))}
-                    className={inputClasses}
-                  />
-                </Field>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <Button type="submit" loading={loading}>
-            {!loading && <ArrowLeftRight className="size-4" />}
-            {loading ? "Converting…" : "Convert"}
-          </Button>
-        </form>
-      </Card>
-
-      {/* Below the form, not above it. The premise still arrives before any
-          result, but the control the reader came for is the first thing they
-          can reach rather than being pushed off the screen by an explanation. */}
-      <HowMonthsWork />
-
-      {error && <ErrorBanner message={error} />}
-
-      <AnimatePresence>
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <Card className="p-5">
-              {result.direction === "gregorian_to_hijri" ? (
-                <p className="text-lg">
-                  {result.input_date} corresponds to{" "}
-                  <strong className="text-gradient-accent">
-                    {result.hijri_day} {result.hijri_month_name} {result.hijri_year}H
-                  </strong>
-                </p>
-              ) : (
-                <p className="text-lg">
-                  {result.hijri_day} {HIJRI_MONTHS[result.hijri_month - 1]} {result.hijri_year}H corresponds to{" "}
-                  <strong className="text-gradient-accent">
-                    {result.gregorian_date}
-                  </strong>
-                </p>
-              )}
-              {result.derivation ? (
-                <DerivationTrace derivation={result.derivation} />
-              ) : (
-                <p className="mt-4 text-sm text-ink-muted">
-                  The step-by-step derivation could not be built for this month. The date above still
-                  comes from the same engine; only the explanation is missing.
-                </p>
-              )}
-            </Card>
-            <div className="mt-4">
-              <CopyLinkButton />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+export default function ConverterRedirect() {
+  return <RedirectStub targetPath="/kalender/" targetLabel="Kalender" buildSearch={resolveSearch} />;
 }
