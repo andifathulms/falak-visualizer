@@ -18,14 +18,50 @@ import "./globals.css";
 const HOME_DESCRIPTION =
   "Work out when each Hijri month begins, whether the hilal is visible from where you are, when to pray, and which way the Kaaba lies — with the altitude, elongation and timings behind every answer.";
 
-// One family, one file. Geist Mono used to be loaded here too and was consumed
-// by nothing: tailwind.config declares only `fontFamily.display`, so every
-// `font-mono` in the app resolves to the default ui-monospace system stack. The
-// variable was declared, preloaded at high priority, and referenced nowhere.
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff2",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+/**
+ * Three families, three roles (DESIGN.md §3.2). All self-hosted via
+ * next/font/local from vendored, Latin-subset woff2 files - same pattern the
+ * previous single-family setup used, no Google Fonts network request either
+ * way.
+ *
+ * Weight sets are trimmed to what the app actually uses today (grepped: only
+ * font-normal/font-medium/font-semibold appear anywhere, never font-bold),
+ * not the full family. This is the same discipline the removed Geist Mono
+ * comment used to call out - a shipped weight nothing references is exactly
+ * the mistake being avoided here. A later step can add a file if a new
+ * component genuinely needs a weight this set doesn't cover.
+ *
+ * DESIGN.md calls Be Vietnam Pro "(variable)"; it isn't - Google Fonts never
+ * published a variable build, only static weights. Loaded as three static
+ * files instead, which is the standard next/font/local pattern for a
+ * multi-weight static family and has no user-visible difference from a
+ * variable font at these three weights.
+ */
+const newsreader = localFont({
+  src: "./fonts/Newsreader-Variable.woff2",
+  variable: "--font-display",
+  weight: "200 800",
+  style: "normal",
+  display: "swap",
+});
+
+const beVietnamPro = localFont({
+  src: [
+    { path: "./fonts/BeVietnamPro-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/BeVietnamPro-Medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/BeVietnamPro-SemiBold.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const plexMono = localFont({
+  src: [
+    { path: "./fonts/IBMPlexMono-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/IBMPlexMono-SemiBold.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-plex-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -77,10 +113,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} relative min-h-screen bg-night-sky antialiased`}
-      >
+    <html
+      lang="en"
+      className={`${newsreader.variable} ${beVietnamPro.variable} ${plexMono.variable}`}
+    >
+      {/*
+        The font variable classes live on <html>, not <body>: Tailwind's
+        Preflight sets `font-family: var(--font-sans), ...` on the html
+        selector itself, and a CSS custom property is only visible to the
+        element that defines it and that element's descendants - defining it
+        one level down on <body> would leave <html>'s own font-family
+        unresolved. (The previous single-Geist-family setup had this same
+        placement, which is one reason on top of `font-display` never being
+        applied anywhere that it was silently inert - see the comment above.)
+      */}
+      <body className="relative min-h-screen bg-night-sky antialiased">
         {/* strategy="beforeInteractive": must run before first paint, or the
             wrong theme flashes - see components/ThemeToggle.tsx. Next inlines
             beforeInteractive scripts into <head> regardless of where the

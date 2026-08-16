@@ -171,3 +171,53 @@ inline in `globals.css`, matching the file's existing comment convention:
   (the `--ufuk-*` ramp itself is unchanged).
 - Dark-mode `--verdict-dark`: `#6B5680` (senja-500) → `#9682AB`, an
   unlisted, lighter step of the same senja hue, same treatment.
+
+---
+
+## Step 2 — executed
+
+Scope, per §9.2: add the three families via `next/font/local`, map to
+`display`/`sans`/`mono`, narrow `font-mono` to genuinely technical values.
+
+**Correction to DESIGN.md:** §3.2 calls Be Vietnam Pro "(variable)". Checked
+against the npm registry directly (`@fontsource-variable/be-vietnam-pro`
+returns 404; only `@fontsource/be-vietnam-pro`, static weights, exists) —
+Google Fonts has never published a variable build of this family, only
+Newsreader is actually variable. Loaded Be Vietnam Pro as three static
+weight files instead (400/500/600 — the only weights the app's classNames
+use anywhere, confirmed by grep; `font-bold`/700 appears nowhere). This has
+no user-visible difference from a variable font at these three weights and
+is the standard `next/font/local` pattern for a multi-weight static family.
+Newsreader is genuinely variable and was loaded as one file carrying both
+its `wght` (200–800) and `opsz` (6–72) axes, confirmed via `fontTools`
+against the actual binary rather than assumed from the package name.
+
+**Found and fixed in passing, not scope creep:** the previous single-family
+setup (`fontFamily.display` → Geist) was never actually applied anywhere —
+`grep -rn "font-display\b" src` returned zero matches before this step, and
+Tailwind's Preflight was never told to use it as the default `sans` either
+(only `extend.fontFamily.display` existed, not `.sans`). The app has been
+rendering in the plain browser default sans-serif stack this entire time;
+Geist shipped as dead weight in the same way Geist Mono already had (per
+that font's own removal comment). Fixed by overriding Tailwind's default
+`sans` and `mono` keys (not just adding `display`), which is what makes
+Preflight's `html { font-family: theme('fontFamily.sans') }` and every
+`font-mono` utility actually resolve to the new families — verified against
+the compiled build output, not assumed:
+`html{font-family:var(--font-sans),ui-sans-serif,system-ui,sans-serif}` and
+`.font-mono{font-family:var(--font-plex-mono),ui-monospace,...}`. This also
+required moving the font-variable classes from `<body>` to `<html>` — a CSS
+custom property is only visible to the element defining it and that
+element's descendants, and Preflight's rule lives on `html` itself.
+
+`font-display` is applied to exactly one place in this step: `PageHeader`'s
+`<h1>`, the app's one shared "page title" element and the first item on
+DESIGN.md's own typography table (§3.2). Nowhere else — the rest of the
+typography rollout (verdict sentences, the headline number, pull quotes)
+belongs to the pages that carry them, which are being rewritten wholesale
+in steps 3–8, not retrofitted here.
+
+Verified: `tsc --noEmit` clean, eslint clean, `next build`
+(`STATIC_EXPORT=1`) succeeds, compiled CSS inspected directly to confirm
+the font-family resolution above, and all 63 vitest tests (including the
+golden-vector suite) pass unchanged.

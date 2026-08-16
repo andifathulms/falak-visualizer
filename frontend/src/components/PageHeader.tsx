@@ -23,7 +23,11 @@ export function PageHeader({
         <Icon className="size-5" strokeWidth={1.8} />
       </div>
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+        {/* DESIGN.md §3.2: page titles are Newsreader (`font-display`), not
+            the UI sans - this is the one place in the current app that role
+            unambiguously applies regardless of how PageHeader's placement
+            changes later (see MIGRATION.md's flag on this component). */}
+        <h1 className="font-display text-xl font-semibold tracking-tight">{title}</h1>
         <p className="mt-1 text-sm text-ink-muted">{description}</p>
       </div>
     </motion.div>

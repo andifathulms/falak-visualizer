@@ -88,8 +88,18 @@ const config: Config = {
           dark: "#6b7899",
         },
       },
+      // DESIGN.md §3.2. `sans` and `mono` override Tailwind's own default
+      // keys (not just add new ones): Preflight's `html { font-family:
+      // theme('fontFamily.sans') }` and every `font-mono` utility both read
+      // these, so overriding the defaults - rather than only adding
+      // `display` as before - is what makes Be Vietnam Pro the app's actual
+      // body font and narrows `font-mono` to Plex Mono instead of the
+      // browser's ui-monospace stack. `display` is Newsreader, a serif book
+      // face, so its own fallback stack is serif, not sans.
       fontFamily: {
-        display: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui"],
+        display: ["var(--font-display)", "ui-serif", "Georgia", "serif"],
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-plex-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
 
       // The single type ladder from globals.css. Overriding (not extending)
