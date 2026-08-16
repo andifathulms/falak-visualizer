@@ -31,6 +31,13 @@ export const ROUTES = {
       "Apakah hilal terlihat malam ini? Satu tempat satu petang, satu petang se-Indonesia, atau satu tempat setahun penuh — satu perhitungan yang sama, dilihat dari tiga sisi.",
     locale: "id",
   },
+  "kalender": {
+    path: "/kalender",
+    title: "Kalender",
+    description:
+      "Tanggal berapa hari ini, dan kenapa? Dua belas batas awal bulan Hijriah dalam satu tahun, tiga kriteria berdampingan, dan sidang isbat sebagai pembanding — lengkap dengan alasan di balik setiap tanggal.",
+    locale: "id",
+  },
   "converter": {
     path: "/converter",
     title: "Hijri ↔ Gregorian Converter",

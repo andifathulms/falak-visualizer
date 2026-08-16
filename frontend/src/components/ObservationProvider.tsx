@@ -38,6 +38,10 @@ import { parsePlainDate } from "@/lib/falak/time";
 export interface HijriEquivalent {
   label: string;
   error?: string;
+  /** Structured form of the same result `label` is formatted from, for callers that need to drive UI off the actual values rather than re-parsing the string - e.g. /kalender highlighting BoundaryRibbon's matching month (migration step 6). Undefined exactly when `error` is set. */
+  year?: number;
+  month?: number;
+  day?: number;
 }
 
 interface GeoState {
@@ -139,7 +143,12 @@ export function ObservationProvider({ children }: { children: React.ReactNode })
     try {
       const plainDate = parsePlainDate(observation.dateIso);
       const result = gregorianToHijri(plainDate, observation.lat, observation.lon);
-      return { label: `${result.day} ${result.monthName} ${result.year}` };
+      return {
+        label: `${result.day} ${result.monthName} ${result.year}`,
+        year: result.year,
+        month: result.month,
+        day: result.day,
+      };
     } catch (error) {
       // CLAUDE.md: no silent fallback. A date outside ephemeris range or an
       // unparseable value surfaces here explicitly rather than showing a

@@ -550,3 +550,99 @@ mode, real Playwright-driven interaction (tab switching, the Se-Indonesia
 compute trigger and its ~3,255-point Web Worker sweep run to completion,
 grid hover, method selection), and a 375px mobile pass across all three
 sweeps - not just compiled.
+
+---
+
+## Step 6 — executed
+
+Scope, per §9.6: build `BoundaryRibbon`, then `/kalender`, absorbing
+`/converter`, `/hijri-archive`, `/isbat-accuracy`. Same standalone-first
+discipline as steps 3 and 5: a pure geometry module, tested; a component,
+screenshot-verified with real engine data against a temporary preview
+route; then the page.
+
+**Design reading, stated explicitly since DESIGN.md's prose leaves the
+exact mechanism open:** §5.2 describes lanes that "merge into one solid
+band" or "visibly split, offset by the number of days". Implemented as one
+mechanism, not two code paths: each boundary's per-lane ticks are always
+connected by a single polyline; when every resolved tick shares the same
+x-position the polyline is trivially straight (drawn thicker, solid,
+accent-coloured - reads as "merged"), and when they differ it zigzags
+(thinner, dashed, verdict-margin/nila-coloured - reads as "split"). One
+element, two readings, driven entirely by the same offset data
+`fetchHijriYearArchive` already computes - no separate "is this merged"
+branch to keep in sync with the geometry.
+
+**A design decision DESIGN.md leaves implicit, made explicit here:**
+clicking a boundary needs an actual Gregorian date to link to, but the
+geometry module only carries relative day-*offsets* (deliberately - that's
+all layout needs). `BoundaryPoint` carries one additional field,
+`mabimsStartDate`, threaded through for the link only and never read by
+any layout math, so the "pure offsets" property of the geometry itself
+still holds.
+
+**Click targets are plain HTML `<Link>`s below the SVG, not inside it** -
+a deliberate choice made *because of*, not despite, step 5's
+`fill="transparent"`/pointer-events lesson: an SVG-native click target
+around each cluster would need its own hit-testing story, and having just
+paid down that exact class of bug once this step doesn't reopen it.
+Twelve real, keyboard-reachable links are simpler and carry no such risk.
+Verified end-to-end, not just as a plausible href: a preview-harness click
+correctly landed on `/hilal`'s "Petang ini" showing the exact right
+evening, place, and date - confirming `?lat=&lon=&d=` written by
+`BoundaryRibbon` and read by `ObservationProvider` (step 4) agree on
+their contract without any new code linking the two pages together.
+
+**DerivationTrace rewritten, not just restyled, per DESIGN.md's explicit
+instruction** ("each search step numbered, the failing condition in
+`--verdict-dark`, the passing one in `--verdict-lit`"): numbered step
+badges, and the step's own explanatory sentence (not just an icon) now
+carries the verdict colour. Still used unchanged by the old, still-live
+`/converter` page - upgraded globally, same reasoning as `HisabDisclaimer`
+and `verdictLabels.ts` in step 5.
+
+**DESIGN.md's "conversion control" turned out to need no new input at
+all.** Re-reading §6 against what §4.3 already built: the context bar's
+existing date field, with its live Hijri readout, *is* the conversion
+control - re-implementing it on `/kalender` would have duplicated state
+that migration step 4 already centralised. What `/kalender` adds is
+reading the *structured* result of that same conversion (`hijri.month`,
+not just its formatted label) to drive `BoundaryRibbon`'s highlight -
+`ObservationProvider`'s `hijri` field gained `year`/`month`/`day` fields
+alongside the existing formatted `label`, additive and non-breaking.
+Confirmed live: typing a date in the context bar visibly moves which
+ribbon segment is highlighted, with no page-specific date input anywhere
+on `/kalender`.
+
+**Resolved a question MIGRATION.md left open** (flag #6, "whether the
+ribbon recomputes its full 12-month sweep on every place/date-context
+change... is undecided"): `fetchHijriYearArchive`'s 36 month-start
+searches auto-compute with a visible progress readout on year/place
+change, the same pattern already validated for the lighter 12-single-
+evening `Setahun` sweep in step 5 - not gated behind an explicit trigger
+like the Indonesia sweep, which needs one specifically because it's
+Web-Worker-sharded; this one isn't and runs main-thread with yields, same
+as `Setahun` and the same as the old `/hijri-archive` page it replaces.
+
+**Screenshot-verified, including a real cross-page interaction**, not
+just individually: the full `/kalender` page rendered correctly in light
+and dark mode with real data (Jakarta, evening of 2024-03-11); the
+month x method table and isbat comparison both correctly ported from the
+old pages' logic (kept, per §5.2's explicit "do not delete it") with
+Indonesian labels and restyled tokens; the `DerivationTrace` disclosure
+opens to show the numbered, colour-coded steps; and the 375px mobile pass
+confirmed no crashes or broken layout, though it surfaced a minor,
+non-blocking cosmetic redundancy - the SVG's own bottom month labels and
+the separate HTML link row beneath it both show month abbreviations,
+which crowd together at 375px. Left as a follow-up polish item, not fixed
+in this step: functionally both rows work (the SVG labels are decorative,
+the link row is the real interactive target), and the fix (suppressing
+the SVG's own text at narrow widths) is cosmetic, not structural.
+
+Verified: `tsc --noEmit` clean, `eslint` clean across the full `src/`
+tree, `next build` (`STATIC_EXPORT=1`) succeeds for all 20 routes, all
+106 vitest tests pass (98 prior + 8 new), and `BoundaryRibbon` was
+checked via rendered screenshots (light/dark) against three real years of
+engine output (1445-1447H, the years with seeded isbat records) before
+being wired into `/kalender`, plus a real click-through from a ribbon
+boundary to `/hilal` and a 375px mobile pass of the finished page.
