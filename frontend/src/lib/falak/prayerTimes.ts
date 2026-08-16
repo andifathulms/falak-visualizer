@@ -106,7 +106,16 @@ export function solarTransit(date: PlainDate, lonEastDeg: number): Instant {
   return lo + quantizeToMicrosecond((hi - lo) / 2);
 }
 
-function asrTargetAltitudeDeg(
+/**
+ * Exported (was module-private) for DayArc (migration step 7), which needs
+ * the same target altitude dailyPrayerTimes already computes internally to
+ * label Asr's defining angle on the drawing - not new astronomy, the exact
+ * value dailyPrayerTimes's own asr crossing search already used, exposed
+ * rather than recomputed. golden.test.ts's "prayer times" suite exercises
+ * dailyPrayerTimes/solarTransit/CONVENTIONS only, never this function
+ * directly, so the export changes nothing about the pinned surface.
+ */
+export function asrTargetAltitudeDeg(
   instant: Instant,
   latDeg: number,
   shadowFactor: number,

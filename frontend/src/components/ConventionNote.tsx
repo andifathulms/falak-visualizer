@@ -31,14 +31,14 @@ export function ConventionNote({ convention }: { convention: string }) {
   const isDefault = c.name === DEFAULT_CONVENTION;
 
   return (
-    <div className="rounded-xl border border-neutral-200 px-4 py-3 text-sm dark:border-night-700/60">
+    <div className="rounded-xl border border-border px-4 py-3 text-sm">
       <p>
         <span className="font-semibold">{c.name}</span>{" "}
         <span className="text-ink-muted">
           — fajr at{" "}
-          <span className="font-mono tabular-nums text-foreground">{c.fajrAngleDeg}°</span> below the
+          <span className="font-mono tabular-nums text-ink">{c.fajrAngleDeg}°</span> below the
           horizon, isha at{" "}
-          <span className="font-mono tabular-nums text-foreground">{c.ishaAngleDeg}°</span>, asr at a
+          <span className="font-mono tabular-nums text-ink">{c.ishaAngleDeg}°</span>, asr at a
           shadow length of {c.asrShadowFactor}× object height
           {c.asrShadowFactor === 1 ? " (Shafi'i)" : " (Hanafi)"}.
         </span>
@@ -51,8 +51,8 @@ export function ConventionNote({ convention }: { convention: string }) {
         not the method.
       </p>
       <p className="mt-1.5 text-sm text-ink-muted">
-        Only <span className="font-medium text-foreground">fajr</span> and{" "}
-        <span className="font-medium text-foreground">isha</span> depend on this choice — they are
+        Only <span className="font-medium text-ink">fajr</span> and{" "}
+        <span className="font-medium text-ink">isha</span> depend on this choice — they are
         defined by how far the sun has to be below the horizon, which is a convention rather than an
         observation. Sunrise, dhuhr and maghrib are fixed by the sun&apos;s position and do not move.
         {isDefault

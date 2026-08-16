@@ -38,6 +38,13 @@ export const ROUTES = {
       "Tanggal berapa hari ini, dan kenapa? Dua belas batas awal bulan Hijriah dalam satu tahun, tiga kriteria berdampingan, dan sidang isbat sebagai pembanding — lengkap dengan alasan di balik setiap tanggal.",
     locale: "id",
   },
+  "langit": {
+    path: "/langit",
+    title: "Langit",
+    description:
+      "Di mana matahari sekarang, dan ke arah mana kiblat? Lima waktu salat dan arah kiblat dari satu perhitungan posisi matahari yang sama, digambar sebagai satu langit.",
+    locale: "id",
+  },
   "converter": {
     path: "/converter",
     title: "Hijri ↔ Gregorian Converter",

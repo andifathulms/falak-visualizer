@@ -646,3 +646,99 @@ checked via rendered screenshots (light/dark) against three real years of
 engine output (1445-1447H, the years with seeded isbat records) before
 being wired into `/kalender`, plus a real click-through from a ribbon
 boundary to `/hilal` and a 375px mobile pass of the finished page.
+
+---
+
+## Step 7 — executed
+
+Scope, per §9.7: build `DayArc`, then `/langit`, absorbing `/prayer-times`
+and `/qibla`. Same standalone-first discipline as every prior signature
+component - and the step that found the two most consequential bugs in
+this whole migration, both only visible by actually rendering and
+interacting with real output, never from reading the code.
+
+**Geometry, stated explicitly:** the arc's x-axis is time (real sun-
+altitude samples via `solarPosition` + `altitudeDeg`, the same pair
+`hilalTrajectory` already combines for a similar purpose near sunset, just
+extended across a full day); the compass strip's x-axis is bearing.
+DESIGN.md's "the qibla bearing is a line across the compass ring at the
+base of the dome, sharing the same horizon" is read as a shared *baseline*,
+not a shared *axis* - unifying two different coordinate systems into one
+would misrepresent both. Fajr/Isha's depression zone and the merged/split
+reading elsewhere in this migration follow the same "one data source, two
+renderings" shape: one continuous altitude curve, styled solid above the
+horizon and dashed/shaded below it, not two separately-constructed shapes.
+
+**A frozen-boundary exposure, smaller than step 5's**: `prayerTimes.ts`'s
+`asrTargetAltitudeDeg` changed from module-private to exported - one
+keyword, no logic touched - so DayArc can label Asr's defining angle with
+the exact value `dailyPrayerTimes` already computed internally, rather
+than re-deriving the same formula a second time outside the tested module.
+Confirmed the golden-vector suite exercises `dailyPrayerTimes`/
+`solarTransit`/`CONVENTIONS` only, never this function directly, so the
+export pins nothing new (34/34 before and after).
+
+**Bug 1 - a real, general hydration risk, not specific to this
+component.** A first version of the preview harness called
+`buildDayArcInput`/`qiblaDirection` synchronously in the render body -
+reasonable-looking, since both are plain synchronous functions, unlike
+every fetchXxx-shaped flow elsewhere in this app. That ran the computation
+during static-export prerendering (Node.js) AND again during client
+hydration (the browser's engine), and confirmed via the dev server's
+unminified error output: `Math.sin`/`cos`/`atan2` are not guaranteed
+bit-identical across JS engines (ECMA-262 leaves their precision
+implementation-defined), and the drift was large enough to shift which
+side of a bisection search `dailyPrayerTimes` landed on - not just
+last-bit pixel noise. Fixed two ways: `dayArcGeometry.ts`'s coordinate
+outputs are now rounded to 2dp at the module boundary (defensive, cheap,
+and correct regardless of cause - a chart doesn't need 16-digit pixel
+precision), and, more importantly, the preview harness itself was moved
+onto the `useEffect`-gated pattern every other data flow in this app
+(PetangIni, SeIndonesia, Setahun, /kalender) already uses - not because
+that pattern was previously understood to prevent this, but because it
+turns out to, and now is documented as why. `instrumentGeometry.ts` uses
+the same class of transcendental math (`Math.acos`/`sqrt` in the crescent
+bisection) and was not audited for this in this pass - flagged, not fixed,
+since nothing currently renders it synchronously at build time.
+
+**Bug 2 - a real, currently-live defect in the frozen engine**, found by
+rendering four real cities and seeing two of them render as a solid,
+nonsensical block instead of a dome. Traced to `lib/falak/horizon.ts`'s
+`findHorizonCrossing`: its 36-hour search window can contain two
+same-direction horizon crossings (today's and tomorrow's), and the
+`mod(_, 24)` distance-to-target-local-hour comparison it uses to pick
+between them doesn't distinguish which calendar day either candidate is
+actually on - confirmed directly (Banda Aceh, 5.5483/95.3238,
+2026-06-15, Kemenag RI: `dailyPrayerTimes` returns fajr at 2026-06-16
+05:00 local, a full day after sunrise/dhuhr/asr/maghrib/isha, which all
+land correctly on 2026-06-15). This is a defect in code the currently-
+live `/prayer-times` page already calls - discovered as a side effect of
+this step, not introduced by it, and `lib/falak/**` is frozen for this
+work: the actual fix (correcting the disambiguation logic, then
+regenerating the golden-vector suite through the backend pipeline) is out
+of scope here and belongs to a separate workstream. Per CLAUDE.md's
+no-silent-fallback rule, `dayArcData.ts` now validates every prayer
+instant sits within a plausible span of dhuhr before building the chart,
+and throws an explicit, specific error instead of plotting a mis-dated
+value - covered by a regression test (`dayArcData.test.ts`) using the
+exact real coordinates and date that exposed it, not a synthetic case.
+**This should be surfaced to whoever owns the backend astronomy engine -
+it is a real accuracy defect in a religious-calendar tool, not a
+migration-scope nicety.**
+
+**DESIGN.md's "conversion control"-style reuse, again**: the daily
+readout row and DayArc's plotted markers are both built from the *same*
+`buildDayArcInput` call, not two separate computations that could drift -
+matching the same "one source, multiple views" discipline as
+`/kalender`'s conversion line and `BoundaryRibbon`'s highlight.
+
+Verified: `tsc --noEmit` clean, `eslint` clean across the full `src/`
+tree, `next build` (`STATIC_EXPORT=1`) succeeds for all 21 routes, all
+117 vitest tests pass (106 prior + 11 new: 9 geometry + 2 regression),
+`DayArc` checked via rendered screenshots (light/dark) against four real
+cities before being wired in (two of which correctly show an explicit
+error rather than a broken chart, confirming the guard works both ways),
+and the finished `/langit` page verified with real data end to end
+(daily readout, monthly table load, qibla bearing/distance, Rashdul
+Qibla) plus a 375px mobile pass confirming the arc goes properly
+full-bleed there, same fix pattern as step 5's `HorizonInstrument`.
