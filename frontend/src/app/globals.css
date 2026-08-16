@@ -208,18 +208,6 @@ h3 {
     text-wrap: balance;
   }
 
-  /* Emphasis for the app's headline outputs - the converted date, the hilal
-     verdict, the hero.
-     DESIGN.md §3.1 confines the app to exactly one gradient (the sky behind
-     HorizonInstrument) and removes the old gold-to-teal gradient headline
-     span (§8) as part of the home-page rebuild. Until that lands, this stays
-     a solid colour rather than a second gradient, so pages not yet migrated
-     that still reference this class don't end up carrying two "the" gradient
-     moments at once. */
-  .text-gradient-accent {
-    color: var(--accent-text);
-  }
-
   .glass-card {
     /* No backdrop-filter here deliberately: blur() creates a new CSS
        stacking context, which traps any absolutely-positioned overlay
@@ -227,72 +215,6 @@ h3 {
        over it regardless of z-index. Solid tinted background instead. */
     background: color-mix(in srgb, var(--surface-card) 96%, transparent);
     border: 1px solid var(--border);
-  }
-
-  .bg-shimmer {
-    background-image: linear-gradient(
-      110deg,
-      transparent 40%,
-      color-mix(in srgb, var(--text-body) 8%, transparent) 50%,
-      transparent 60%
-    );
-    background-size: 200% 100%;
-  }
-}
-
-/* Decorative starfield used behind hero sections (dark mode only) */
-.starfield {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-}
-
-@media (prefers-color-scheme: dark) {
-  .starfield {
-    opacity: 1;
-  }
-}
-
-.starfield::before,
-.starfield::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-repeat: repeat;
-  background-size: 220px 220px;
-}
-
-.starfield::before {
-  background-image: radial-gradient(1.4px 1.4px at 20px 30px, rgba(232, 193, 100, 0.9), transparent),
-    radial-gradient(1px 1px at 90px 60px, rgba(236, 238, 245, 0.7), transparent),
-    radial-gradient(1.2px 1.2px at 150px 120px, rgba(125, 211, 200, 0.8), transparent),
-    radial-gradient(1px 1px at 60px 170px, rgba(236, 238, 245, 0.6), transparent);
-  animation: twinkle 4s ease-in-out infinite;
-}
-
-.starfield::after {
-  background-position: 40px 80px;
-  background-image: radial-gradient(1px 1px at 110px 20px, rgba(236, 238, 245, 0.5), transparent),
-    radial-gradient(1.3px 1.3px at 180px 90px, rgba(217, 168, 62, 0.7), transparent),
-    radial-gradient(1px 1px at 30px 140px, rgba(236, 238, 245, 0.6), transparent);
-  animation: twinkle 5s ease-in-out infinite reverse;
-}
-
-/* The two animations that never stop on their own. WCAG 2.2.2 asks for a way to
-   pause anything auto-animating beyond five seconds; honouring the OS
-   preference is that mechanism. The starfield keeps its stars, it just stops
-   twinkling - the decoration survives, the motion does not. */
-@media (prefers-reduced-motion: reduce) {
-  .starfield::before,
-  .starfield::after {
-    animation: none;
-  }
-
-  .bg-shimmer {
-    animation: none;
-    background-image: none;
   }
 }
 

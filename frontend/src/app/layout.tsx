@@ -5,7 +5,7 @@ import { MakerSignature } from "@/components/MakerSignature";
 import { MotionProvider } from "@/components/MotionProvider";
 import { StructuredData } from "@/components/StructuredData";
 import { NavBar } from "@/components/NavBar";
-import { ThemeToggle, noFlashThemeScript } from "@/components/ThemeToggle";
+import { noFlashThemeScript } from "@/components/ThemeToggle";
 import { ObservationProvider } from "@/components/ObservationProvider";
 import { ContextBar } from "@/components/ContextBar";
 import { SITE, absoluteUrl } from "@/lib/routes";
@@ -129,7 +129,7 @@ export default function RootLayout({
         placement, which is one reason on top of `font-display` never being
         applied anywhere that it was silently inert - see the comment above.)
       */}
-      <body className="relative min-h-screen bg-night-sky antialiased">
+      <body className="relative min-h-screen bg-surface-page antialiased">
         {/* strategy="beforeInteractive": must run before first paint, or the
             wrong theme flashes - see components/ThemeToggle.tsx. Next inlines
             beforeInteractive scripts into <head> regardless of where the
@@ -139,13 +139,12 @@ export default function RootLayout({
         </Script>
         <StructuredData />
         <MotionProvider>
-          <ThemeToggle />
           {/*
             Bypass block (WCAG 2.4.1). The landmarks below already let screen
             reader users jump straight to <main>, but a sighted keyboard user
-            has no landmark navigation and tabs through six nav links and the
-            Analysis menu on every page load. Different audience, same
-            criterion - this is not a duplicate of the landmarks.
+            has no landmark navigation and tabs through every nav link on
+            every page load. Different audience, same criterion - this is
+            not a duplicate of the landmarks.
 
             Visible only while focused: it is the first tab stop, and showing it
             permanently would put a control at the top of every page that nobody
@@ -157,7 +156,6 @@ export default function RootLayout({
           >
             Skip to content
           </a>
-          <div className="starfield" />
           <NavBar />
           {/*
             DESIGN.md §4.3/§9.4: place and date, persistent across every
@@ -176,7 +174,7 @@ export default function RootLayout({
             about what the output means, the other is a credit.
           */}
           <footer className="relative mx-auto max-w-6xl px-4 pb-10 pt-4 sm:px-6">
-            <div className="flex flex-col items-center gap-5 border-t border-neutral-200/70 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8 dark:border-night-700/60">
+            <div className="flex flex-col items-center gap-5 border-t border-border pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
               <p className="max-w-md text-center text-sm text-ink-muted sm:text-left">
                 Falak is a hisab (calculation) tool, not a substitute for official sidang isbat
                 determination.

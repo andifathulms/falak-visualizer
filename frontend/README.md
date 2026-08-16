@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Falak — frontend
 
-## Getting Started
+Next.js 14 App Router frontend for Falak, a Hijri calendar and Islamic
+astronomy visualizer. Builds as a static export and deploys to GitHub
+Pages — there is no Node server in production; every calculation this
+app shows runs client-side, in the browser, against the astronomy engine
+under `src/lib/falak/`.
 
-First, run the development server:
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Static export
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The production build is a static export (`STATIC_EXPORT=1`), matching
+how it's actually served:
 
-## Learn More
+```bash
+STATIC_EXPORT=1 npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+This writes a fully static `out/` directory — no API routes, no
+server-side rendering at request time. `STATIC_EXPORT=1` is required
+because `next.config.mjs` only sets `output: "export"` when that
+variable is present, so a plain `npm run build` builds a normal
+(non-static) Next.js app instead.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Testing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+npx tsc --noEmit
+npx vitest run
+```
 
-## Deploy on Vercel
+`vitest` covers the astronomy geometry modules under `src/lib/` against
+fixture data in `src/lib/falak/__fixtures__/golden-vectors.json` — see
+the root `PRD.md` and `CLAUDE.md` for why that validation exists and
+what it's not allowed to skip.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deployed to GitHub Pages from the static `out/` output. There is no
+Vercel deployment target for this project.

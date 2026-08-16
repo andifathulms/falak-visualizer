@@ -66,7 +66,7 @@ export function MakerSignature() {
           href={MAKER.portfolio}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-foreground underline decoration-neutral-300 underline-offset-2 transition-colors hover:text-accent hover:decoration-gold-500 dark:decoration-night-600"
+          className="text-ink underline decoration-border underline-offset-2 transition-colors duration-fast hover:text-accent hover:decoration-accent-solid"
         >
           {MAKER.name}
         </a>{" "}
@@ -82,7 +82,7 @@ export function MakerSignature() {
               rel="noopener noreferrer"
               aria-label={link.label}
               title={link.label}
-              className="flex rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-neutral-500/10 hover:text-foreground"
+              className="flex rounded-lg p-1.5 text-ink-muted transition-colors duration-fast hover:bg-accent-solid/10 hover:text-ink"
             >
               {link.icon}
             </a>

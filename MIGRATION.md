@@ -878,3 +878,99 @@ unchanged, `next build` (`STATIC_EXPORT=1`) succeeds for all 21 routes,
 and all nine redirects re-verified end-to-end with Playwright after the
 `window.location.replace()` fix - correct destination, correct
 translated params, no console errors.
+
+## Step 10 — executed
+
+§8's deletions, plus the full pass for stray old token names §9.10 asks
+for.
+
+**`NavBar` rewritten - the deferred piece from step 4, now unblocked.**
+MIGRATION.md's own step-4 note ("NavBar intentionally not touched...
+collapsing it now would point the header at three routes that don't
+exist yet") named the exact condition for doing this: `/hilal`,
+`/kalender`, `/langit` all exist (steps 5-7) and every old route has a
+redirect stub (step 9). Five links plus an "Analysis" dropdown (nine
+destinations) collapse to three - Hilal, Kalender, Langit - restyled
+onto the new tokens, dropdown and its `@headlessui/react` `Menu` usage
+removed. The theme toggle moves from its own fixed-position button
+(`ThemeToggle.tsx`'s own "TEMPORARY placement" comment, written in step
+1) into the nav bar itself; `ThemeToggle.tsx` now exports only
+`noFlashThemeScript`, the blocking script the root layout still needs.
+
+**A real bug, found by Playwright, not by reading the new component.**
+The rewritten nav's active-link check (`pathname === link.href`) never
+matched on any of the three routes - confirmed via computed styles, all
+three links carried byte-identical background/color on every page.
+Root cause: the static export sets `trailingSlash: true`
+(`next.config.mjs`), so `usePathname()` returns `/hilal/` while
+`NAV_LINKS`' own hrefs are `/hilal` - a plain equality check against two
+strings that differ only by a trailing slash. Fixed with a small
+`isActive()` normalizer (strip a trailing slash from both sides except
+the root `/`) plus `aria-current="page"` on the active link. Re-verified
+with Playwright on all three routes: exactly one link highlighted per
+page, matching the page actually shown, `aria-current` present, no
+console errors.
+
+**Orphaned files deleted, confirmed dead first.** `SampleResult` was
+already gone (step 8). `TrajectoryChart.tsx` (and the `recharts`
+dependency it was the only importer of), `HilalMoon.tsx` (the pulsing
+glow loop §8 names), `LocationPicker.tsx` (superseded by
+`ObservationProvider`/`ContextBar`, step 4), `PageHeader.tsx`, and
+`HowMonthsWork.tsx` were each confirmed to have zero imports anywhere in
+`src` before deletion - the last two aren't named in §8 but were only
+still present because they used the ramps this step removes, and
+nothing renders them. `npm uninstall recharts` removed the now-unused
+dependency cleanly (it was the sole importer).
+
+**Tailwind ramps removed** (`night-*`, `gold-*`, `moon-*`, `land-*`,
+`lattice-*`, plus the `night-sky` background-image and its `twinkle`
+keyframe/animation) from `tailwind.config.ts`, once grepping confirmed
+nothing under `src` still referenced them - the last live holdouts were
+`NavBar.tsx` (fixed above) and the five files just deleted.
+`globals.css`'s decorative `.starfield` rule (the dark-mode-only
+twinkling background layer behind the old hero, using hardcoded
+gold/teal hex values rather than tokens - DESIGN.md's new design has no
+mention of it, and its own colours predate the token system) and the
+unused `.text-gradient-accent`/`.bg-shimmer` utilities were removed the
+same way, confirmed unreferenced first. `layout.tsx`'s `<body>` moved
+off `bg-night-sky` onto `bg-surface-page`; its footer border moved off
+`border-neutral-200/70 dark:border-night-700/60` onto `border-border`.
+
+**One more stray file found during the token-name pass, not by grepping
+for ramp names but by grepping for `--foreground`/`--background`
+directly:** `MakerSignature.tsx` (the footer byline) used
+`text-foreground` and `hover:bg-neutral-500/10` - remnants of the
+original Next.js template's default token names, which this migration's
+token system (step 1) never defined. These had been silently resolving
+to no CSS rule since step 1, the same class of bug as step 5's
+opacity-modifier discovery. Restyled onto `text-ink`/`hover:bg-accent-
+solid/10` and matching tokens for the link decoration and icon-button
+hover states.
+
+**`frontend/README.md` rewritten** off the stock `create-next-app`
+boilerplate (which still referenced the removed Geist font) into a real
+description of the static-export build, its `STATIC_EXPORT=1`
+requirement (verified against `next.config.mjs`, not assumed), the
+`vitest`/golden-vector validation this project's `CLAUDE.md` requires,
+and GitHub Pages as the actual deployment target - the Vercel deploy
+section is gone since there is no Vercel target for this project.
+
+**Not touched, and deliberately so:** `fade-in-up`, `fade-in`, `shimmer`
+(the keyframe, distinct from the now-removed `.bg-shimmer` CSS class),
+and `grid-fade` are currently unused too, but none of them are named in
+§8 or built from retired-palette hex values - removing them would be
+scope creep past "stray old token names" into deleting motion
+primitives DESIGN.md §3.3 may still want. Left in place.
+
+Verified: `tsc --noEmit` clean, `eslint` clean, all 117 vitest tests
+pass unchanged, `next build` (`STATIC_EXPORT=1`) succeeds for all 21
+routes, and the rebuilt `NavBar` checked end-to-end with Playwright -
+light mode, dark mode via the now-inline toggle (persisted across
+navigation), all three destination pages, correct active-link
+highlighting after the trailing-slash fix, a 375px mobile menu including
+the toggle, and zero console errors or hydration warnings across every
+page and state tested.
+
+This closes DESIGN.md §9's migration order. Per the standing
+instruction ("push it after all complete"), the next action is pushing
+the full sequence of commits from step 1 through step 10.
