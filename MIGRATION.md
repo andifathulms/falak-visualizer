@@ -221,3 +221,95 @@ Verified: `tsc --noEmit` clean, eslint clean, `next build`
 (`STATIC_EXPORT=1`) succeeds, compiled CSS inspected directly to confirm
 the font-family resolution above, and all 63 vitest tests (including the
 golden-vector suite) pass unchanged.
+
+---
+
+## Step 3 — executed
+
+Scope, per §9.3: build `HorizonInstrument` standalone against
+`__fixtures__/golden-vectors.json`, get the crescent geometry, the
+threshold band, and the hover-linking right. Not wired into any page.
+
+**Resolved the azimuth flag (MIGRATION.md's earlier flag #7)** per your
+answer: horizontal placement uses `lagTimeMinutes` (already validated,
+already exported) instead of a true azimuth value, which doesn't exist
+anywhere in the frozen engine. Turned out to need *zero* new files under
+`lib/falak/` — every value the drawing needs (altitude, elongation,
+illumination, lag time, the MABIMS/Odeh thresholds) was already exported.
+The geometry mapping itself lives in a new file **outside** the frozen
+boundary, `src/lib/instrumentGeometry.ts`, which only *reads* two existing
+`lib/falak/visibility.ts` exports (`MABIMS_MIN_ALTITUDE_DEG`, `odehVValue`)
+and never modifies them.
+
+**Built and screenshot-verified, not just compiled.** Per this session's
+own standing instruction to check UI changes in a browser before calling
+them done: built a standalone preview harness at
+`src/app/_dev/horizon-instrument/page.tsx` (the `_` prefix is Next's App
+Router convention for a private, unroutable folder — confirmed by building
+and checking it produces no route, both before and after every fix below),
+rendered it against six real cases from the fixture set via a temporary
+real route + Playwright screenshots, in both light and dark mode. This
+caught two real bugs a passing test suite alone did not:
+
+1. **The moon was invisible in every realistic case.** A literally
+   area-proportional crescent (the mathematically "correct" version -
+   `circleOverlapVisibleFraction`, still in the module and still tested)
+   renders real hilal-scale illumination (routinely under 1%) as a
+   sub-pixel sliver at icon scale - confirmed directly: illumination
+   0.00212 produced a ~0.09px mask offset on a 44px-diameter circle.
+   DESIGN.md's "a 0.4% crescent must look like a 0.4% crescent" (§5.1)
+   turns out to require *perceptual* differentiation, not photometric area
+   truth, for the exact regime this app lives in. Fixed by adding
+   `perceptualCrescentFraction()` - a documented, monotonic, exact-at-both-
+   ends power-curve compression (gamma 0.3) applied before the area
+   inversion - so a 0.02% crescent, a 2% crescent, and a 90% crescent are
+   all visibly distinct and none of them disappear. The true
+   `illumination_fraction` is never hidden by this: it's always the number
+   shown in the readout beside the drawing, only the drawing's shape is
+   compressed.
+2. **Extreme-but-real fixture values drove the moon off-canvas** in both
+   axes - the fixture set's own stress case (37.4° altitude, +562 minutes
+   of lag, a near-full moon far outside hilal territory, used elsewhere
+   only to exercise the Odeh formula's range) pushed the moon 88px above
+   the top edge and, separately, 90px past the right edge. Fixed with two
+   independent defensive pixel-space clamps (`ALT_DOMAIN_*`/`SUN_RADIUS`/
+   `MOON_RADIUS` margins on the y-axis, canvas-width margins on the x-axis)
+   on top of the existing semantic value-range clamps, so a future change
+   to `ALT_PX_PER_DEG`, `LAG_PX_PER_MINUTE`, or the viewport size can't
+   silently reopen the same failure by drifting out of sync with the
+   canvas size. Real hilal-range inputs (0-15° altitude, tens of minutes of
+   lag) never approach either clamp.
+
+Both fixes are covered by new tests (`instrumentGeometry.test.ts`) that
+encode the exact fixture values that exposed them, not just the fix's
+final behaviour, so a regression back to either bug fails loudly. The
+component's `<title>` tooltips, `role="img"` + `<desc>`, and the `<dl>`
+readout's keyboard-reachable hover-linking were also confirmed by direct
+inspection of the rendered SVG output and an interactive hover screenshot,
+not assumed from the code alone.
+
+**Also found, not fixed:** `HilalMoon.tsx`'s own crescent-shift formula,
+worked through the same two-circle mask this component reuses, puts the
+offset in the *opposite* direction from `HorizonInstrument`'s - largest at
+illumination 0, which is backwards for an area-proportional reading (see
+`crescentOffsetForVisibleFraction`'s doc comment). This isn't fixed here:
+`HilalMoon` is already flagged as likely orphaned (MIGRATION.md flag #2)
+once `HorizonInstrument` replaces its call sites, so this is one more data
+point for deleting it outright rather than patching it.
+
+**Odeh's threshold band is cross-validated against all 195 real fixture
+observations**, not just algebra checked in isolation:
+`odehThresholdBand()`'s closed-form altitude inversion is asserted to
+agree with the frozen `odehCriterion()`'s own verdict for every
+`"visible"` and `"not_visible"` observation in the fixture set (marginal
+cases are between the two boundaries `odehThresholdBand` doesn't compute,
+so aren't checked here - the "visible" boundary is the one this component
+draws).
+
+Verified: `tsc --noEmit` clean, eslint clean, `next build`
+(`STATIC_EXPORT=1`) succeeds with `/_dev/**` producing no route (checked
+directly in the build output, both before and after cleanup), all 86
+vitest tests pass (63 prior + 23 new, including cross-validation against
+all 195 real fixture observations), and the component was visually
+verified via rendered screenshots in both light and dark mode plus an
+interactive hover-linking screenshot - not just compiled.
