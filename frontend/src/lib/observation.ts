@@ -41,6 +41,42 @@ export function matchCity(lat: number, lon: number): CityLocation | null {
   );
 }
 
+const EARTH_RADIUS_KM = 6371;
+
+/** Great-circle distance, not the frozen engine's qibla bearing math - this
+ * is UI-only "how far is your pin from the nearest city label" rounding,
+ * not a religious calculation, so it stays out of lib/falak/ per this
+ * module's own header note. */
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** For coordinates that don't land on a listed city (typically "Lokasi
+ * saya" geolocation, or hand-entered coordinates) - a "~40 km dari Balikpapan"
+ * label reads better than raw degrees, and gives a reader outside the 34
+ * listed cities a sense of where they are without pretending a full reverse
+ * geocoder exists. Always returns a city (Indonesia's coastline-to-coastline
+ * span means the nearest listed capital is never absurdly far), so the
+ * caller doesn't need a null case here - only a threshold for whether to
+ * bother showing it (see ContextBar.tsx). */
+export function nearestCity(lat: number, lon: number): { city: CityLocation; distanceKm: number } {
+  let best = INDONESIAN_CITIES[0];
+  let bestDistance = haversineKm(lat, lon, best.lat, best.lon);
+  for (const city of INDONESIAN_CITIES.slice(1)) {
+    const distance = haversineKm(lat, lon, city.lat, city.lon);
+    if (distance < bestDistance) {
+      best = city;
+      bestDistance = distance;
+    }
+  }
+  return { city: best, distanceKm: bestDistance };
+}
+
 export function observationFromParams(params: URLSearchParams): Partial<Observation> {
   const out: Partial<Observation> = {};
   const lat = params.get("lat");

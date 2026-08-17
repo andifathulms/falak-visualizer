@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { Check, ChevronsUpDown, Loader2, LocateFixed, MapPin, Pencil } from "lucide-react";
-import { INDONESIAN_CITIES } from "@/lib/locations";
+import { INDONESIAN_CITIES, REGIONS } from "@/lib/locations";
+import { nearestCity } from "@/lib/observation";
 import { cn } from "@/lib/cn";
 import { useObservation } from "@/components/ObservationProvider";
 
@@ -25,26 +26,34 @@ const CUSTOM_VALUE = "__custom__";
  * (DESIGN.md §9.5-§9.7), at which point this bar becomes their only place
  * and date input, per §4.3: "Delete every per-page location form and every
  * submit button that only existed to gate a calculation."
+ *
+ * Coordinate display: previously showed the raw lat/lon TWICE at once
+ * whenever there was no exact city match (as the button's own label, via
+ * matchCity, AND as a permanently-visible pair of editable Lat/Lon inputs) -
+ * confusing on first read, and reported as such. The button now falls back
+ * to a `nearestCity` label ("~12 km dari Balikpapan") instead of raw
+ * degrees, and the Lat/Lon inputs are opt-in behind an explicit toggle
+ * (`coordsExpanded`) rather than automatically shown - a reader who wants
+ * the exact numbers still gets them, but doesn't see the same information
+ * rendered twice by default.
  */
 export function ContextBar() {
   const { lat, lon, dateIso, matchedCity, hijri, geo, setCity, setCustomCoords, setDate, requestGeolocation } =
     useObservation();
 
-  const [customMode, setCustomMode] = useState(matchedCity === null);
-  useEffect(() => {
-    setCustomMode(matchedCity === null);
-  }, [matchedCity]);
+  const [coordsExpanded, setCoordsExpanded] = useState(false);
 
   function handleSelect(value: string) {
     if (value === CUSTOM_VALUE) {
-      setCustomMode(true);
+      setCoordsExpanded(true);
       return;
     }
     const city = INDONESIAN_CITIES.find((c) => c.name === value);
     if (city) setCity(city);
   }
 
-  const buttonLabel = matchedCity ? matchedCity.name : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
+  const nearest = matchedCity === null ? nearestCity(lat, lon) : null;
+  const buttonLabel = matchedCity ? matchedCity.name : `~${Math.round(nearest!.distanceKm)} km dari ${nearest!.city.name}`;
 
   const formattedGregorian = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(
     new Date(`${dateIso}T00:00:00`),
@@ -67,26 +76,33 @@ export function ContextBar() {
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <Listbox.Options className="glass-card absolute z-30 mt-2 max-h-64 w-56 overflow-auto rounded-xl py-1 text-sm shadow-lg shadow-black/10 focus:outline-none dark:shadow-black/40">
-                  {INDONESIAN_CITIES.map((city) => (
-                    <Listbox.Option
-                      key={city.name}
-                      value={city.name}
-                      className={({ active, selected }) =>
-                        cn(
-                          "flex cursor-pointer items-center gap-2 px-3 py-2",
-                          active && "bg-accent-solid/10",
-                          selected && "text-accent",
-                        )
-                      }
-                    >
-                      {({ selected }) => (
-                        <>
-                          <Check className={cn("size-3.5", selected ? "opacity-100" : "opacity-0")} />
-                          {city.name}
-                        </>
-                      )}
-                    </Listbox.Option>
+                <Listbox.Options className="glass-card absolute z-30 mt-2 max-h-80 w-60 overflow-auto rounded-xl py-1 text-sm shadow-lg shadow-black/10 focus:outline-none dark:shadow-black/40">
+                  {REGIONS.map((region) => (
+                    <div key={region}>
+                      <p className="px-3 pb-1 pt-2.5 text-2xs font-semibold uppercase tracking-wide text-ink-muted">
+                        {region}
+                      </p>
+                      {INDONESIAN_CITIES.filter((city) => city.region === region).map((city) => (
+                        <Listbox.Option
+                          key={city.name}
+                          value={city.name}
+                          className={({ active, selected }) =>
+                            cn(
+                              "flex cursor-pointer items-center gap-2 px-3 py-2",
+                              active && "bg-accent-solid/10",
+                              selected && "text-accent",
+                            )
+                          }
+                        >
+                          {({ selected }) => (
+                            <>
+                              <Check className={cn("size-3.5", selected ? "opacity-100" : "opacity-0")} />
+                              {city.name}
+                            </>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </div>
                   ))}
                   <div className="my-1 border-t border-border" />
                   <Listbox.Option
@@ -126,6 +142,20 @@ export function ContextBar() {
             <span className="hidden sm:inline">Lokasi saya</span>
           </button>
 
+          <button
+            type="button"
+            onClick={() => setCoordsExpanded((v) => !v)}
+            title="Sesuaikan koordinat"
+            aria-expanded={coordsExpanded}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors",
+              coordsExpanded ? "text-accent" : "text-ink-muted hover:text-accent",
+            )}
+          >
+            <Pencil className="size-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">Koordinat</span>
+          </button>
+
           {geo.error && <p className="text-xs text-verdict-negative">{geo.error}</p>}
         </div>
 
@@ -147,7 +177,7 @@ export function ContextBar() {
           </span>
         </div>
 
-        {customMode && (
+        {coordsExpanded && (
           <div className="flex items-center gap-2 text-xs text-ink-muted">
             <label className="flex items-center gap-1">
               Lat

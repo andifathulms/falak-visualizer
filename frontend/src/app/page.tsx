@@ -70,6 +70,14 @@ export default function HomePage() {
             di atas ufuk saat matahari terbenam.
           </p>
 
+          {/* DESIGN.md keeps home minimal, but a first-time reader has no
+              other cue that this drawing is live for whatever place/date
+              sits in the bar above, not a fixed illustration - flagged as
+              confusing without it. One line, not a callout. */}
+          <p className="text-sm text-ink-muted">
+            Dihitung ulang otomatis untuk lokasi dan tanggal di atas — ganti keduanya untuk melihat malam lain.
+          </p>
+
           <nav aria-label="Selanjutnya" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <Link href="/hilal" className="text-accent underline underline-offset-2 hover:no-underline">
               Lihat perhitungan lengkap
