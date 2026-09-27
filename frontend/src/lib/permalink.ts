@@ -9,11 +9,19 @@ export function readQueryParams(): URLSearchParams {
   return new URLSearchParams(window.location.search);
 }
 
+/**
+ * MERGES into the current query string: keys given with a value are set, keys
+ * given as undefined or "" are removed, keys not mentioned are left alone. Two
+ * writers share the URL - ObservationProvider (place, date) and the page
+ * (its own view state) - and a replace-everything write from either would
+ * silently erase the other's part of a permalink.
+ */
 export function writeQueryParams(params: Record<string, string | number | undefined>) {
   if (typeof window === "undefined") return;
-  const qs = new URLSearchParams();
+  const qs = new URLSearchParams(window.location.search);
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== "") qs.set(key, String(value));
+    if (value === undefined || value === "") qs.delete(key);
+    else qs.set(key, String(value));
   }
   const query = qs.toString();
   const url = `${window.location.pathname}${query ? `?${query}` : ""}`;

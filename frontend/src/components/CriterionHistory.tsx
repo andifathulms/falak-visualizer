@@ -30,14 +30,14 @@ import type { HilalObservation } from "@/lib/api";
 const RULES = {
   current: {
     key: "current" as const,
-    label: "MABIMS 2021 (current)",
-    summary: "Altitude ≥ 3° and elongation ≥ 6.4°",
+    label: "MABIMS 2021 (berlaku)",
+    summary: "Tinggi ≥ 3° dan elongasi ≥ 6,4°",
     citation: CITATIONS.mabims_2021,
   },
   pre2021: {
     key: "pre2021" as const,
-    label: "MABIMS 1992–2021 (former)",
-    summary: "Altitude ≥ 2°, elongation ≥ 3°, and moon age ≥ 8 hours",
+    label: "MABIMS 1992–2021 (lama)",
+    summary: "Tinggi ≥ 2°, elongasi ≥ 3°, dan umur bulan ≥ 8 jam",
     citation: CITATIONS.mabims_pre2021,
   },
 };
@@ -46,14 +46,14 @@ const RULES = {
 function conditionsFor(rule: "current" | "pre2021", obs: HilalObservation) {
   if (rule === "current") {
     return [
-      { label: "Altitude", need: "≥ 3°", got: `${obs.moon_altitude_deg.toFixed(2)}°`, met: obs.moon_altitude_deg >= 3 },
-      { label: "Elongation", need: "≥ 6.4°", got: `${obs.elongation_deg.toFixed(2)}°`, met: obs.elongation_deg >= 6.4 },
+      { label: "Tinggi", need: "≥ 3°", got: `${obs.moon_altitude_deg.toFixed(2)}°`, met: obs.moon_altitude_deg >= 3 },
+      { label: "Elongasi", need: "≥ 6,4°", got: `${obs.elongation_deg.toFixed(2)}°`, met: obs.elongation_deg >= 6.4 },
     ];
   }
   return [
-    { label: "Altitude", need: "≥ 2°", got: `${obs.moon_altitude_deg.toFixed(2)}°`, met: obs.moon_altitude_deg >= 2 },
-    { label: "Elongation", need: "≥ 3°", got: `${obs.elongation_deg.toFixed(2)}°`, met: obs.elongation_deg >= 3 },
-    { label: "Moon age", need: "≥ 8 h", got: `${obs.moon_age_hours.toFixed(1)} h`, met: obs.moon_age_hours >= 8 },
+    { label: "Tinggi", need: "≥ 2°", got: `${obs.moon_altitude_deg.toFixed(2)}°`, met: obs.moon_altitude_deg >= 2 },
+    { label: "Elongasi", need: "≥ 3°", got: `${obs.elongation_deg.toFixed(2)}°`, met: obs.elongation_deg >= 3 },
+    { label: "Umur bulan", need: "≥ 8 jam", got: `${obs.moon_age_hours.toFixed(1)} jam`, met: obs.moon_age_hours >= 8 },
   ];
 }
 
@@ -66,20 +66,16 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
   const otherMet = conditionsFor(other, obs).every((c) => c.met);
 
   return (
-    <section aria-labelledby="criterion-history" className="rounded-xl border border-border p-4">
-      <h2 id="criterion-history" className="text-md font-semibold">
-        The same evening, under a different rule
+    <section aria-labelledby="criterion-history" className="card p-5">
+      <h2 id="criterion-history" className="text-md font-bold">
+        Petang yang sama, aturan yang berbeda
       </h2>
       <p className="mt-1 text-sm text-ink-muted">
-        MABIMS changed its criterion in 2021. Nothing about the sky changed — only the rule applied
-        to it. Switch between them and watch what happens to the verdict.
+        MABIMS mengganti kriterianya pada 2021. Langitnya tidak berubah - hanya aturan yang diterapkan. Ganti aturannya dan lihat apa
+        yang terjadi pada hasilnya.
       </p>
 
-      <div
-        role="group"
-        aria-label="Criterion to apply"
-        className="mt-3 inline-flex flex-wrap rounded-xl border border-border p-1"
-      >
+      <div role="group" aria-label="Aturan yang diterapkan" className="mt-3 inline-flex flex-wrap gap-1 rounded-full bg-surface-raised p-1">
         {(["current", "pre2021"] as const).map((k) => (
           <button
             key={k}
@@ -88,8 +84,8 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
             aria-pressed={rule === k}
             className={
               rule === k
-                ? "rounded-lg bg-accent-solid/15 px-3 py-1.5 text-sm font-medium text-accent"
-                : "rounded-lg px-3 py-1.5 text-sm font-medium text-ink-muted hover:text-ink"
+                ? "rounded-full bg-surface-card px-3.5 py-1.5 text-sm font-bold text-ink shadow-sm"
+                : "rounded-full px-3.5 py-1.5 text-sm font-semibold text-ink-muted hover:text-ink"
             }
           >
             {RULES[k].label}
@@ -97,43 +93,33 @@ export function CriterionHistory({ obs }: { obs: HilalObservation }) {
         ))}
       </div>
 
-      <p className="mt-3 font-mono text-2xs text-ink">{active.summary}</p>
+      <p className="mt-3 text-sm font-semibold">{active.summary}</p>
 
-      <ul className="mt-2 space-y-1">
+      <ul className="mt-2 space-y-1.5">
         {conditions.map((c) => (
           <li key={c.label} className="flex flex-wrap items-center gap-x-2 text-sm">
-            <span className="text-ink-muted">{c.label}</span>
-            <span className="font-mono tabular-nums">{c.got}</span>
-            <span className="text-2xs text-ink-muted">needs {c.need}</span>
-            <Badge tone={c.met ? "positive" : "neutral"}>{c.met ? "Met" : "Not met"}</Badge>
+            <span className="w-24 text-ink-muted">{c.label}</span>
+            <span className="font-bold tabular-nums">{c.got.replace(".", ",")}</span>
+            <span className="text-2xs text-ink-muted">perlu {c.need}</span>
+            <Badge tone={c.met ? "positive" : "neutral"}>{c.met ? "Terpenuhi" : "Belum"}</Badge>
           </li>
         ))}
       </ul>
 
       <p className="mt-3 border-t border-border pt-3 text-sm">
-        Under this rule the crescent is{" "}
-        <span className="font-semibold">{met ? "established" : "not established"}</span> on this
-        evening.{" "}
+        Dengan aturan ini hilal <span className="font-bold">{met ? "dianggap sudah ada" : "belum dianggap ada"}</span> petang ini.{" "}
         {met === otherMet ? (
           <span className="text-ink-muted">
-            The other rule agrees here — most evenings are not close enough for the choice to
-            matter. The ones that are decide when Ramadan starts.
+            Aturan satunya sepakat - kebanyakan petang tidak cukup dekat dengan batas untuk membuat pilihan aturan berpengaruh. Petang yang
+            dekat itulah yang menentukan kapan Ramadan dimulai.
           </span>
         ) : (
-          <span className="text-ink-muted">
-            The other rule disagrees. On an evening like this one, which rule is in force decides
-            what date the month begins.
-          </span>
+          <span className="text-ink-muted">Aturan satunya tidak sepakat. Pada petang seperti ini, aturan yang berlaku menentukan tanggal awal bulan.</span>
         )}
       </p>
 
       <p className="mt-2 text-2xs text-ink-muted">
-        {active.citation.reference}{" "}
-        {"note" in active.citation && active.citation.note ? (
-          <em>{active.citation.note}</em>
-        ) : null}{" "}
-        This comparison is for understanding only — every date this app produces uses the current
-        MABIMS 2021 criterion.
+        Perbandingan ini hanya untuk pemahaman - semua tanggal di Falak memakai MABIMS 2021 yang berlaku.
       </p>
     </section>
   );

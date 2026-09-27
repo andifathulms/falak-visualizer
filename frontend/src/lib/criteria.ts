@@ -85,3 +85,56 @@ export function verdictTone(method: HilalMethod, verdict: boolean | string): "li
   }
   return verdict ? "lit" : "dark";
 }
+
+/** MODEL_CAVEATS (lib/falak/tolerance.ts), in the interface language. Same four items, same order. */
+export const MODEL_CAVEATS_ID: ReadonlyArray<{ title: string; detail: string }> = [
+  {
+    title: "Hanya refraksi standar",
+    detail:
+      "Terbenam matahari dan bulan memakai refraksi standar 34 menit busur di ufuk. Suhu dan tekanan udara sebenarnya dapat menggeser terbenam hingga sekitar satu menit, dan tinggi bulan berubah kira-kira seperempat derajat per menit di lintang Indonesia.",
+  },
+  {
+    title: "Elongasi geosentris",
+    detail:
+      "Apakah elongasi 6,4° MABIMS 2021 dimaksudkan toposentris masih diperdebatkan; PBNU berpendapat demikian. Falak melaporkan nilai geosentris yang lazim, yang berbeda sekitar 0,1–0,2°.",
+  },
+  {
+    title: "Busur pandang Odeh didekati",
+    detail:
+      "Odeh menilai pada 'waktu terbaik', ketika matahari sekitar 4,5° di bawah ufuk. Falak menilai saat terbenam dan mengambil busur pandang dari tinggi bulan di sana - penyederhanaan yang terdokumentasi dan dapat menggeser klasifikasi di dekat batasnya.",
+  },
+  {
+    title: "Permukaan laut, bumi bulat",
+    detail:
+      "Koreksi toposentris mengabaikan ketinggian pengamat dan kepepatan bumi. Keduanya jauh di bawah satu menit busur pada ketinggian ini, dan aplikasi tidak menanyakan ketinggian tempat.",
+  },
+];
+
+interface MarginLike {
+  verdict: "met" | "not_met" | "indeterminate";
+  margin: number | null;
+  tolerance: number;
+  unit: "deg" | "min";
+  binding: string;
+}
+
+/** An engine CriterionMargin as one Indonesian sentence fragment. */
+export function marginText(method: HilalMethod, m: MarginLike): string {
+  const n = (v: number, d: number) => Math.abs(v).toFixed(d).replace(".", ",");
+  let text: string;
+  if (m.margin === null) {
+    text = m.binding.includes("conjunction") ? "ijtimak terjadi setelah matahari terbenam" : "bulan tidak terbenam petang itu";
+  } else if (method === "mabims_2021") {
+    const which = m.binding.startsWith("altitude") ? "batas tinggi 3°" : "batas elongasi 6,4°";
+    text = `${m.margin >= 0 ? "lebih" : "kurang"} ${n(m.margin, 2)}° dari ${which}`;
+  } else if (method === "wujudul_hilal") {
+    text = m.margin >= 0 ? `bulan terbenam ${n(m.margin, 1)} mnt setelah matahari` : `bulan terbenam ${n(m.margin, 1)} mnt sebelum matahari`;
+  } else {
+    const v = /v = (-?[\d.]+)/.exec(m.binding)?.[1];
+    text = v ? `nilai-v ${Number(v).toFixed(2).replace(".", ",")}` : `selisih ${n(m.margin, 2)}`;
+  }
+  if (m.verdict === "indeterminate") {
+    text += ` — di dalam toleransi mesin ±${String(m.tolerance).replace(".", ",")}${m.unit === "deg" ? "°" : " mnt"}, jadi belum bisa dipastikan`;
+  }
+  return text;
+}
