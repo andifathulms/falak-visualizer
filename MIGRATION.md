@@ -1,3 +1,7 @@
+> **Historical.** This plan migrated the app to DESIGN.md v1 and is complete.
+> DESIGN.md v2 (September 2026) supersedes v1's IA, palette and typefaces;
+> read DESIGN.md, not this file, before changing the UI.
+
 # MIGRATION.md — Falak
 
 File-by-file disposition for the DESIGN.md rework, plus every place DESIGN.md
