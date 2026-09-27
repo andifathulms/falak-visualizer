@@ -164,6 +164,10 @@ const config: Config = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        twinkle: {
+          "0%, 100%": { opacity: "0.35" },
+          "50%": { opacity: "1" },
+        },
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
@@ -178,6 +182,7 @@ const config: Config = {
         "fade-in-up": "fade-in-up 0.5s ease-out both",
         "fade-in": "fade-in 0.4s ease-out both",
         shimmer: "shimmer 2s linear infinite",
+        twinkle: "twinkle 4.5s ease-in-out infinite",
       },
     },
   },
