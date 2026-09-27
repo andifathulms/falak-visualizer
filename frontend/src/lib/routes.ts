@@ -21,28 +21,55 @@ export interface RouteMeta {
 }
 
 export const ROUTES = {
-  // New IA (DESIGN.md §4.1). Indonesian per §7 - unlike the entries below,
-  // which stay in English until each old route is absorbed and retired
-  // (MIGRATION.md).
-  "hilal": {
-    path: "/hilal",
-    title: "Hilal",
+  // Live destinations (DESIGN.md v2 §4.1), Indonesian per §7.
+  "salat": {
+    path: "/salat",
+    title: "Jadwal Salat",
     description:
-      "Apakah hilal terlihat malam ini? Satu tempat satu petang, satu petang se-Indonesia, atau satu tempat setahun penuh — satu perhitungan yang sama, dilihat dari tiga sisi.",
+      "Waktu salat untuk tempat dan tanggal pilihan Anda, dihitung dari posisi matahari - lengkap dengan lintasan matahari sepanjang hari, sudut yang dipakai, dan jadwal sebulan (imsakiyah).",
+    locale: "id",
+  },
+  "kiblat": {
+    path: "/kiblat",
+    title: "Arah Kiblat",
+    description:
+      "Arah dan jarak ke Ka'bah dari lokasi Anda, cara menemukannya dengan bayangan matahari tanpa kompas, dan jadwal Rashdul Kiblat - saat matahari tepat di atas Ka'bah.",
+    locale: "id",
+  },
+  "awal-bulan": {
+    path: "/awal-bulan",
+    title: "Awal Bulan Hijriah",
+    description:
+      "Kapan awal Ramadan, Syawal, dan Zulhijah? Tanggal menurut tiap kriteria hisab, langit pada petang penentu, peta ketinggian hilal se-Indonesia, dan alasan di balik setiap perbedaan.",
     locale: "id",
   },
   "kalender": {
     path: "/kalender",
-    title: "Kalender",
+    title: "Kalender Hijriah",
     description:
-      "Tanggal berapa hari ini, dan kenapa? Dua belas batas awal bulan Hijriah dalam satu tahun, tiga kriteria berdampingan, dan sidang isbat sebagai pembanding — lengkap dengan alasan di balik setiap tanggal.",
+      "Kalender dengan tanggal Masehi dan Hijriah berdampingan, hari besar Islam, konversi dua arah, dan awal tiap bulan menurut tiga kriteria - dibandingkan dengan keputusan sidang isbat.",
+    locale: "id",
+  },
+  "belajar": {
+    path: "/belajar",
+    title: "Belajar Ilmu Falak",
+    description:
+      "Istilah hisab dan rukyat, tiga kriteria awal bulan beserta alasannya dan siapa yang memakainya, cara Falak menghitung, dan bagaimana hasilnya diuji terhadap efemeris JPL DE440.",
+    locale: "id",
+  },
+  // Retired paths. They exist only as redirect stubs with their own noindex
+  // metadata; kept here because older layouts and structured data still read
+  // their titles.
+  "hilal": {
+    path: "/hilal",
+    title: "Hilal",
+    description: "Sekarang bagian dari Awal Bulan.",
     locale: "id",
   },
   "langit": {
     path: "/langit",
     title: "Langit",
-    description:
-      "Di mana matahari sekarang, dan ke arah mana kiblat? Lima waktu salat dan arah kiblat dari satu perhitungan posisi matahari yang sama, digambar sebagai satu langit.",
+    description: "Sekarang dibagi menjadi Salat dan Kiblat.",
     locale: "id",
   },
   "converter": {
@@ -97,11 +124,11 @@ export const ROUTES = {
 
 export type RouteKey = keyof typeof ROUTES;
 
-/** Every route, for the sitemap. Home is first and has no PageHeader of its own. */
-export const ALL_PATHS: readonly string[] = [
-  "/",
-  ...Object.values(ROUTES).map((r) => r.path),
-];
+/** The live destinations, in navigation order (DESIGN.md v2 §4.1) - the sitemap and structured data list these, never the redirect stubs. */
+export const LIVE_ROUTE_KEYS = ["salat", "kiblat", "awal-bulan", "kalender", "belajar"] as const satisfies readonly RouteKey[];
+
+/** Every live route, for the sitemap. Home is first. */
+export const ALL_PATHS: readonly string[] = ["/", ...LIVE_ROUTE_KEYS.map((key) => ROUTES[key].path)];
 
 export const SITE = {
   name: "Falak",
@@ -112,7 +139,7 @@ export const SITE = {
    */
   origin: "https://andifathulms.github.io",
   basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? "",
-  tagline: "Hijri Calendar & Islamic Astronomy Visualizer",
+  tagline: "Hisab awal bulan, jadwal salat & arah kiblat",
 } as const;
 
 export function absoluteUrl(path: string): string {

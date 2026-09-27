@@ -3,7 +3,7 @@
 import { RedirectStub } from "@/components/RedirectStub";
 import { buildSearch } from "@/lib/legacyRedirects";
 
-/** Retired (migration step 9): absorbed into /langit's daily/monthly readout. */
+/** Retired (migration step 9): absorbed into daily/monthly readout. */
 function resolveSearch(params: URLSearchParams): string {
   return buildSearch({
     d: params.get("date") ?? undefined,
@@ -14,5 +14,5 @@ function resolveSearch(params: URLSearchParams): string {
 }
 
 export default function PrayerTimesRedirect() {
-  return <RedirectStub targetPath="/langit/" targetLabel="Langit" buildSearch={resolveSearch} />;
+  return <RedirectStub targetPath="/salat/" targetLabel="Salat" buildSearch={resolveSearch} />;
 }

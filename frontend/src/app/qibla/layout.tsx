@@ -3,8 +3,8 @@ import { absoluteUrl } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: "Qibla Direction has moved — Falak",
-  description: "Qibla Direction is now part of Langit.",
-  alternates: { canonical: absoluteUrl("/langit") },
+  description: "Qibla Direction is now part of Kiblat.",
+  alternates: { canonical: absoluteUrl("/kiblat") },
   robots: { index: false, follow: true },
 };
 

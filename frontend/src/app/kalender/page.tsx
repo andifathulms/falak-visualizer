@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Equal, GitCompareArrows } from "lucide-react";
 import { BoundaryRibbon } from "@/components/BoundaryRibbon";
 import { DerivationTrace } from "@/components/DerivationTrace";
+import { DateStepper } from "@/components/DateStepper";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { Badge } from "@/components/ui/Badge";
@@ -73,7 +74,7 @@ function MatchCell({ record, method }: { record: IsbatComparisonRecord; method: 
  * about this exact function.
  */
 export default function KalenderPage() {
-  const { lat, lon, dateIso, hijri } = useObservation();
+  const { lat, lon, dateIso, hijri, setDate, timeZone } = useObservation();
 
   const [archive, setArchive] = useState<HijriYearArchive | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -137,7 +138,10 @@ export default function KalenderPage() {
 
   return (
     <div lang="id" className="space-y-6">
-      <h1 className="sr-only">Kalender</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-extrabold tracking-tight">Kalender</h1>
+        <DateStepper value={dateIso} onChange={setDate} timeZone={timeZone} />
+      </div>
 
       {hijri.error ? (
         <ErrorBanner message="Tanggal di luar rentang efemeris (1900-2100). Pilih tanggal lain." />

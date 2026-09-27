@@ -3,8 +3,8 @@ import { absoluteUrl } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: "Prayer Times has moved — Falak",
-  description: "Prayer Times is now part of Langit.",
-  alternates: { canonical: absoluteUrl("/langit") },
+  description: "Prayer Times is now part of Salat.",
+  alternates: { canonical: absoluteUrl("/salat") },
   robots: { index: false, follow: true },
 };
 

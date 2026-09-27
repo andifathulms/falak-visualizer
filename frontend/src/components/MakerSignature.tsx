@@ -61,7 +61,7 @@ export function MakerSignature() {
   return (
     <div className="flex flex-col items-center gap-2 sm:items-end">
       <p className="text-sm text-ink-muted">
-        Designed &amp; built by{" "}
+        Dirancang &amp; dibuat oleh{" "}
         <a
           href={MAKER.portfolio}
           target="_blank"
@@ -70,7 +70,7 @@ export function MakerSignature() {
         >
           {MAKER.name}
         </a>{" "}
-        &middot; <span className="font-mono tabular-nums">&copy; {year}</span>
+        &middot; <span className="tabular-nums">&copy; {year}</span>
       </p>
 
       <ul className="flex items-center gap-0.5">

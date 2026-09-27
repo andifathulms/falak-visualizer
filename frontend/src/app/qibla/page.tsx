@@ -3,7 +3,7 @@
 import { RedirectStub } from "@/components/RedirectStub";
 import { buildSearch } from "@/lib/legacyRedirects";
 
-/** Retired (migration step 9): absorbed into /langit's compass strip + bearing readout. */
+/** Retired (migration step 9): absorbed into compass strip + bearing readout. */
 function resolveSearch(params: URLSearchParams): string {
   return buildSearch({
     lat: params.get("lat") ?? undefined,
@@ -12,5 +12,5 @@ function resolveSearch(params: URLSearchParams): string {
 }
 
 export default function QiblaRedirect() {
-  return <RedirectStub targetPath="/langit/" targetLabel="Langit" buildSearch={resolveSearch} />;
+  return <RedirectStub targetPath="/kiblat/" targetLabel="Kiblat" buildSearch={resolveSearch} />;
 }

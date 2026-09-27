@@ -4,7 +4,7 @@ import { absoluteUrl } from "@/lib/routes";
 export const metadata: Metadata = {
   title: "Visibility Map has moved — Falak",
   description: "The Visibility Map is now the \"Se-Indonesia\" sweep on /hilal.",
-  alternates: { canonical: absoluteUrl("/hilal") },
+  alternates: { canonical: absoluteUrl("/awal-bulan") },
   robots: { index: false, follow: true },
 };
 

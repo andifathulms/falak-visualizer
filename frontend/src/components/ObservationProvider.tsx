@@ -113,7 +113,7 @@ export function ObservationProvider({ children }: { children: React.ReactNode })
 
   const requestGeolocation = useCallback(() => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      setGeo({ locating: false, error: "Geolocation isn't supported by this browser.", fromGeolocation: false });
+      setGeo({ locating: false, error: "Peramban ini tidak mendukung deteksi lokasi. Pilih kota dari daftar.", fromGeolocation: false });
       return;
     }
     setGeo({ locating: true, error: null, fromGeolocation: false });
@@ -128,8 +128,8 @@ export function ObservationProvider({ children }: { children: React.ReactNode })
           fromGeolocation: false,
           error:
             err.code === err.PERMISSION_DENIED
-              ? "Location permission denied - allow it in your browser settings, or pick a city instead."
-              : "Couldn't get your location. Pick a city instead.",
+              ? "Izin lokasi ditolak. Izinkan di pengaturan peramban, atau pilih kota dari daftar."
+              : "Lokasi tidak bisa didapat. Pilih kota dari daftar.",
         });
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 },

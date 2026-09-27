@@ -1,4 +1,6 @@
-import { ALL_PATHS, ROUTES, SITE, absoluteUrl } from "@/lib/routes";
+import { ALL_PATHS, LIVE_ROUTE_KEYS, ROUTES, SITE, absoluteUrl } from "@/lib/routes";
+
+const LIVE_ROUTES = LIVE_ROUTE_KEYS.map((key) => ROUTES[key]);
 
 /**
  * JSON-LD describing what this site is and what it contains.
@@ -27,18 +29,18 @@ export function StructuredData() {
       operatingSystem: "Any (web browser)",
       isAccessibleForFree: true,
       offers: { "@type": "Offer", price: "0", priceCurrency: "IDR" },
-      inLanguage: "en",
+      inLanguage: "id",
       description:
-        "Hijri calendar conversion, hilal visibility, prayer times and qibla direction, computed from solar and lunar position and shown with the numbers behind every verdict.",
-      featureList: Object.values(ROUTES).map((r) => r.title),
+        "Awal bulan Hijriah menurut tiga kriteria hisab, jadwal salat, dan arah kiblat - dihitung dari posisi matahari dan bulan di peramban, lengkap dengan angka di balik setiap hasil.",
+      featureList: LIVE_ROUTES.map((r) => r.title),
     },
     {
       "@type": "WebSite",
       "@id": `${absoluteUrl("/")}#site`,
       name: SITE.name,
       url: absoluteUrl("/"),
-      inLanguage: "en",
-      hasPart: Object.values(ROUTES).map((r) => ({
+      inLanguage: "id",
+      hasPart: LIVE_ROUTES.map((r) => ({
         "@type": "WebPage",
         name: r.title,
         url: absoluteUrl(r.path).replace(/\/?$/, "/"),

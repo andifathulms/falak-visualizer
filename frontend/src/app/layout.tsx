@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Link from "next/link";
 import Script from "next/script";
 import { MakerSignature } from "@/components/MakerSignature";
 import { MotionProvider } from "@/components/MotionProvider";
@@ -7,7 +8,6 @@ import { StructuredData } from "@/components/StructuredData";
 import { NavBar } from "@/components/NavBar";
 import { noFlashThemeScript } from "@/components/ThemeToggle";
 import { ObservationProvider } from "@/components/ObservationProvider";
-import { ContextBar } from "@/components/ContextBar";
 import { SITE, absoluteUrl } from "@/lib/routes";
 import "./globals.css";
 
@@ -153,30 +153,32 @@ export default function RootLayout({
             href="#main"
             className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-[var(--surface-card)] focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--accent-solid)]"
           >
-            Skip to content
+            Lewati ke konten
           </a>
-          <NavBar />
           {/*
-            DESIGN.md §4.3/§9.4: place and date, persistent across every
-            route. Scoped to ContextBar + main (not NavBar, which doesn't
-            read it) - see ContextBar.tsx for the transitional note on why
-            this coexists with each old page's own location form for now.
+            Place is global and lives in the header's PlaceChip; each page
+            owns its own date control (DESIGN.md v2 §1.2). NavBar reads the
+            place, so the provider wraps it too.
           */}
           <ObservationProvider>
-            <ContextBar />
-            <main id="main" className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+            <NavBar />
+            <main id="main" className="relative mx-auto max-w-6xl px-4 pb-32 pt-6 sm:px-6 sm:pt-8 md:pb-16">
+              {children}
+            </main>
           </ObservationProvider>
           {/*
-            One seam only: a single rule above a bottom bar carrying both the
-            hisab caveat and the byline. They sit opposite each other on desktop
-            and stack on mobile, deliberately never merged - one is a statement
-            about what the output means, the other is a credit.
+            A credit, not a disclaimer: the hisab caveat sits beside every
+            month-start answer instead (DESIGN.md v2 §7.2), so it is not
+            repeated here. pb clears the phone tab bar.
           */}
-          <footer className="relative mx-auto max-w-6xl px-4 pb-10 pt-4 sm:px-6">
-            <div className="flex flex-col items-center gap-5 border-t border-border pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
-              <p className="max-w-md text-center text-sm text-ink-muted sm:text-left">
-                Falak is a hisab (calculation) tool, not a substitute for official sidang isbat
-                determination.
+          <footer className="relative mx-auto max-w-6xl px-4 pb-28 sm:px-6 md:pb-10">
+            <div className="flex flex-col items-center gap-4 border-t border-border pt-6 text-sm text-ink-muted sm:flex-row sm:justify-between">
+              <p className="text-center sm:text-left">
+                Falak menghitung dari rumus astronomi di peramban Anda —{" "}
+                <Link href="/belajar" className="font-semibold text-accent hover:underline">
+                  pelajari caranya
+                </Link>
+                .
               </p>
               <MakerSignature />
             </div>

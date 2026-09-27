@@ -13,5 +13,5 @@ function resolveSearch(params: URLSearchParams): string {
 }
 
 export default function VisibilityMapRedirect() {
-  return <RedirectStub targetPath="/hilal/" targetLabel="Hilal" buildSearch={resolveSearch} />;
+  return <RedirectStub targetPath="/awal-bulan/" targetLabel="Awal Bulan" buildSearch={resolveSearch} />;
 }
