@@ -21,6 +21,7 @@ import type { HilalMethod } from "@/lib/falak/visibility";
 import { HIJRI_MONTHS_ID, hijriMonthArabic, hijriMonthName } from "@/lib/hijriNames";
 import { formatClock, formatClockIso, formatLongDate, todayIsoIn, zoneAbbreviation } from "@/lib/localDate";
 import { hijriToday, monthOutlook, nextHijriMonth, KEY_MONTHS } from "@/lib/monthOutlook";
+import { gregorianToHijri } from "@/lib/falak/converter";
 import { readQueryParams, writeQueryParams } from "@/lib/permalink";
 import { cn } from "@/lib/cn";
 
@@ -63,10 +64,23 @@ export default function AwalBulanPage() {
     const q = readQueryParams();
     const bulan = /^(\d{4})-(\d{1,2})$/.exec(q.get("bulan") ?? "");
     if (bulan) setSelected([Number(bulan[1]), Number(bulan[2])]);
+    else if (q.get("sweep") && q.get("d")) {
+      // An old /hilal-era link names an EVENING, not a month: open the month
+      // that evening could start (late in a Hijri month -> the next one).
+      try {
+        const h = gregorianToHijri(parsePlainDate(q.get("d")!), lat, lon);
+        setSelected(h.day >= 25 ? nextHijriMonth(h.year, h.month) : [h.year, h.month]);
+      } catch {
+        // Out of range: fall back to the default month rather than guess.
+      }
+    }
     const v = q.get("tampilan") ?? q.get("sweep");
     if (v === "petang" || v === "indonesia" || v === "setahun") setView(v);
     const k = q.get("kriteria") ?? q.get("method");
     if (k === "mabims_2021" || k === "wujudul_hilal" || k === "odeh") setMethod(k);
+    // Read once on mount. lat/lon may still be the provider's default here;
+    // which month an evening belongs to does not depend on the place in practice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const today = useMemo(() => (now === null ? null : parsePlainDate(todayIsoIn(timeZone))), [now === null, timeZone]); // eslint-disable-line react-hooks/exhaustive-deps
