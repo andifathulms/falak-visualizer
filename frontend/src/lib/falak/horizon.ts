@@ -173,9 +173,11 @@ export function findHorizonCrossing(
     const crossesUp = f0 <= 0 && 0 < f1;
     const crossesDown = f0 > 0 && 0 >= f1;
     if ((rising && crossesUp) || (!rising && crossesDown)) {
-      const localHour = mod((t0 - windowStart) / HOUR_US + 12, 24);
-      const gap = Math.abs(localHour - targetLocalHour);
-      const distance = Math.min(gap, 24 - gap);
+      // Absolute distance from local midnight, not modulo 24h - see the
+      // matching comment in backend/falak/astronomy/_horizon.py for the
+      // wrong-day fajr this fixed.
+      const elapsedHours = (t0 - windowStart) / HOUR_US;
+      const distance = Math.abs(elapsedHours - targetLocalHour);
       if (bestDistance === null || distance < bestDistance) {
         bestDistance = distance;
         bestBracket = [t0, f0, t1, f1];

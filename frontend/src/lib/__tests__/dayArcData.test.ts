@@ -21,23 +21,22 @@ describe("buildDayArcInput", () => {
   });
 
   /**
-   * Regression test for a real defect in the frozen engine's
-   * findHorizonCrossing (lib/falak/horizon.ts), discovered while building
-   * DayArc - see dayArcData.ts's assertSameCivilDay doc comment for the
-   * full explanation. This is not a synthetic edge case: these are real
-   * coordinates from lib/locations.ts and a real date. The engine itself
-   * is frozen and out of scope to fix here; this test only pins the
-   * presentation-layer guard that keeps the bad value from being plotted
-   * silently. If this test ever starts failing because dailyPrayerTimes
-   * stops reproducing the bug, that's good news - the guard just becomes
-   * inert, not wrong - but the test should be revisited rather than
-   * deleted reflexively.
+   * Regression test for a real defect in findHorizonCrossing
+   * (lib/falak/horizon.ts): it compared candidate crossings modulo 24h
+   * inside a 36h window, so the requested day's fajr and the next day's
+   * could tie and the wrong one won. Banda Aceh on 2026-06-15 and Jakarta
+   * on 2026-09-27 both hit it. This test used to pin the presentation
+   * guard (assertSameCivilDay) that refused to plot the bad value; the
+   * engine is now fixed, so these cases must build cleanly. The guard stays
+   * in dayArcData.ts as a backstop.
    */
-  it("throws rather than plotting a mis-dated prayer instant (Banda Aceh, 2026-06-15)", () => {
-    const bandaAceh = city("Banda Aceh");
-    const bearing = qiblaDirection(bandaAceh.lat, bandaAceh.lon).bearingDeg;
-    expect(() =>
-      buildDayArcInput(parsePlainDate("2026-06-15"), bandaAceh.lat, bandaAceh.lon, KEMENAG_RI, bearing),
-    ).toThrow(/dailyPrayerTimes returned/);
+  it.each([
+    ["Banda Aceh", "2026-06-15"],
+    ["Jakarta", "2026-09-27"],
+  ])("builds a same-day arc for %s on %s (formerly a mis-dated fajr)", (name, iso) => {
+    const c = city(name);
+    const bearing = qiblaDirection(c.lat, c.lon).bearingDeg;
+    const input = buildDayArcInput(parsePlainDate(iso), c.lat, c.lon, KEMENAG_RI, bearing);
+    expect(input.prayers).toHaveLength(6);
   });
 });

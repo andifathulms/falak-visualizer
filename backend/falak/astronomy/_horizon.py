@@ -150,6 +150,14 @@ def find_horizon_crossing(
         samples.append((t, alt_diff(t)))
         t += step
 
+    # window_start is local mean MIDNIGHT (noon - 12h), so hours elapsed since
+    # it are already local clock hours. Distance is measured on that absolute
+    # timeline, not modulo 24h: the window is 36h long, so a modulo comparison
+    # made the requested day's crossing and the next day's crossing tie at
+    # almost the same "local hour", and a sub-minute difference picked the
+    # wrong day (fajr for Jakarta on 2026-09-27 came back as 28 Sep 04:22 WIB,
+    # 16.6h from dhuhr). An earlier version also added 12 to the elapsed hours,
+    # which measured rising crossings against 18:00 instead of 06:00.
     target_local_hour = 6 if rising else 18
     best_bracket = None
     best_distance = None
@@ -157,8 +165,8 @@ def find_horizon_crossing(
         crosses_up = f0 <= 0 < f1
         crosses_down = f0 > 0 >= f1
         if (rising and crosses_up) or (not rising and crosses_down):
-            local_hour = ((t0 - window_start).total_seconds() / 3600.0 + 12) % 24
-            distance = min(abs(local_hour - target_local_hour), 24 - abs(local_hour - target_local_hour))
+            elapsed_hours = (t0 - window_start).total_seconds() / 3600.0
+            distance = abs(elapsed_hours - target_local_hour)
             if best_distance is None or distance < best_distance:
                 best_distance = distance
                 best_bracket = (t0, f0, t1, f1)

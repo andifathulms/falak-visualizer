@@ -48,17 +48,11 @@ const FALLBACK_HALF_SPAN = 7 * HOUR_US;
  * where the two candidates are nearly equidistant from the target hour, it
  * can pick the wrong one.
  *
- * This is a defect in already-shipped, already-live code (the current
- * /prayer-times page calls the same function) discovered as a side effect
- * of this migration step, not introduced by it. lib/falak/** is frozen for
- * this work - fixing the root cause means correcting the disambiguation
- * logic and regenerating the golden-vector suite through the backend
- * pipeline, out of scope here. Per CLAUDE.md's no-silent-fallback rule,
- * the responsible move is not to guess a correction, but to detect the
- * inconsistency and fail loudly: `assertSameCivilDay` throws rather than
- * letting DayArc render a chart built from a mis-dated instant, and the
- * caller (the real /langit page) surfaces that as an explicit error
- * rather than a wrong-looking drawing.
+ * Root cause fixed in both engines (horizon.ts / _horizon.py now measure
+ * distance from local midnight on an absolute timeline) and the golden
+ * vectors regenerated. The guard stays as a backstop: per CLAUDE.md's
+ * no-silent-fallback rule, if a mis-dated instant ever reappears, the page
+ * reports it rather than drawing a wrong-looking arc.
  */
 function assertSameCivilDay(times: ReturnType<typeof dailyPrayerTimes>): void {
   const withinReasonableSpan = (label: string, instant: Instant | null, maxHoursFromDhuhr: number) => {
@@ -68,7 +62,7 @@ function assertSameCivilDay(times: ReturnType<typeof dailyPrayerTimes>): void {
       throw new Error(
         `dailyPrayerTimes returned ${label} ${hoursFromDhuhr.toFixed(1)}h from dhuhr - ` +
           `outside the +/-${maxHoursFromDhuhr}h a same-day prayer time should ever be. ` +
-          `This is a known engine edge case (see dayArcData.ts), not a value this page can plot reliably.`,
+          `Not a value this page can plot reliably (see dayArcData.ts).`,
       );
     }
   };
