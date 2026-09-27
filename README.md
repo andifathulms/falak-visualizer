@@ -40,16 +40,17 @@ the disagreement is the actual subject.
 
 ## What it does
 
+The interface is in Indonesian and organised around the moments people open it
+(see [DESIGN.md](DESIGN.md)):
+
 | Page | What you get |
 |---|---|
-| **Converter** | Hijri ↔ Gregorian from real conjunction times and a visibility criterion, not an offset table |
-| **Hilal Visibility** | Moon altitude, elongation, age, illumination and lag time for any date and place, judged against all three criteria at once |
-| **Visibility Map** | The criterion evaluated at 3,255 points across Indonesia and drawn over the real coastline |
-| **Prayer Times** | Daily times and a printable monthly *jadwal imsakiyah*, in the location's own timezone |
-| **Qibla** | Great-circle bearing and distance, plus *Rashdul Qibla* — the moments the Sun sits directly over the Kaaba, so you can calibrate with a shadow and no instruments |
-| **Method Divergence** | Where the three criteria disagree across a whole Hijri year |
-| **Visibility Calendar** | A twelve-month view of the conditions behind each month start |
-| **Isbat Accuracy** | Each method's predictions against historically announced Kemenag dates |
+| **Hari ini** (`/`) | The live sky right now (Sun and Moon at their real position and phase), today's Hijri date, the next prayer with a countdown, the next month start under each criterion, and a countdown to Ramadan, Syawal or Zulhijah |
+| **Salat** (`/salat`) | The day's times on the Sun's actual path, the angle behind each time, a live "now" marker, and a printable monthly *jadwal imsakiyah* with Hijri dates |
+| **Kiblat** (`/kiblat`) | Bearing and distance, a "face the Sun, then turn N°" instruction for the current minute, and *Rashdul Qibla* — when the Sun stands over the Kaaba |
+| **Awal Bulan** (`/awal-bulan`) | Pick a Hijri month: its ijtimak, deciding evening and day 1 per criterion, the sky at sunset with a sunset-to-moonset scrubber, an altitude contour map of Indonesia, and the twelve deciding evenings of the year |
+| **Kalender** (`/kalender`) | A month grid with Gregorian and Hijri dates, where criteria disagree, Islamic holidays, two-way conversion, and a comparison with historical sidang isbat decisions |
+| **Belajar** (`/belajar`) | The glossary, the three criteria and who uses them, how a month start is decided, and how the engine is validated |
 
 Every verdict is paired with the raw numbers that produced it — that was the
 point.

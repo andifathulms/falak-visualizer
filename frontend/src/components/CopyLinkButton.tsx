@@ -20,7 +20,7 @@ export function CopyLinkButton() {
   return (
     <Button type="button" variant="ghost" onClick={handleClick}>
       {copied ? <Check className="size-4" /> : <Link2 className="size-4" />}
-      {copied ? "Link copied" : "Copy link to this result"}
+      {copied ? "Tautan disalin" : "Salin tautan"}
     </Button>
   );
 }

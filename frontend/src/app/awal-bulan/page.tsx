@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { CriterionHistory } from "@/components/CriterionHistory";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { HisabDisclaimer } from "@/components/HisabDisclaimer";
@@ -240,7 +241,10 @@ export default function AwalBulanPage() {
               </p>
             </li>
           </ol>
-          <HisabDisclaimer />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <HisabDisclaimer />
+            <CopyLinkButton />
+          </div>
         </section>
       )}
 
