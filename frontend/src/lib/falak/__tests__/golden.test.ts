@@ -413,6 +413,7 @@ describe("qibla", () => {
       expect(events.length, `event count ${c.year}`).toBe(c.events.length);
       events.forEach((event, index) => {
         expectInstant(event.utcTime, c.events[index].utc_time, `rashdul ${c.year}[${index}]`);
+        expectInstant(event.declinationCrossingUtc, c.events[index].declination_crossing_utc, `rashdul crossing ${c.year}[${index}]`);
         expect(event.direction, `direction ${c.year}[${index}]`).toBe(c.events[index].direction);
       });
     }

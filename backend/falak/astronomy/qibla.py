@@ -5,7 +5,7 @@ import datetime as _dt
 import math
 from dataclasses import dataclass
 
-from . import solar
+from . import prayer_times, solar
 
 KAABA_LATITUDE_DEG = 21.4225
 KAABA_LONGITUDE_DEG = 39.8262
@@ -49,15 +49,23 @@ def _declination_diff(dt: _dt.datetime) -> float:
 
 @dataclass(frozen=True)
 class RashdulQiblaEvent:
+    # The usable moment: the Sun's transit over the Kaaba's meridian on the day
+    # its declination is closest to the Kaaba's latitude. This is when the Sun
+    # actually stands (to within a few arcminutes) at the Kaaba's zenith.
     utc_time: _dt.datetime
     direction: str  # "ascending" (~ May) or "descending" (~ July)
+    # The exact instant declination equals the Kaaba's latitude. Kept for
+    # inspection; it usually falls hours away from Makkah noon (often at
+    # night there), so it is NOT a moment to check a shadow.
+    declination_crossing_utc: _dt.datetime
 
 
 def rashdul_qibla_events(year: int, tolerance_seconds: float = 1.0) -> list[RashdulQiblaEvent]:
     """
     "Rashdul Qibla" / Istiwa'ul A'zham: the two moments each year when the
-    Sun is directly overhead the Kaaba (solar declination == Kaaba's
-    latitude). At that exact instant, the Sun's azimuth as seen from any
+    Sun is directly overhead the Kaaba - on the Kaaba's meridian (Makkah
+    solar noon) on the day its declination is closest to the Kaaba's
+    latitude. At that exact instant, the Sun's azimuth as seen from any
     location where it is above the horizon coincides with that location's
     great-circle bearing to the Kaaba - the same spherical-triangle relation
     that qibla_direction() uses - so a plumb line's shadow there points
@@ -94,10 +102,22 @@ def rashdul_qibla_events(year: int, tolerance_seconds: float = 1.0) -> list[Rash
             else:
                 hi = mid
 
+        crossing = lo + (hi - lo) / 2
+        # Declination equality is only half the condition: the Sun must also
+        # be on the Kaaba's meridian. Take Makkah's solar transit on the day
+        # before, of, and after the crossing and keep the one whose
+        # declination is closest to the Kaaba's latitude.
+        transits = [
+            prayer_times.solar_transit(crossing.date() + _dt.timedelta(days=k), KAABA_LONGITUDE_DEG)
+            for k in (-1, 0, 1)
+        ]
+        transit = min(transits, key=lambda t: abs(_declination_diff(t)))
+
         events.append(
             RashdulQiblaEvent(
-                utc_time=lo + (hi - lo) / 2,
+                utc_time=transit,
                 direction="ascending" if crosses_up else "descending",
+                declination_crossing_utc=crossing,
             )
         )
 

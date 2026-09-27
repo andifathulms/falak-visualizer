@@ -4,12 +4,15 @@
  * Qibla direction: great-circle initial bearing and distance to the Kaaba, plus
  * the two Rashdul Qibla instants each year.
  */
+import { solarTransit } from "./prayerTimes";
 import { solarPosition } from "./solar";
 import {
+  addDays,
   DAY_US,
   degrees,
   instantFromCivil,
   mod,
+  plainDateOf,
   quantizeToMicrosecond,
   SECOND_US,
   radians,
@@ -54,14 +57,18 @@ function declinationDiff(instant: Instant): number {
 }
 
 export interface RashdulQiblaEvent {
+  /** Makkah solar transit on the day declination is closest to the Kaaba's latitude - the moment to check a shadow. */
   utcTime: Instant;
   /** "ascending" (~May) or "descending" (~July). */
   direction: "ascending" | "descending";
+  /** Exact declination == Kaaba latitude instant. Often night in Makkah; for inspection only. */
+  declinationCrossingUtc: Instant;
 }
 
 /**
  * "Rashdul Qibla" / Istiwa'ul A'zham: the two moments each year when the Sun is
- * directly overhead the Kaaba (solar declination == the Kaaba's latitude). At
+ * directly overhead the Kaaba - on the Kaaba's meridian (Makkah solar noon) on
+ * the day its declination is closest to the Kaaba's latitude. At
  * that instant the Sun's azimuth, seen from anywhere it is above the horizon,
  * coincides with that location's great-circle bearing to the Kaaba - the same
  * spherical-triangle relation qiblaDirection() uses - so a plumb line's shadow
@@ -101,9 +108,20 @@ export function rashdulQiblaEvents(year: number, toleranceSeconds = 1.0): Rashdu
       }
     }
 
+    const crossing = lo + quantizeToMicrosecond((hi - lo) / 2);
+    // Mirrors qibla.py: the Sun must also be on the Kaaba's meridian, so take
+    // Makkah's transit nearest in declination to the Kaaba's latitude.
+    const day = plainDateOf(crossing);
+    let transit = solarTransit(addDays(day, -1), KAABA_LONGITUDE_DEG);
+    for (const k of [0, 1]) {
+      const candidate = solarTransit(addDays(day, k), KAABA_LONGITUDE_DEG);
+      if (Math.abs(declinationDiff(candidate)) < Math.abs(declinationDiff(transit))) transit = candidate;
+    }
+
     events.push({
-      utcTime: lo + quantizeToMicrosecond((hi - lo) / 2),
+      utcTime: transit,
       direction: crossesUp ? "ascending" : "descending",
+      declinationCrossingUtc: crossing,
     });
   }
 

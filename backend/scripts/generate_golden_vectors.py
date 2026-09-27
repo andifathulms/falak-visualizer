@@ -474,7 +474,8 @@ def build_qibla():
     for year in (2020, 2024, 2025, 2026, 2027, 2030):
         events = qibla.rashdul_qibla_events(year)
         rashdul.append(
-            {"year": year, "events": [{"utc_time": iso(e.utc_time), "direction": e.direction} for e in events]}
+            {"year": year, "events": [{"utc_time": iso(e.utc_time), "direction": e.direction,
+                                    "declination_crossing_utc": iso(e.declination_crossing_utc)} for e in events]}
         )
 
     return {"directions": directions, "rashdul": rashdul}

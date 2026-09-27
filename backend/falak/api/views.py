@@ -324,7 +324,11 @@ def rashdul_qibla_view(request: Request) -> Response:
     events = qibla_module.rashdul_qibla_events(year)
     payload_events = []
     for event in events:
-        entry = {"utc_time": event.utc_time.isoformat(), "direction": event.direction}
+        entry = {
+            "utc_time": event.utc_time.isoformat(),
+            "direction": event.direction,
+            "declination_crossing_utc": event.declination_crossing_utc.isoformat(),
+        }
         if lat is not None and lon is not None:
             result = qibla_module.qibla_direction(lat, lon)
             entry["bearing_deg"] = result.bearing_deg

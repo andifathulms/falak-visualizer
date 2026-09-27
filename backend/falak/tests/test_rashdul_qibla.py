@@ -1,3 +1,5 @@
+import datetime
+
 from falak.astronomy import qibla
 
 
@@ -29,5 +31,27 @@ def test_rashdul_qibla_event_declination_matches_kaaba_latitude():
 
     events = qibla.rashdul_qibla_events(2024)
     for event in events:
-        dec = solar.solar_position(event.utc_time).apparent_declination_deg
+        dec = solar.solar_position(event.declination_crossing_utc).apparent_declination_deg
         assert abs(dec - qibla.KAABA_LATITUDE_DEG) < 0.001
+
+
+def test_rashdul_qibla_event_is_makkah_solar_noon():
+    """
+    Regression: utc_time used to be the declination-equality instant, which
+    in 2026 fell at 23:05 UTC (night in Makkah) - the page then told users in
+    Jakarta to check a shadow at 06.05 WIB. The usable moment is Makkah's
+    solar transit: the Sun must be near the zenith over the Kaaba itself.
+    """
+    from falak.astronomy._horizon import altitude_deg
+    from falak.astronomy.prayer_times import _sun_ra_dec
+    from falak.astronomy.timescale import julian_day
+
+    for year in (2024, 2025, 2026, 2027):
+        for event in qibla.rashdul_qibla_events(year):
+            ra, dec = _sun_ra_dec(event.utc_time)
+            alt = altitude_deg(ra, dec, qibla.KAABA_LATITUDE_DEG, qibla.KAABA_LONGITUDE_DEG,
+                               julian_day(event.utc_time))
+            assert alt > 89.5, (year, event, alt)
+            # Makkah noon lands around 09:1x-09:2x UTC (≈16.1x-16.2x WIB).
+            assert 9 <= event.utc_time.hour < 10, event
+            assert abs(event.utc_time - event.declination_crossing_utc) <= datetime.timedelta(hours=12)

@@ -450,6 +450,7 @@ export async function fetchQibla(params: { lat: number; lon: number }): Promise<
 export interface RashdulQiblaEvent {
   utc_time: string;
   direction: "ascending" | "descending";
+  declination_crossing_utc: string;
   bearing_deg?: number;
 }
 
@@ -474,6 +475,7 @@ export async function fetchRashdulQibla(params: {
     events: rashdulQiblaEvents(year).map((event) => ({
       utc_time: formatInstant(event.utcTime),
       direction: event.direction,
+      declination_crossing_utc: formatInstant(event.declinationCrossingUtc),
       ...(bearing === undefined ? {} : { bearing_deg: bearing }),
     })),
   };

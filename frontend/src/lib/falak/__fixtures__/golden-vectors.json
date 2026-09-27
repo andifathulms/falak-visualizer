@@ -15778,12 +15778,14 @@
    {
     "events": [
      {
+      "declination_crossing_utc": "2020-05-27T12:39:48.537599",
       "direction": "ascending",
-      "utc_time": "2020-05-27T12:39:48.537599"
+      "utc_time": "2020-05-27T09:17:53.401453"
      },
      {
+      "declination_crossing_utc": "2020-07-15T08:37:48.786621",
       "direction": "descending",
-      "utc_time": "2020-07-15T08:37:48.786621"
+      "utc_time": "2020-07-15T09:26:42.503015"
      }
     ],
     "year": 2020
@@ -15791,12 +15793,14 @@
    {
     "events": [
      {
+      "declination_crossing_utc": "2024-05-27T11:30:44.274903",
       "direction": "ascending",
-      "utc_time": "2024-05-27T11:30:44.274903"
+      "utc_time": "2024-05-27T09:17:54.280359"
      },
      {
+      "declination_crossing_utc": "2024-07-15T07:58:52.653809",
       "direction": "descending",
-      "utc_time": "2024-07-15T07:58:52.653809"
+      "utc_time": "2024-07-15T09:26:44.260828"
      }
     ],
     "year": 2024
@@ -15804,12 +15808,14 @@
    {
     "events": [
      {
+      "declination_crossing_utc": "2025-05-27T17:17:04.914551",
       "direction": "ascending",
-      "utc_time": "2025-05-27T17:17:04.914551"
+      "utc_time": "2025-05-27T09:17:53.401453"
      },
      {
+      "declination_crossing_utc": "2025-07-15T13:43:23.869630",
       "direction": "descending",
-      "utc_time": "2025-07-15T13:43:23.869630"
+      "utc_time": "2025-07-15T09:26:43.381922"
      }
     ],
     "year": 2025
@@ -15817,12 +15823,14 @@
    {
     "events": [
      {
+      "declination_crossing_utc": "2026-05-27T23:05:49.255371",
       "direction": "ascending",
-      "utc_time": "2026-05-27T23:05:49.255371"
+      "utc_time": "2026-05-28T09:17:59.553797"
      },
      {
+      "declination_crossing_utc": "2026-07-15T19:25:45.227051",
       "direction": "descending",
-      "utc_time": "2026-07-15T19:25:45.227051"
+      "utc_time": "2026-07-15T09:26:42.503015"
      }
     ],
     "year": 2026
@@ -15830,12 +15838,14 @@
    {
     "events": [
      {
+      "declination_crossing_utc": "2027-05-28T04:57:00.593262",
       "direction": "ascending",
-      "utc_time": "2027-05-28T04:57:00.593262"
+      "utc_time": "2027-05-28T09:17:57.795984"
      },
      {
+      "declination_crossing_utc": "2027-07-16T01:06:25.729981",
       "direction": "descending",
-      "utc_time": "2027-07-16T01:06:25.729981"
+      "utc_time": "2027-07-16T09:26:47.776453"
      }
     ],
     "year": 2027
@@ -15843,12 +15853,14 @@
    {
     "events": [
      {
+      "declination_crossing_utc": "2030-05-27T22:41:43.674317",
       "direction": "ascending",
-      "utc_time": "2030-05-27T22:41:43.674317"
+      "utc_time": "2030-05-28T09:18:01.311609"
      },
      {
+      "declination_crossing_utc": "2030-07-15T18:05:50.354005",
       "direction": "descending",
-      "utc_time": "2030-07-15T18:05:50.354005"
+      "utc_time": "2030-07-15T09:26:44.260828"
      }
     ],
     "year": 2030
