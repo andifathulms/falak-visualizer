@@ -110,7 +110,11 @@ def _month_start_from_conjunction_for_method(
     for offset in (0, 1, 2, 3):
         evening = conj.date() + _dt.timedelta(days=offset)
         obs = visibility.compute_hilal_observation(evening, lat_deg, lon_deg)
-        if obs.conjunction_time < obs.sunset_time and _is_visible_for_method(obs, method):
+        # Gate on THIS month's conjunction. obs.conjunction_time is the most
+        # recent conjunction before that evening's sunset, which on an evening
+        # before this month's ijtimak is the PREVIOUS month's - so comparing
+        # against it was always true and the gate never excluded anything.
+        if conj < obs.sunset_time and _is_visible_for_method(obs, method):
             return evening + _dt.timedelta(days=1)
     raise ValueError(
         f"could not establish month start ({method}) within 3 evenings of conjunction {conj}"

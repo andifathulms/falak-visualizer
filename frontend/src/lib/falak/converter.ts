@@ -185,7 +185,11 @@ export function monthStartTrace(
   for (const offset of [0, 1, 2, 3]) {
     const evening = addDays(plainDateOf(conjunction), offset);
     const observation = computeHilalObservation(evening, latDeg, lonDeg);
-    const conjunctionBeforeSunset = observation.conjunctionTime < observation.sunsetTime;
+    // This month's conjunction, not observation.conjunctionTime: on an evening
+    // before this month's ijtimak that field is the previous month's
+    // conjunction, which made this gate always pass (and the trace show a
+    // tick for an ijtimak that had not happened yet). Mirrors converter.py.
+    const conjunctionBeforeSunset = conjunction < observation.sunsetTime;
     const criterionMet = conjunctionBeforeSunset && isVisibleForMethod(observation, method);
     steps.push({ evening, conjunctionBeforeSunset, criterionMet, observation });
     if (criterionMet) {
