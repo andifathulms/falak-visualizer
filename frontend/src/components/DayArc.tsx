@@ -1,217 +1,143 @@
 "use client";
 
 import { useId } from "react";
-import { motion } from "framer-motion";
-import {
-  computeDayArcLayout,
-  DEFAULT_DAY_ARC_VIEWPORT,
-  type DayArcInput,
-  type DayArcViewport,
-  type PrayerKey,
-} from "@/lib/dayArcGeometry";
+import { SunGlyph } from "@/components/sky/Celestial";
+import { computeDayArcLayout, type DayArcInput, type DayArcViewport } from "@/lib/dayArcGeometry";
+import { PRAYER_LABEL } from "@/lib/prayerSchedule";
+import { formatClock } from "@/lib/localDate";
+import { HOUR_US, type Instant } from "@/lib/falak/time";
 
 /**
- * "DayArc" (DESIGN.md §5.3) - the sun's altitude across a day, drawn as an
- * arc, with the five prayer moments marked where the curve crosses their
- * defining altitude. A compass strip beneath shares the arc's horizon
- * baseline and marks the qibla bearing - "prayer times and qibla are the
- * same geometry" (§5.3), made visible by literally sharing a horizon line,
- * not by unifying two different coordinate systems (the arc's axis is
- * time; the strip's is compass bearing) into one, which would misrepresent
- * both.
+ * DayArc (DESIGN.md v2 §5.3): the Sun's altitude across one day - real engine
+ * samples, not a drawn curve - with each prayer marked where the Sun crosses
+ * the altitude that defines it, and a "now" Sun when the day is today.
  *
- * Fajr and Isha (and any other below-horizon portion of the curve) are
- * shaded as a distinct depression zone rather than continuing the arc's
- * solid stroke - DESIGN.md is explicit that pretending they sit "on the
- * arc" the way the daylight prayers do would misstate the geometry: the
- * sun genuinely is below the horizon at those moments.
+ * The horizontal axis is time, labelled in the place's own clock; the vertical
+ * axis is solar altitude. Subuh and Isya sit below the horizon, in a shaded
+ * depression zone, because that is where the Sun genuinely is at those moments.
  */
-
-const PRAYER_LABEL: Record<PrayerKey, string> = {
-  fajr: "Subuh",
-  sunrise: "Terbit",
-  dhuhr: "Dzuhur",
-  asr: "Ashar",
-  maghrib: "Maghrib",
-  isha: "Isya",
-};
-
 export interface DayArcProps {
   input: DayArcInput;
+  timeZone: string | null;
+  now?: Instant | null;
   viewport?: DayArcViewport;
   className?: string;
 }
 
-export function DayArc({ input, viewport = DEFAULT_DAY_ARC_VIEWPORT, className }: DayArcProps) {
+export function DayArc({ input, timeZone, now = null, viewport = { width: 960, archHeight: 300 }, className }: DayArcProps) {
   const uid = useId();
   const layout = computeDayArcLayout(input, viewport);
-  const { width } = viewport;
+  const { width, archHeight } = viewport;
+  const samples = input.samples;
+  const t0 = samples[0]?.instant ?? 0;
+  const t1 = samples[samples.length - 1]?.instant ?? 1;
+  const xOfTime = (t: Instant) => ((t - t0) / (t1 - t0 || 1)) * width;
+
+  // "Now" sits on the curve: interpolate the sampled altitude at the current instant.
+  let nowPoint: { x: number; y: number } | null = null;
+  if (now !== null && now >= t0 && now <= t1) {
+    const i = samples.findIndex((s) => s.instant >= now);
+    const a = samples[Math.max(0, i - 1)];
+    const b = samples[Math.max(0, i)];
+    const f = b.instant === a.instant ? 0 : (now - a.instant) / (b.instant - a.instant);
+    const alt = a.altitudeDeg + (b.altitudeDeg - a.altitudeDeg) * f;
+    nowPoint = { x: xOfTime(now), y: layout.yForAltitude(alt) };
+  }
+
+  // Hour ticks every 2 hours on the hour, in the place's clock.
+  const ticks: Instant[] = [];
+  const firstHour = Math.ceil(t0 / HOUR_US) * HOUR_US;
+  for (let t = firstHour; t <= t1; t += HOUR_US) {
+    const hour = Number(formatClock(t, timeZone).slice(0, 2));
+    if (hour % 2 === 0) ticks.push(t);
+  }
+
+  const desc =
+    "Lintasan ketinggian matahari sepanjang hari. " +
+    input.prayers
+      .filter((p) => p.instant !== null)
+      .map((p) => `${PRAYER_LABEL[p.key]} ${formatClock(p.instant, timeZone)}, matahari ${p.definingAltitudeDeg.toFixed(1).replace(".", ",")}°`)
+      .join("; ") +
+    ".";
 
   return (
     <div className={className}>
-      <svg
-        viewBox={`0 0 ${width} ${layout.totalHeight}`}
-        role="img"
-        aria-labelledby={`${uid}-desc`}
-        className="h-auto w-full max-w-full"
-      >
-        <desc id={`${uid}-desc`}>
-          The sun&apos;s altitude across the day, with the five prayer moments marked where it crosses
-          each one&apos;s defining angle, and the qibla bearing marked on a compass strip sharing the
-          same horizon.
-        </desc>
-
+      <svg viewBox={`0 0 ${width} ${archHeight + 34}`} role="img" aria-labelledby={`${uid}-desc`} className="block h-auto w-full">
+        <desc id={`${uid}-desc`}>{desc}</desc>
         <defs>
-          <linearGradient id={`${uid}-sky`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--surface-raised)" />
-            <stop offset="100%" stopColor="var(--surface-card)" />
+          <linearGradient id={`${uid}-day`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--sun)" stopOpacity={0.14} />
+            <stop offset="100%" stopColor="var(--sun)" stopOpacity={0.02} />
           </linearGradient>
+          <clipPath id={`${uid}-above`}>
+            <rect x={0} y={0} width={width} height={layout.horizonY} />
+          </clipPath>
+          <clipPath id={`${uid}-below`}>
+            <rect x={0} y={layout.horizonY} width={width} height={archHeight - layout.horizonY} />
+          </clipPath>
         </defs>
 
-        <rect x={0} y={0} width={width} height={viewport.archHeight} fill={`url(#${uid}-sky)`} />
-
-        {/* Depression zone: shaded, distinct from the daylight sky, under
-            the horizon wherever the curve is negative. */}
+        {/* Night below the horizon, faintly. */}
+        <rect x={0} y={layout.horizonY} width={width} height={archHeight - layout.horizonY} fill="var(--verdict-margin)" fillOpacity={0.07} />
         {layout.depressionBands.map((band, i) => (
-          <rect
-            key={i}
-            x={band.x1}
-            y={layout.horizonY}
-            width={band.x2 - band.x1}
-            height={viewport.archHeight - layout.horizonY}
-            fill="var(--border)"
-            fillOpacity={0.35}
-          />
+          <rect key={i} x={band.x1} y={layout.horizonY} width={band.x2 - band.x1} height={archHeight - layout.horizonY} fill="var(--verdict-margin)" fillOpacity={0.08} />
         ))}
 
-        <line x1={0} y1={layout.horizonY} x2={width} y2={layout.horizonY} stroke="var(--text-body)" strokeOpacity={0.6} strokeWidth={1} />
+        {/* Daylight: the area under the arc. */}
+        <path d={`${layout.curvePath} L ${width},${layout.horizonY} L 0,${layout.horizonY} Z`} fill={`url(#${uid}-day)`} clipPath={`url(#${uid}-above)`} />
 
-        {/* The arc itself: one continuous path, styled once above the
-            horizon (solid) and once below it (dashed) via two clip
-            rectangles over the same `d` - one curve, two readings, same
-            approach as BoundaryRibbon's merge/split connector. */}
-        <clipPath id={`${uid}-above`}>
-          <rect x={0} y={0} width={width} height={layout.horizonY} />
-        </clipPath>
-        <clipPath id={`${uid}-below`}>
-          <rect x={0} y={layout.horizonY} width={width} height={viewport.archHeight - layout.horizonY} />
-        </clipPath>
-        <path d={layout.curvePath} fill="none" stroke="var(--verdict-lit)" strokeWidth={2.5} clipPath={`url(#${uid}-above)`} />
-        <path
-          d={layout.curvePath}
-          fill="none"
-          stroke="var(--verdict-dark)"
-          strokeWidth={1.5}
-          strokeDasharray="3 3"
-          clipPath={`url(#${uid}-below)`}
-        />
+        <line x1={0} y1={layout.horizonY} x2={width} y2={layout.horizonY} stroke="var(--text-body)" strokeOpacity={0.35} />
+        <text x={8} y={layout.horizonY - 6} fontSize={11} fill="var(--text-muted)">
+          ufuk
+        </text>
 
-        {layout.prayers.map((p) =>
-          p.point ? (
+        <path d={layout.curvePath} fill="none" stroke="var(--sun)" strokeWidth={3} strokeLinecap="round" clipPath={`url(#${uid}-above)`} />
+        <path d={layout.curvePath} fill="none" stroke="var(--verdict-margin)" strokeWidth={1.6} strokeDasharray="4 4" clipPath={`url(#${uid}-below)`} />
+
+        {layout.prayers.map((p) => {
+          if (!p.point) return null;
+          const below = p.belowHorizon;
+          // The noon label sits beside the peak (above it is off-canvas and
+          // where the "now" pill lives); the rest sit above or below their point.
+          const beside = p.key === "dhuhr";
+          const labelY = beside ? p.point.y + 4 : below ? p.point.y + 20 : p.point.y - 26;
+          const labelX = beside ? p.point.x + 12 : Math.min(width - 26, Math.max(26, p.point.x));
+          const anchor = beside ? "start" : "middle";
+          return (
             <g key={p.key}>
-              <line
-                x1={p.point.x}
-                y1={p.point.y}
-                x2={p.point.x}
-                y2={layout.horizonY}
-                stroke="var(--border)"
-                strokeWidth={1}
-                strokeDasharray="2 2"
-              />
-              <circle
-                cx={p.point.x}
-                cy={p.point.y}
-                r={4}
-                fill={p.belowHorizon ? "var(--verdict-dark)" : "var(--verdict-lit)"}
-              >
-                <title>
-                  {PRAYER_LABEL[p.key]}: altitude matahari {p.definingAltitudeDeg.toFixed(1)}°
-                </title>
-              </circle>
-              <text
-                x={p.point.x}
-                y={p.point.y - 10}
-                textAnchor="middle"
-                fontSize={11}
-                fontFamily="var(--font-plex-mono)"
-                fill="var(--text-body)"
-              >
+              <line x1={p.point.x} y1={p.point.y} x2={p.point.x} y2={layout.horizonY} stroke="var(--border-strong)" strokeDasharray="2 3" />
+              <circle cx={p.point.x} cy={p.point.y} r={5} fill="var(--surface-card)" stroke={below ? "var(--verdict-margin)" : "var(--sun)"} strokeWidth={2.2} />
+              <text x={labelX} y={labelY} textAnchor={anchor} fontSize={13} fontWeight={700} fill="var(--text-body)">
                 {PRAYER_LABEL[p.key]}
               </text>
-            </g>
-          ) : null,
-        )}
-
-        {/* Compass strip, sharing the arc's horizon baseline. Reference
-            ticks at N/E/S/W (0/90/180/270deg); the qibla bearing gets its
-            own marker and label. Schematic, not a true compass - see the
-            module comment. */}
-        <g>
-          <line
-            x1={0}
-            y1={layout.compassStripY + 20}
-            x2={width}
-            y2={layout.compassStripY + 20}
-            stroke="var(--border)"
-            strokeWidth={1}
-          />
-          {[
-            { deg: 0, label: "U" },
-            { deg: 90, label: "T" },
-            { deg: 180, label: "S" },
-            { deg: 270, label: "B" },
-            { deg: 360, label: "U" },
-          ].map(({ deg, label }) => (
-            <g key={deg}>
-              <line
-                x1={(deg / 360) * width}
-                y1={layout.compassStripY + 14}
-                x2={(deg / 360) * width}
-                y2={layout.compassStripY + 26}
-                stroke="var(--text-muted)"
-                strokeWidth={1}
-              />
-              <text
-                x={(deg / 360) * width}
-                y={layout.compassStripY + 42}
-                textAnchor="middle"
-                fontSize={10}
-                fill="var(--text-muted)"
-              >
-                {label}
+              <text x={labelX} y={labelY + 15} textAnchor={anchor} fontSize={12} fill="var(--text-muted)" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {formatClock(p.instant, timeZone)}
               </text>
             </g>
-          ))}
+          );
+        })}
 
-          <motion.g
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            <line
-              x1={layout.qiblaX}
-              y1={layout.compassStripY + 4}
-              x2={layout.qiblaX}
-              y2={layout.compassStripY + 36}
-              stroke="var(--accent-solid)"
-              strokeWidth={2.5}
-            />
-            <polygon
-              points={`${layout.qiblaX - 5},${layout.compassStripY + 4} ${layout.qiblaX + 5},${layout.compassStripY + 4} ${layout.qiblaX},${layout.compassStripY - 4}`}
-              fill="var(--accent-solid)"
-            />
-            <text
-              x={layout.qiblaX}
-              y={layout.compassStripY + 54}
-              textAnchor="middle"
-              fontSize={10}
-              fontWeight={600}
-              fill="var(--accent-text)"
-            >
-              Kiblat
+        {nowPoint && (
+          <g>
+            <line x1={nowPoint.x} y1={0} x2={nowPoint.x} y2={archHeight} stroke="var(--accent-solid)" strokeOpacity={0.5} strokeDasharray="3 4" />
+            <SunGlyph cx={nowPoint.x} cy={nowPoint.y} r={7} />
+            <rect x={Math.min(width - 70, Math.max(2, nowPoint.x - 34))} y={4} width={68} height={20} rx={10} fill="var(--accent-solid)" />
+            <text x={Math.min(width - 36, Math.max(36, nowPoint.x))} y={18} textAnchor="middle" fontSize={11.5} fontWeight={700} fill="var(--accent-on-solid)">
+              {formatClock(now, timeZone)}
             </text>
-          </motion.g>
-        </g>
+          </g>
+        )}
+
+        {/* Time axis. */}
+        <line x1={0} y1={archHeight} x2={width} y2={archHeight} stroke="var(--border)" />
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={xOfTime(t)} y1={archHeight} x2={xOfTime(t)} y2={archHeight + 5} stroke="var(--text-muted)" strokeOpacity={0.6} />
+            <text x={Math.min(width - 18, Math.max(18, xOfTime(t)))} y={archHeight + 22} textAnchor="middle" fontSize={11.5} fill="var(--text-muted)">
+              {formatClock(t, timeZone)}
+            </text>
+          </g>
+        ))}
       </svg>
     </div>
   );

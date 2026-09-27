@@ -72,6 +72,8 @@ export interface DayArcLayout {
   prayers: PlottedPrayer[];
   compassStripY: number;
   qiblaX: number;
+  /** The altitude scale used for every y above, so callers can place extra marks (e.g. "now") on the same axis. */
+  yForAltitude: (altitudeDeg: number) => number;
 }
 
 function timeToX(instant: Instant, domain: [Instant, Instant], width: number): number {
@@ -163,5 +165,6 @@ export function computeDayArcLayout(input: DayArcInput, viewport: DayArcViewport
     prayers,
     compassStripY: archHeight,
     qiblaX,
+    yForAltitude: altToY,
   };
 }

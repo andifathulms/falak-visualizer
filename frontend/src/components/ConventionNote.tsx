@@ -29,35 +29,31 @@ export function ConventionNote({ convention }: { convention: string }) {
   if (!c) return null;
 
   const isDefault = c.name === DEFAULT_CONVENTION;
+  const deg = (v: number) => `${String(v).replace(".", ",")}°`;
 
   return (
-    <div className="rounded-xl border border-border px-4 py-3 text-sm">
+    <div className="space-y-2 rounded-control bg-surface-raised px-4 py-3.5 text-sm">
       <p>
-        <span className="font-semibold">{c.name}</span>{" "}
+        <span className="font-bold">{c.name}</span>{" "}
         <span className="text-ink-muted">
-          — fajr at{" "}
-          <span className="font-mono tabular-nums text-ink">{c.fajrAngleDeg}°</span> below the
-          horizon, isha at{" "}
-          <span className="font-mono tabular-nums text-ink">{c.ishaAngleDeg}°</span>, asr at a
-          shadow length of {c.asrShadowFactor}× object height
-          {c.asrShadowFactor === 1 ? " (Shafi'i)" : " (Hanafi)"}.
+          — Subuh saat matahari <span className="font-semibold tabular-nums text-ink">{deg(c.fajrAngleDeg)}</span> di bawah
+          ufuk, Isya pada <span className="font-semibold tabular-nums text-ink">{deg(c.ishaAngleDeg)}</span>, Asar saat
+          bayangan {c.asrShadowFactor}× tinggi benda{c.asrShadowFactor === 1 ? " (Syafi'i)" : " (Hanafi)"}.
         </span>
       </p>
-      <p className="mt-1.5 text-sm text-ink-muted">
-        Asr is set by shadow length rather than by a clock because that is what can be observed
-        without one: as the sun descends, every object&apos;s shadow lengthens, and asr begins when a
-        shadow has grown by {c.asrShadowFactor === 1 ? "the object's own height" : "twice the object's height"}{" "}
-        beyond whatever it measured at noon. The factor is the point of disagreement between schools,
-        not the method.
+      <p className="text-ink-muted">
+        Asar ditentukan dari panjang bayangan, bukan jam, karena itulah yang bisa diamati tanpa jam: saat matahari turun,
+        bayangan memanjang, dan Asar tiba ketika bayangan bertambah sepanjang{" "}
+        {c.asrShadowFactor === 1 ? "tinggi benda itu sendiri" : "dua kali tinggi benda"} dari panjangnya saat tengah hari.
+        Yang diperselisihkan mazhab adalah faktornya, bukan caranya.
       </p>
-      <p className="mt-1.5 text-sm text-ink-muted">
-        Only <span className="font-medium text-ink">fajr</span> and{" "}
-        <span className="font-medium text-ink">isha</span> depend on this choice — they are
-        defined by how far the sun has to be below the horizon, which is a convention rather than an
-        observation. Sunrise, dhuhr and maghrib are fixed by the sun&apos;s position and do not move.
+      <p className="text-ink-muted">
+        Hanya <span className="font-semibold text-ink">Subuh</span> dan <span className="font-semibold text-ink">Isya</span>{" "}
+        yang bergantung pada konvensi, karena keduanya didefinisikan oleh seberapa jauh matahari di bawah ufuk - sebuah
+        kesepakatan, bukan pengamatan. Terbit, Zuhur, dan Magrib ditentukan posisi matahari dan tidak berubah.
         {isDefault
-          ? " Kemenag RI is the Indonesian standard and the default here; change it only if you are matching a schedule set by another organisation."
-          : " This is not the Indonesian standard — Kemenag RI is. Use it when you are matching a schedule set by that organisation."}
+          ? " Kemenag RI adalah standar Indonesia dan bawaan di sini; ganti hanya bila Anda menyamakan dengan jadwal lembaga lain."
+          : " Ini bukan standar Indonesia (standarnya Kemenag RI). Pakai bila Anda menyamakan dengan jadwal lembaga tersebut."}
       </p>
     </div>
   );

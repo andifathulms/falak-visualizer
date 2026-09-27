@@ -75,7 +75,7 @@ export default function DayArcPreview() {
             </div>
           ) : (
             <div className="max-w-3xl rounded-2xl border border-border bg-surface-card p-4">
-              <DayArc input={r.input} />
+              <DayArc input={r.input} timeZone="Asia/Jakarta" />
             </div>
           )}
         </section>

@@ -1,235 +1,323 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayArc } from "@/components/DayArc";
 import { DateStepper } from "@/components/DateStepper";
-import { ConventionNote, CONVENTION_OPTIONS, DEFAULT_CONVENTION } from "@/components/ConventionNote";
 import { ErrorBanner } from "@/components/ErrorBanner";
+import { PrintButton } from "@/components/PrintButton";
 import { Select } from "@/components/ui/Select";
-import { Table, type TableColumn } from "@/components/ui/Table";
 import { useObservation } from "@/components/ObservationProvider";
-import { ApiError, fetchPrayerTimesMonth, type PrayerTimesMonthResult, type PrayerTimesResult } from "@/lib/api";
+import { useNow } from "@/components/useNow";
+import { CONVENTION_OPTIONS, ConventionNote, DEFAULT_CONVENTION } from "@/components/ConventionNote";
 import { buildDayArcInput } from "@/lib/dayArcData";
-import type { DayArcInput, PrayerKey } from "@/lib/dayArcGeometry";
-import { CONVENTIONS } from "@/lib/falak/prayerTimes";
+import type { DayArcInput } from "@/lib/dayArcGeometry";
+import { gregorianToHijri, monthStartDate } from "@/lib/falak/converter";
+import { CONVENTIONS, dailyPrayerTimes, type DailyPrayerTimes } from "@/lib/falak/prayerTimes";
 import { qiblaDirection } from "@/lib/falak/qibla";
-import { parsePlainDate } from "@/lib/falak/time";
+import { addDays, daysBetween, MINUTE_US, parsePlainDate, type PlainDate } from "@/lib/falak/time";
+import { hijriMonthName } from "@/lib/hijriNames";
+import { formatClock, formatLongDate, todayIsoIn, zoneAbbreviation } from "@/lib/localDate";
+import { formatCountdown, nextPrayer, PRAYER_LABEL, PRAYER_ORDER } from "@/lib/prayerSchedule";
 import { readQueryParams } from "@/lib/permalink";
+import { cn } from "@/lib/cn";
 
-const PRAYER_ORDER: PrayerKey[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
-const PRAYER_LABEL: Record<PrayerKey, string> = {
-  fajr: "Subuh",
-  sunrise: "Terbit",
-  dhuhr: "Dzuhur",
-  asr: "Ashar",
-  maghrib: "Maghrib",
-  isha: "Isya",
-};
+/** Kemenag's imsak: a fixed precaution before Subuh, not an astronomical moment. */
+const IMSAK_MINUTES = 10;
 
-function formatLocalTime(instant: number | null, timeZone: string): string {
-  if (instant === null) return "—";
-  return new Date(instant / 1000).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone });
+const MONTHS_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+function fmtDeg(value: number): string {
+  return `${value.toFixed(value % 1 === 0 ? 0 : 2).replace(".", ",")}°`;
 }
 
-function formatTime(iso: string | null, timeZone: string) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone });
+/** Hijri labels for a run of consecutive days: one conversion, then roll over at each month start. */
+function hijriLabels(first: PlainDate, count: number, lat: number, lon: number): string[] {
+  try {
+    const h = gregorianToHijri(first, lat, lon);
+    let [y, m, d] = [h.year, h.month, h.day];
+    let next = monthStartDate(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, lat, lon);
+    const out: string[] = [];
+    for (let i = 0; i < count; i += 1) {
+      const day = addDays(first, i);
+      if (daysBetween(next, day) >= 0) {
+        [y, m, d] = m === 12 ? [y + 1, 1, 1] : [y, m + 1, 1];
+        next = monthStartDate(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, lat, lon);
+      } else if (i > 0) {
+        d += 1;
+      }
+      out.push(`${d} ${hijriMonthName(m)}`);
+    }
+    return out;
+  } catch {
+    return Array.from({ length: count }, () => "—");
+  }
 }
 
 /**
- * /langit - "where is the sun, and which way is the Kaaba?" (DESIGN.md
- * §4.1/§6). Absorbs /prayer-times and /qibla: DayArc at the top, the daily
- * readout as one row (not six cards), convention selector + ConventionNote,
- * a monthly toggle that swaps the readout for the jadwal imsakiyah table
- * while keeping the arc, and Rashdul Qibla at the bottom with its own year
- * input (DESIGN.md §6: "keeps its own section... its own year input" -
- * the one control on this page that isn't the shared context bar, since a
- * calibration year isn't "place and date").
- *
- * DayArc's input is computed here from the SAME dailyPrayerTimes call the
- * readout row formats - one computation, two views of it, not two separate
- * calls that could drift.
+ * /salat (DESIGN.md v2 §6): one day's prayer times with the Sun's path behind
+ * them and the angle that defines each time, and the month as a printable
+ * jadwal imsakiyah. Everything recomputes for the place in the header and the
+ * day in the stepper; there is nothing to submit.
  */
 export default function SalatPage() {
-  const { lat, lon, dateIso, timeZone, setDate } = useObservation();
+  const { lat, lon, dateIso, timeZone, setDate, matchedCity } = useObservation();
   const [convention, setConvention] = useState(DEFAULT_CONVENTION);
-  const [view, setView] = useState<"daily" | "monthly">("daily");
+  const now = useNow(30_000);
+  const zone = zoneAbbreviation(timeZone);
 
-  // `?convention=` read once on mount (migration step 9): the redirect
-  // stub replacing /prayer-times needs a way to carry an old link's
-  // convention choice over, the same reasoning as /hilal's `?sweep=`.
+  // Old /prayer-times links carry ?convention= (redirect stub).
   useEffect(() => {
-    const qConvention = readQueryParams().get("convention");
-    if (qConvention && CONVENTION_OPTIONS.some((o) => o.value === qConvention)) {
-      setConvention(qConvention);
-    }
+    const q = readQueryParams().get("convention");
+    if (q && CONVENTION_OPTIONS.some((o) => o.value === q)) setConvention(q);
   }, []);
 
-  const [dayArc, setDayArc] = useState<DayArcInput | null>(null);
-  const [dayArcError, setDayArcError] = useState<string | null>(null);
+  const conventionDef = CONVENTIONS[convention] ?? CONVENTIONS[DEFAULT_CONVENTION];
 
-  const [monthResult, setMonthResult] = useState<PrayerTimesMonthResult | null>(null);
-  const [monthError, setMonthError] = useState<string | null>(null);
-  const [monthLoading, setMonthLoading] = useState(false);
-  const now = new Date();
-  const [monthYear, setMonthYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
-
-  const displayTimeZone = timeZone ?? "UTC";
-
-  useEffect(() => {
-    let cancelled = false;
-    setDayArcError(null);
+  const day = useMemo(() => {
     try {
-      const q = qiblaDirection(lat, lon);
-      const conventionDef = CONVENTIONS[convention] ?? CONVENTIONS[DEFAULT_CONVENTION];
-      const input = buildDayArcInput(parsePlainDate(dateIso), lat, lon, conventionDef, q.bearingDeg);
-      if (!cancelled) {
-        setDayArc(input);
-      }
-    } catch (err) {
-      if (!cancelled) {
-        setDayArc(null);
-        setDayArcError(err instanceof Error ? err.message : String(err));
-      }
+      const date = parsePlainDate(dateIso);
+      const input: DayArcInput = buildDayArcInput(date, lat, lon, conventionDef, qiblaDirection(lat, lon).bearingDeg);
+      const times = dailyPrayerTimes(date, lat, lon, conventionDef);
+      const tomorrow = dailyPrayerTimes(addDays(date, 1), lat, lon, conventionDef);
+      return { input, times, tomorrow, error: null as string | null };
+    } catch (error) {
+      return { input: null, times: null, tomorrow: null, error: error instanceof Error ? error.message : String(error) };
     }
-    return () => {
-      cancelled = true;
-    };
-  }, [dateIso, lat, lon, convention]);
+  }, [dateIso, lat, lon, conventionDef]);
 
-  async function loadMonth() {
-    setMonthLoading(true);
-    setMonthError(null);
-    try {
-      const r = await fetchPrayerTimesMonth({ year: monthYear, month, lat, lon, convention });
-      setMonthResult(r);
-    } catch (err) {
-      setMonthError(err instanceof ApiError ? err.message : "Perhitungan gagal.");
-    } finally {
-      setMonthLoading(false);
-    }
-  }
-
-  const monthColumns: TableColumn<PrayerTimesResult>[] = [
-    { key: "date", header: "Tanggal", render: (d) => d.date },
-    ...PRAYER_ORDER.map(
-      (key): TableColumn<PrayerTimesResult> => ({
-        key,
-        header: PRAYER_LABEL[key],
-        render: (d) => formatTime(d[key], displayTimeZone),
-      }),
-    ),
-  ];
+  const isToday = now !== null && dateIso === todayIsoIn(timeZone);
+  const next = isToday && day.times && now !== null ? nextPrayer(day.times, day.tomorrow, now) : null;
 
   return (
-    <div lang="id" className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-tight">Jadwal salat</h1>
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-2xs font-bold uppercase tracking-[0.14em] text-accent">Jadwal salat</p>
+          <h1 className="mt-1 text-[1.9rem] font-extrabold leading-tight tracking-tight sm:text-4xl">
+            {matchedCity?.name ?? "Lokasi Anda"}
+          </h1>
+        </div>
         <DateStepper value={dateIso} onChange={setDate} timeZone={timeZone} />
-      </div>
+      </header>
 
-      {dayArcError && (
+      {day.error && (
         <ErrorBanner
-          message={`Jadwal untuk lokasi dan tanggal ini tidak dapat dihitung dengan andal: ${dayArcError}`}
+          message="Jadwal untuk lokasi dan tanggal ini tidak bisa dihitung dengan andal, jadi tidak ditampilkan. Coba tanggal atau lokasi lain."
+          detail={day.error}
         />
       )}
 
-      {dayArc && (
-        <div className="-mx-4 sm:mx-0">
-          <DayArc input={dayArc} />
+      {day.times && day.input && (
+        <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
+          <section className="card overflow-hidden" aria-label="Lintasan matahari">
+            <div className="flex items-center justify-between gap-3 px-5 pt-4">
+              <h2 className="text-sm font-bold">Lintasan matahari</h2>
+              <span className="text-xs text-ink-muted">waktu {zone}</span>
+            </div>
+            <div className="hidden px-2 pb-3 pt-1 sm:block">
+              <DayArc input={day.input} timeZone={timeZone} now={isToday ? now : null} viewport={{ width: 640, archHeight: 420 }} />
+            </div>
+            <div className="px-1 pb-3 pt-1 sm:hidden">
+              <DayArc input={day.input} timeZone={timeZone} now={isToday ? now : null} viewport={{ width: 420, archHeight: 360 }} />
+            </div>
+          </section>
+
+          <section className="card overflow-hidden" aria-label="Waktu salat">
+            {next && now !== null && (
+              <div className="flex items-end justify-between gap-3 border-b border-border bg-accent-solid/10 px-5 py-4">
+                <div>
+                  <p className="text-2xs font-bold uppercase tracking-[0.14em] text-accent">Berikutnya</p>
+                  <p className="text-2xl font-extrabold">
+                    {PRAYER_LABEL[next.key]}{" "}
+                    <span className="tabular-nums text-accent">{formatClock(next.instant, timeZone)}</span>
+                  </p>
+                </div>
+                <p className="whitespace-nowrap text-sm font-bold text-accent" aria-live="polite">
+                  {formatCountdown(now, next.instant)} lagi
+                </p>
+              </div>
+            )}
+            <ul>
+              <li className="flex items-center justify-between border-b border-border px-5 py-2.5 text-sm text-ink-muted">
+                <span>
+                  Imsak <span className="text-2xs">(Subuh − {IMSAK_MINUTES} mnt)</span>
+                </span>
+                <span className="tabular-nums">{formatClock(day.times.fajr === null ? null : day.times.fajr - IMSAK_MINUTES * MINUTE_US, timeZone)}</span>
+              </li>
+              {PRAYER_ORDER.map((key) => {
+                const t = day.times![key];
+                const plotted = day.input!.prayers.find((p) => p.key === key);
+                const isNext = next !== null && !next.tomorrow && next.key === key;
+                const past = isToday && now !== null && t !== null && t <= now;
+                return (
+                  <li
+                    key={key}
+                    className={cn(
+                      "flex items-center justify-between gap-3 border-b border-border px-5 py-3 last:border-b-0",
+                      isNext && "bg-accent-solid/10",
+                      key === "sunrise" && "text-ink-muted",
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span className={cn("block font-bold", isNext && "text-accent", past && "text-ink-muted")}>{PRAYER_LABEL[key]}</span>
+                      {plotted && (
+                        <span className="block text-2xs text-ink-muted">
+                          {key === "dhuhr"
+                            ? `matahari transit + ${conventionDef.dhuhrCorrectionMinutes} mnt`
+                            : key === "asr"
+                              ? `bayangan = ${conventionDef.asrShadowFactor}× tinggi + bayangan zuhur (matahari ${fmtDeg(plotted.definingAltitudeDeg)})`
+                              : `matahari ${fmtDeg(plotted.definingAltitudeDeg)}`}
+                        </span>
+                      )}
+                    </span>
+                    <span className={cn("text-xl font-extrabold tabular-nums", isNext && "text-accent", past && "text-ink-muted")}>
+                      {formatClock(t, timeZone)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" aria-label="Tampilan" className="inline-flex rounded-xl border border-border p-1 text-sm">
-          {(["daily", "monthly"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={view === v}
-              onClick={() => setView(v)}
-              className={
-                view === v
-                  ? "rounded-lg bg-accent-solid/15 px-3 py-1.5 font-medium text-accent"
-                  : "rounded-lg px-3 py-1.5 text-ink-muted transition-colors duration-fast hover:text-ink"
-              }
-            >
-              {v === "daily" ? "Harian" : "Bulanan"}
-            </button>
-          ))}
+      <section className="card space-y-4 p-5" aria-label="Konvensi">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-md font-bold">Konvensi sudut</h2>
+            <p className="text-sm text-ink-muted">Hanya Subuh dan Isya yang bergantung pada pilihan ini.</p>
+          </div>
+          <div className="w-56">
+            <Select label="Konvensi" value={convention} onChange={setConvention} options={CONVENTION_OPTIONS} />
+          </div>
         </div>
-        <Select label="Konvensi" value={convention} onChange={setConvention} options={CONVENTION_OPTIONS} />
+        <ConventionNote convention={convention} />
+      </section>
+
+      <MonthTable lat={lat} lon={lon} dateIso={dateIso} timeZone={timeZone} convention={convention} />
+    </div>
+  );
+}
+
+function MonthTable({
+  lat,
+  lon,
+  dateIso,
+  timeZone,
+  convention,
+}: {
+  lat: number;
+  lon: number;
+  dateIso: string;
+  timeZone: string | null;
+  convention: string;
+}) {
+  const initial = parsePlainDate(dateIso);
+  const [cursor, setCursor] = useState({ year: initial.year, month: initial.month });
+  useEffect(() => {
+    const d = parsePlainDate(dateIso);
+    setCursor({ year: d.year, month: d.month });
+  }, [dateIso]);
+
+  const rows = useMemo(() => {
+    try {
+      const conv = CONVENTIONS[convention];
+      const first: PlainDate = { year: cursor.year, month: cursor.month, day: 1 };
+      const count = new Date(Date.UTC(cursor.year, cursor.month, 0)).getUTCDate();
+      const hijri = hijriLabels(first, count, lat, lon);
+      const days: Array<{ date: PlainDate; hijri: string; times: DailyPrayerTimes }> = [];
+      for (let i = 0; i < count; i += 1) {
+        const date = addDays(first, i);
+        days.push({ date, hijri: hijri[i], times: dailyPrayerTimes(date, lat, lon, conv) });
+      }
+      return { days, error: null as string | null };
+    } catch (error) {
+      return { days: [], error: error instanceof Error ? error.message : String(error) };
+    }
+  }, [cursor, lat, lon, convention]);
+
+  const shift = (delta: number) =>
+    setCursor(({ year, month }) => {
+      const m = month + delta;
+      return m < 1 ? { year: year - 1, month: 12 } : m > 12 ? { year: year + 1, month: 1 } : { year, month: m };
+    });
+
+  const today = todayIsoIn(timeZone);
+
+  return (
+    <section className="card print-area overflow-hidden" aria-label="Jadwal sebulan">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-5">
+        <div>
+          <h2 className="text-md font-bold">Jadwal sebulan</h2>
+          <p className="text-sm text-ink-muted">
+            {convention} · waktu {zoneAbbreviation(timeZone)} · Imsak = Subuh − {IMSAK_MINUTES} menit
+          </p>
+        </div>
+        <div className="no-print flex items-center gap-1">
+          <button type="button" onClick={() => shift(-1)} className="flex size-10 items-center justify-center rounded-full border border-border hover:bg-surface-raised" aria-label="Bulan sebelumnya">
+            <ChevronLeft className="size-4" aria-hidden="true" />
+          </button>
+          <span className="min-w-[9.5rem] text-center text-sm font-bold">
+            {MONTHS_ID[cursor.month - 1]} {cursor.year}
+          </span>
+          <button type="button" onClick={() => shift(1)} className="flex size-10 items-center justify-center rounded-full border border-border hover:bg-surface-raised" aria-label="Bulan berikutnya">
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </button>
+          <span className="ml-2 hidden sm:block">
+            <PrintButton label="Cetak" />
+          </span>
+        </div>
       </div>
 
-      {view === "daily" ? (
-        dayArc && (
-          <>
-            {/* DESIGN.md §6: "the daily prayer times as a single readout
-                row - not six separate cards". */}
-            <dl className="flex flex-wrap gap-x-8 gap-y-3 rounded-2xl border border-border bg-surface-card px-5 py-4">
-              {dayArc.prayers.map((p) => (
-                <div key={p.key}>
-                  <dt className="text-2xs font-medium text-ink-muted">{PRAYER_LABEL[p.key]}</dt>
-                  <dd className="font-mono text-lg font-semibold tabular-nums">
-                    {formatLocalTime(p.instant, displayTimeZone)}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <ConventionNote convention={convention} />
-          </>
-        )
+      {rows.error ? (
+        <div className="p-5">
+          <ErrorBanner message="Jadwal bulan ini tidak bisa dihitung untuk lokasi ini." detail={rows.error} />
+        </div>
       ) : (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="text-sm">
-              <span className="mb-1.5 block font-medium text-ink-muted">Tahun</span>
-              <input
-                type="number"
-                value={monthYear}
-                onChange={(e) => setMonthYear(Number(e.target.value))}
-                className="h-11 w-24 rounded-lg border border-border bg-surface-card px-3 text-sm"
-              />
-            </label>
-            <label className="text-sm">
-              <span className="mb-1.5 block font-medium text-ink-muted">Bulan</span>
-              <input
-                type="number"
-                min={1}
-                max={12}
-                value={month}
-                onChange={(e) => setMonth(Number(e.target.value))}
-                className="h-11 w-20 rounded-lg border border-border bg-surface-card px-3 text-sm"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={loadMonth}
-              disabled={monthLoading}
-              className="h-11 rounded-xl bg-accent-solid px-4 text-sm font-medium text-accent-on shadow-md shadow-accent-solid/20 disabled:opacity-60"
-            >
-              {monthLoading ? "Memuat…" : "Muat jadwal bulanan"}
-            </button>
-          </div>
-
-          {monthError && <ErrorBanner message={monthError} />}
-
-          {monthResult && (
-            <div className="rounded-2xl border border-border bg-surface-card p-5">
-              <Table
-                columns={monthColumns}
-                rows={monthResult.days}
-                caption={`Jadwal salat harian bulan ${monthResult.month} tahun ${monthResult.year}, konvensi ${convention}, waktu setempat.`}
-                rowKey={(d) => d.date}
-              />
-              <ConventionNote convention={convention} />
-            </div>
-          )}
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabel jadwal salat sebulan">
+          <table className="w-full min-w-[46rem] text-sm">
+            <caption className="sr-only">
+              Jadwal salat {MONTHS_ID[cursor.month - 1]} {cursor.year}, konvensi {convention}, waktu setempat.
+            </caption>
+            <thead className="bg-surface-raised text-2xs uppercase tracking-wider text-ink-muted">
+              <tr>
+                <th scope="col" className="px-4 py-2.5 text-left font-bold">Tanggal</th>
+                <th scope="col" className="px-3 py-2.5 text-left font-bold">Hijriah</th>
+                <th scope="col" className="px-3 py-2.5 text-right font-bold">Imsak</th>
+                {PRAYER_ORDER.map((k) => (
+                  <th key={k} scope="col" className="px-3 py-2.5 text-right font-bold">
+                    {PRAYER_LABEL[k]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.days.map(({ date, hijri, times }) => {
+                const iso = `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
+                const isToday = iso === today;
+                const friday = new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay() === 5;
+                return (
+                  <tr key={iso} className={cn("border-t border-border/70 tabular-nums", isToday && "bg-accent-solid/10 font-bold")}>
+                    <th scope="row" className="whitespace-nowrap px-4 py-2 text-left font-semibold">
+                      <span className={cn(friday && "text-accent")}>{formatLongDate(iso, { weekday: "short", month: undefined, year: undefined })}</span>
+                    </th>
+                    <td className="whitespace-nowrap px-3 py-2 text-ink-muted">{hijri}</td>
+                    <td className="px-3 py-2 text-right text-ink-muted">
+                      {formatClock(times.fajr === null ? null : times.fajr - IMSAK_MINUTES * MINUTE_US, timeZone)}
+                    </td>
+                    {PRAYER_ORDER.map((k) => (
+                      <td key={k} className={cn("px-3 py-2 text-right", k === "sunrise" && "text-ink-muted")}>
+                        {formatClock(times[k], timeZone)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
-
-    </div>
+    </section>
   );
 }
