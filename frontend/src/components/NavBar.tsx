@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Compass, FileCode2, Menu as MenuIcon, Moon, MoonStar, Sun, X } from "lucide-react";
+import { CalendarDays, Compass, FileCode2, Menu as MenuIcon, MoonStar, X } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
-import { THEME_STORAGE_KEY } from "@/components/ThemeToggle";
+import { ThemeControl } from "@/components/ThemeControl";
 import { cn } from "@/lib/cn";
 import { API_DOCS_URL } from "@/lib/api";
 
@@ -53,41 +53,6 @@ function linkClasses(active: boolean) {
   );
 }
 
-function ThemeToggleInline() {
-  const [isDark, setIsDark] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
-
-  function toggle() {
-    const next = !document.documentElement.classList.contains("dark");
-    document.documentElement.classList.toggle("dark", next);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, next ? "dark" : "light");
-    } catch {
-      // Storage can be unavailable (private browsing, quota); the toggle
-      // still works for the rest of this session, it just won't persist.
-    }
-    setIsDark(next);
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex size-9 items-center justify-center rounded-lg text-ink-muted transition-colors duration-fast hover:bg-accent-solid/5 hover:text-ink"
-    >
-      {isDark === null ? null : isDark ? (
-        <Sun className="size-4" aria-hidden="true" />
-      ) : (
-        <Moon className="size-4" aria-hidden="true" />
-      )}
-    </button>
-  );
-}
-
 export function NavBar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -128,11 +93,11 @@ export function NavBar() {
             </a>
           )}
 
-          <ThemeToggleInline />
+          <ThemeControl />
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
-          <ThemeToggleInline />
+          <ThemeControl />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}

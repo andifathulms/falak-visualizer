@@ -39,11 +39,14 @@ function withOpacity(cssVar: string): string {
 }
 
 const config: Config = {
-  // DESIGN.md §2.5 / §9.1: a persisted, user-controlled toggle rather than
-  // OS-preference-only. The .dark class is set on <html> by a blocking
-  // inline script in the root layout (before paint, to avoid a flash) and by
-  // the ThemeToggle component thereafter.
-  darkMode: "class",
+  // DESIGN.md v2 §1.3: the OS preference by default, overridden by an
+  // explicit `.light` / `.dark` class on <html> (ThemeToggle.tsx). The
+  // `dark:` variant has to match both, so it is a custom variant rather than
+  // plain "class" or "media".
+  darkMode: [
+    "variant",
+    ["@media (prefers-color-scheme: dark) { html:not(.light) & }", "html.dark &"],
+  ],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -63,8 +66,27 @@ const config: Config = {
         surface: {
           page: withOpacity("--surface-page"),
           card: withOpacity("--surface-card"),
+          raised: withOpacity("--surface-raised"),
         },
-        border: withOpacity("--border"),
+        border: {
+          DEFAULT: withOpacity("--border"),
+          strong: withOpacity("--border-strong"),
+        },
+        sun: withOpacity("--sun"),
+        moon: withOpacity("--moon"),
+        sky: {
+          zenith: withOpacity("--sky-zenith"),
+          high: withOpacity("--sky-high"),
+          low: withOpacity("--sky-low"),
+          horizon: withOpacity("--sky-horizon"),
+          ground: withOpacity("--sky-ground"),
+          ink: withOpacity("--sky-ink"),
+          "ink-muted": withOpacity("--sky-ink-muted"),
+          sun: withOpacity("--sky-sun"),
+          moon: withOpacity("--sky-moon"),
+          lit: withOpacity("--sky-lit"),
+          margin: withOpacity("--sky-margin"),
+        },
         ink: {
           DEFAULT: withOpacity("--text-body"),
           muted: withOpacity("--text-muted"),
@@ -80,18 +102,13 @@ const config: Config = {
           margin: withOpacity("--verdict-margin"),
         },
       },
-      // DESIGN.md §3.2. `sans` and `mono` override Tailwind's own default
-      // keys (not just add new ones): Preflight's `html { font-family:
-      // theme('fontFamily.sans') }` and every `font-mono` utility both read
-      // these, so overriding the defaults - rather than only adding
-      // `display` as before - is what makes Be Vietnam Pro the app's actual
-      // body font and narrows `font-mono` to Plex Mono instead of the
-      // browser's ui-monospace stack. `display` is Newsreader, a serif book
-      // face, so its own fallback stack is serif, not sans.
+      // DESIGN.md v2 §3.2. `sans` and `mono` override Tailwind's defaults so
+      // Preflight's html font-family and every font-mono utility use ours.
       fontFamily: {
         display: ["var(--font-display)", "ui-serif", "Georgia", "serif"],
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["var(--font-plex-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        arab: ["var(--font-arab)", "Geeza Pro", "Noto Naskh Arabic", "serif"],
       },
 
       // The single type ladder from globals.css. Overriding (not extending)
@@ -108,6 +125,7 @@ const config: Config = {
         xl: ["var(--text-xl)", { lineHeight: "var(--leading-tight)" }],
         "2xl": ["var(--text-2xl)", { lineHeight: "var(--leading-tight)" }],
         "3xl": ["var(--text-3xl)", { lineHeight: "var(--leading-tight)" }],
+        "4xl": ["3.75rem", { lineHeight: "1.02" }],
       },
 
       // Wired to the motion tokens so `duration-base` etc. collapse to 1ms under
@@ -150,6 +168,11 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+      },
+      borderRadius: {
+        control: "0.75rem",
+        card: "1.25rem",
+        panel: "1.75rem",
       },
       animation: {
         "fade-in-up": "fade-in-up 0.5s ease-out both",

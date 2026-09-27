@@ -63,8 +63,8 @@ export function DayArc({ input, viewport = DEFAULT_DAY_ARC_VIEWPORT, className }
 
         <defs>
           <linearGradient id={`${uid}-sky`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--sky-gradient-top)" />
-            <stop offset="100%" stopColor="var(--sky-gradient-horizon)" />
+            <stop offset="0%" stopColor="var(--surface-raised)" />
+            <stop offset="100%" stopColor="var(--surface-card)" />
           </linearGradient>
         </defs>
 
@@ -79,7 +79,7 @@ export function DayArc({ input, viewport = DEFAULT_DAY_ARC_VIEWPORT, className }
             y={layout.horizonY}
             width={band.x2 - band.x1}
             height={viewport.archHeight - layout.horizonY}
-            fill="var(--senja-700)"
+            fill="var(--border)"
             fillOpacity={0.35}
           />
         ))}

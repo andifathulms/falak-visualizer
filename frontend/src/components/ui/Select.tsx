@@ -38,7 +38,7 @@ export function Select({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className="glass-card absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl py-1 text-sm shadow-lg shadow-black/10 focus:outline-none dark:shadow-black/40">
+            <Listbox.Options className="card absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-control py-1 text-sm shadow-lg focus:outline-none">
               {options.map((option) => (
                 <Listbox.Option
                   key={option.value}

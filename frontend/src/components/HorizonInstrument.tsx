@@ -124,8 +124,8 @@ export function HorizonInstrument({
 
         <defs>
           <linearGradient id={skyGradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--sky-gradient-top)" />
-            <stop offset="100%" stopColor="var(--sky-gradient-horizon)" />
+            <stop offset="0%" stopColor="var(--sky-high)" />
+            <stop offset="100%" stopColor="var(--sky-horizon)" />
           </linearGradient>
 
           <mask id={crescentMaskId}>
@@ -288,7 +288,7 @@ export function HorizonInstrument({
               y1={layout.lagBracket.y}
               x2={layout.lagBracket.x2}
               y2={layout.lagBracket.y}
-              stroke="var(--nila-600)"
+              stroke="var(--verdict-margin)"
               strokeWidth={1.5}
             />
             <line
@@ -296,7 +296,7 @@ export function HorizonInstrument({
               y1={layout.lagBracket.y - 4}
               x2={layout.lagBracket.x1}
               y2={layout.lagBracket.y + 4}
-              stroke="var(--nila-600)"
+              stroke="var(--verdict-margin)"
               strokeWidth={1.5}
             />
             <line
@@ -304,7 +304,7 @@ export function HorizonInstrument({
               y1={layout.lagBracket.y - 4}
               x2={layout.lagBracket.x2}
               y2={layout.lagBracket.y + 4}
-              stroke="var(--nila-600)"
+              stroke="var(--verdict-margin)"
               strokeWidth={1.5}
             />
             <text
@@ -313,7 +313,7 @@ export function HorizonInstrument({
               fontSize={11}
               textAnchor="middle"
               fontFamily="var(--font-plex-mono)"
-              fill="var(--nila-600)"
+              fill="var(--verdict-margin)"
             >
               {formatMinutes(layout.lagBracket.minutes)}
             </text>

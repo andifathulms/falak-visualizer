@@ -1,15 +1,40 @@
 /**
- * The blocking script the root layout inlines into <head>, as a string so it
- * can be embedded verbatim via dangerouslySetInnerHTML and run before first
- * paint - a script tag added the normal way runs after React hydrates, which
- * is late enough to flash the wrong theme. Reads the persisted choice first,
- * falls back to the OS preference only when nothing has been chosen yet
- * (DESIGN.md §2.5: "OS preference as the initial value, user's choice
- * persisted").
+ * Theme selection (DESIGN.md v2 §1.3): the operating system's preference by
+ * default, overridden only when the reader explicitly picks Terang or Gelap.
  *
- * Kept in this file, not layout.tsx, so the toggle button and the script that
- * has to agree with it (same storage key, same class) can't drift apart.
+ * The OS default needs no script at all - globals.css applies the dark
+ * tokens under `prefers-color-scheme: dark` unless <html> carries `.light`.
+ * An explicit choice is stored and re-applied by this blocking script before
+ * first paint (a normal script runs after hydration, late enough to flash
+ * the wrong theme). "system" is stored as the absence of a choice.
+ *
+ * Kept in this file so the control and the script that must agree with it
+ * (same storage key, same classes) cannot drift apart.
  */
 export const THEME_STORAGE_KEY = "falak-theme";
 
-export const noFlashThemeScript = `(function(){try{var s=localStorage.getItem('${THEME_STORAGE_KEY}');var d=s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+export type ThemeChoice = "system" | "light" | "dark";
+
+export const noFlashThemeScript = `(function(){try{var s=localStorage.getItem('${THEME_STORAGE_KEY}');var c=document.documentElement.classList;c.remove('light','dark');if(s==='light'||s==='dark')c.add(s);}catch(e){}})();`;
+
+export function readThemeChoice(): ThemeChoice {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    return stored === "light" || stored === "dark" ? stored : "system";
+  } catch {
+    return "system";
+  }
+}
+
+export function applyThemeChoice(choice: ThemeChoice): void {
+  const classes = document.documentElement.classList;
+  classes.remove("light", "dark");
+  if (choice !== "system") classes.add(choice);
+  try {
+    if (choice === "system") localStorage.removeItem(THEME_STORAGE_KEY);
+    else localStorage.setItem(THEME_STORAGE_KEY, choice);
+  } catch {
+    // Storage can be unavailable (private browsing); the choice still applies
+    // for this page view, it just won't persist.
+  }
+}

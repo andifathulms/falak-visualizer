@@ -3,104 +3,96 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------------------
-   Design tokens — the "maghrib" palette (DESIGN.md §3.1).
+   Design tokens - Malam (dark) and Fajar (light), DESIGN.md v2 §3.1.
 
-   Ramps first (no meaning of their own), role tokens second (what components
-   actually consume). Components must go through a role token, never a ramp
-   value directly - that indirection is what makes a contrast fix or a palette
-   swap a one-line edit here instead of a grep-and-replace across the app.
+   Components consume ROLE tokens only. Every text pair was measured against
+   --surface-page, --surface-card AND --surface-raised; the comment gives the
+   worst of the three. Floors: 4.5:1 text, 3:1 UI strokes and large text.
+   --border is a passive divider (WCAG 1.4.11 exemption), not a 3:1 pair.
 
-   Every role-token pair below was measured against the mode's own
-   --surface-page AND --surface-card; the ratio in each comment is the worse of
-   the two, same method the previous token file used. Floors: 4.5:1 for text,
-   3:1 for large text and UI strokes (a focus ring, an icon standing alone
-   without text). Two values below were adjusted in *lightness only*, same hue,
-   after that check failed against the literal DESIGN.md hex - see the comment
-   on each. --border is the one pair that stays under the UI-stroke floor on
-   purpose: it is a passive card-edge divider, not a boundary a user needs to
-   perceive to operate anything (WCAG 1.4.11's own exemption for decorative
-   dividers), and forcing it to 3:1 would fight the deliberate "paper" subtlety
-   this palette is going for. The previous token file's --card-border sat at a
-   similarly low, unaudited ratio, so this is not a regression.
+   Theme selection: the OS preference by default (the `prefers-color-scheme`
+   block), overridden by `.light` / `.dark` on <html> when the reader picks
+   one explicitly (components/ThemeToggle.tsx). The dark values are written
+   once as a custom-property block and applied in both places.
    --------------------------------------------------------------------------- */
 
 :root {
-  /* --- Ramps --------------------------------------------------------------
-     Dusk (indigo, cool - the sky above the horizon) */
-  --senja-900: #1a1330;
-  --senja-800: #241b3c;
-  --senja-700: #33274f;
-  --senja-600: #4a3a5e;
-  --senja-500: #6b5680;
+  color-scheme: light;
 
-  /* Horizon ember (warm accent family) */
-  --ufuk-300: #f6d3a3;
-  --ufuk-400: #efb477;
-  --ufuk-500: #e8a05c;
-  --ufuk-600: #c97f3d;
-  --ufuk-700: #9b5e2a;
+  /* --- Fajar (light) ----------------------------------------------------- */
+  --surface-page: #f4f5fa;
+  --surface-card: #ffffff;
+  --surface-raised: #eceef6;
+  --border: #dde0ee;
+  --border-strong: #c5c9dd;
+  --text-body: #15183a; /* 14.81:1 */
+  --text-muted: #555a7c; /*  5.77:1 */
+  --accent-text: #a34a12; /*  5.11:1 */
+  --accent-solid: #b4531a; /*  4.32:1 vs raised (UI), 5.01:1 under on-solid */
+  --accent-on-solid: #ffffff;
+  --verdict-lit: #8a6400; /*  4.64:1 */
+  --verdict-margin: #5645c0; /*  6.03:1 */
+  --verdict-dark: #5f6488; /*  4.95:1 */
+  --sun: #c4611c; /*  3.57:1 - icon/stroke only, never body text */
+  --moon: #8a6d1f;
+  --shadow-card: 0 1px 2px rgb(21 24 58 / 0.05), 0 12px 32px -16px rgb(21 24 58 / 0.18);
 
-  /* Paper (light-mode surfaces) */
-  --kertas-50: #fdfbf4;
-  --kertas-100: #faf6ec;
-  --kertas-200: #f2ebda;
-  --kertas-300: #e4d9c0;
+  /* --- Sky palette (DESIGN.md v2 §3.1): identical in both themes. --------
+     The sky at maghrib is dusk-coloured whatever the page theme is, so sky
+     drawings read the same in Fajar and Malam. The one gradient family. */
+  --sky-zenith: #0b0d1f;
+  --sky-high: #2a2350;
+  --sky-low: #7a4a6b;
+  --sky-horizon: #e0875a;
+  --sky-ground: #07081a;
+  --sky-ink: #eeecf6;
+  --sky-ink-muted: #b4b6d6;
+  --sky-sun: #f4a259;
+  --sky-moon: #f3e9cf;
+  --sky-lit: #f6d78b;
+  --sky-margin: #c7bcff;
+}
 
-  /* Ink (warm, not black) */
-  --tinta-900: #2a2318;
-  --tinta-600: #6a5f4e;
-
-  /* Indigo (secondary data series only) */
-  --nila-700: #2c5169;
-  --nila-600: #3e6e8e;
-  --nila-400: #6e8cae;
-
-  /* --- Role tokens, light (paper) ------------------------------------------ */
-  --surface-page: var(--kertas-100);
-  --surface-card: var(--kertas-50);
-  --border: var(--kertas-300); /* decorative divider - see note above, not a 3:1 pair */
-  --text-body: var(--tinta-900); /* 14.39:1 */
-  --text-muted: var(--tinta-600); /*  5.79:1 */
-  --accent-text: var(--ufuk-700); /*  4.83:1 */
-  /* DESIGN.md specifies --ufuk-500 here; measured 2.02:1 against
-     --surface-page, below the 3:1 UI-stroke floor this token needs as the
-     focus-ring colour (§2.5). Darkened within the same ufuk hue to 3.02:1;
-     the --ufuk-500 ramp step itself is untouched, this is a role-token-only
-     adjustment, same treatment the previous token file already used for
-     --accent-text (a different lightness per mode of one hue). */
-  --accent-solid: #d4771e; /*  3.02:1 vs surface, 4.78:1 under accent-on-solid */
-  --accent-on-solid: var(--tinta-900);
-  --verdict-lit: var(--ufuk-700); /*  4.83:1 */
-  --verdict-dark: var(--senja-600); /*  9.45:1 */
-  --verdict-margin: var(--nila-600); /*  5.09:1 */
-
-  /* The one gradient in the whole app (DESIGN.md §3.1): the sky behind
-     HorizonInstrument, nowhere else. Not a role token components reach for
-     generally - these two exist only for that one drawing's background. */
-  --sky-gradient-top: var(--kertas-200);
-  --sky-gradient-horizon: var(--ufuk-300);
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+    --surface-page: #0b0d1f;
+    --surface-card: #131631;
+    --surface-raised: #1b1f40;
+    --border: #262b55;
+    --border-strong: #353b6e;
+    --text-body: #eceaf4; /* 13.40:1 */
+    --text-muted: #a3a6cb; /*  6.74:1 */
+    --accent-text: #f4a259; /*  7.72:1 */
+    --accent-solid: #f4a259;
+    --accent-on-solid: #1a1330; /*  8.61:1 */
+    --verdict-lit: #f6d78b; /* 11.40:1 */
+    --verdict-margin: #a594f9; /*  6.23:1 */
+    --verdict-dark: #8c90b8; /*  5.16:1 */
+    --sun: #f4a259;
+    --moon: #f3e9cf;
+    --shadow-card: none;
+  }
 }
 
 :root.dark {
-  --surface-page: var(--senja-900);
-  --surface-card: var(--senja-800);
-  --border: var(--senja-700); /* decorative divider - see note above */
-  --text-body: var(--kertas-200); /* 13.62:1 */
-  --text-muted: #a99bb8; /*  6.22:1 */
-  --accent-text: var(--ufuk-400); /*  8.84:1 */
-  --accent-solid: var(--ufuk-500); /*  7.41:1 vs surface, 8.15:1 under accent-on-solid */
-  --accent-on-solid: var(--senja-900);
-  --verdict-lit: var(--ufuk-300); /* 11.38:1 */
-  /* DESIGN.md specifies --senja-500 here; measured 2.52:1 against
-     --surface-page, below the 4.5:1 text floor this token needs (it carries
-     the "not visible" / criterion-not-met word, not just a swatch). Lightened
-     within the same senja hue to 4.68:1; the --senja-500 ramp step itself is
-     untouched. */
-  --verdict-dark: #9682ab; /*  4.68:1 */
-  --verdict-margin: var(--nila-400); /*  4.65:1 */
-
-  --sky-gradient-top: var(--senja-800);
-  --sky-gradient-horizon: var(--ufuk-500);
+  color-scheme: dark;
+  --surface-page: #0b0d1f;
+  --surface-card: #131631;
+  --surface-raised: #1b1f40;
+  --border: #262b55;
+  --border-strong: #353b6e;
+  --text-body: #eceaf4;
+  --text-muted: #a3a6cb;
+  --accent-text: #f4a259;
+  --accent-solid: #f4a259;
+  --accent-on-solid: #1a1330;
+  --verdict-lit: #f6d78b;
+  --verdict-margin: #a594f9;
+  --verdict-dark: #8c90b8;
+  --sun: #f4a259;
+  --moon: #f3e9cf;
+  --shadow-card: none;
 }
 
 /* ---------------------------------------------------------------------------
@@ -206,6 +198,19 @@ h3 {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .text-arab {
+    font-family: var(--font-arab), "Geeza Pro", "Noto Naskh Arabic", serif;
+    direction: rtl;
+    line-height: 1.5;
+  }
+
+  .card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-card);
   }
 
   .glass-card {

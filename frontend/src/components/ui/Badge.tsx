@@ -31,9 +31,9 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-2xs font-medium",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-2xs font-semibold",
         tone === "positive" && "bg-verdict-lit/15 text-verdict-lit",
-        tone === "neutral" && "bg-ink-muted/10 text-ink-muted",
+        tone === "neutral" && "bg-surface-raised text-ink-muted",
         tone === "negative" && "bg-verdict-dark/15 text-verdict-dark",
         // Not a verdict: the engine declining to give one. Deliberately reads
         // as unresolved rather than as a third outcome on the same axis.

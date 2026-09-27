@@ -21,39 +21,28 @@ const HOME_DESCRIPTION =
   "Work out when each Hijri month begins, whether the hilal is visible from where you are, when to pray, and which way the Kaaba lies — with the altitude, elongation and timings behind every answer.";
 
 /**
- * Three families, three roles (DESIGN.md §3.2). All self-hosted via
- * next/font/local from vendored, Latin-subset woff2 files - same pattern the
- * previous single-family setup used, no Google Fonts network request either
- * way.
+ * Four families, four roles (DESIGN.md v2 §3.2), all self-hosted via
+ * next/font/local - no network font request.
  *
- * Weight sets are trimmed to what the app actually uses today (grepped: only
- * font-normal/font-medium/font-semibold appear anywhere, never font-bold),
- * not the full family. This is the same discipline the removed Geist Mono
- * comment used to call out - a shipped weight nothing references is exactly
- * the mistake being avoided here. A later step can add a file if a new
- * component genuinely needs a weight this set doesn't cover.
- *
- * DESIGN.md calls Be Vietnam Pro "(variable)"; it isn't - Google Fonts never
- * published a variable build, only static weights. Loaded as three static
- * files instead, which is the standard next/font/local pattern for a
- * multi-weight static family and has no user-visible difference from a
- * variable font at these three weights.
+ * - Plus Jakarta Sans (variable 400-800): the interface and the answer numerals.
+ * - Newsreader: the reading voice - verdict sentences, Belajar prose.
+ * - IBM Plex Mono: raw engine values inside "Lihat perhitungan" only.
+ * - Amiri, Arabic subset only: Hijri month names in Arabic script. Not
+ *   preloaded - it is decorative, and it is the heaviest file.
  */
+const plusJakarta = localFont({
+  src: "./fonts/PlusJakartaSans-Variable.woff2",
+  variable: "--font-sans",
+  weight: "400 800",
+  style: "normal",
+  display: "swap",
+});
+
 const newsreader = localFont({
   src: "./fonts/Newsreader-Variable.woff2",
   variable: "--font-display",
   weight: "200 800",
   style: "normal",
-  display: "swap",
-});
-
-const beVietnamPro = localFont({
-  src: [
-    { path: "./fonts/BeVietnamPro-Regular.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/BeVietnamPro-Medium.woff2", weight: "500", style: "normal" },
-    { path: "./fonts/BeVietnamPro-SemiBold.woff2", weight: "600", style: "normal" },
-  ],
-  variable: "--font-sans",
   display: "swap",
 });
 
@@ -64,6 +53,15 @@ const plexMono = localFont({
   ],
   variable: "--font-plex-mono",
   display: "swap",
+});
+
+const amiri = localFont({
+  src: "./fonts/Amiri-Regular-Arabic.woff2",
+  variable: "--font-arab",
+  weight: "400",
+  style: "normal",
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -85,7 +83,7 @@ export const metadata: Metadata = {
     title: `${SITE.name} — ${SITE.tagline}`,
     description: HOME_DESCRIPTION,
     url: absoluteUrl("/"),
-    locale: "en",
+    locale: "id_ID",
     images: [
       {
         url: absoluteUrl("/og-card.png"),
@@ -116,8 +114,9 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${newsreader.variable} ${beVietnamPro.variable} ${plexMono.variable}`}
+      lang="id"
+      suppressHydrationWarning
+      className={`${plusJakarta.variable} ${newsreader.variable} ${plexMono.variable} ${amiri.variable}`}
     >
       {/*
         The font variable classes live on <html>, not <body>: Tailwind's

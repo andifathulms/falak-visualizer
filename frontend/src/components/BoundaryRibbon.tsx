@@ -42,7 +42,7 @@ const LANE_LABEL: Record<HilalMethod | "isbat", string> = {
 const LANE_COLOR: Record<HilalMethod | "isbat", string> = {
   wujudul_hilal: "var(--text-muted)",
   mabims_2021: "var(--accent-solid)",
-  odeh: "var(--nila-600)",
+  odeh: "var(--verdict-margin)",
   isbat: "var(--verdict-lit)",
 };
 
