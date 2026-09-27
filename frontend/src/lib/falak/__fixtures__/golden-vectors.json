@@ -2251,15 +2251,15 @@
     "moon_altitude_deg": 6.101811060997725
    },
    {
-    "crescent_width_arcmin": 0.67108830250522,
-    "date": "2021-12-05",
-    "elongation_deg": 16.30046560181658,
+    "crescent_width_arcmin": 0.012653432414882673,
+    "date": "2021-12-04",
+    "elongation_deg": 2.227540575158129,
     "hijri_month": 5,
     "hijri_year": 1443,
-    "illumination_fraction": 0.02009894435296783,
-    "lag_time_minutes": 70.41015625,
-    "moon_age_hours": 27.213590494722222,
-    "moon_altitude_deg": 14.28103513611395
+    "illumination_fraction": 0.00037803496526211955,
+    "lag_time_minutes": 4.052734366666667,
+    "moon_age_hours": 3.2056152344444446,
+    "moon_altitude_deg": 0.03593812213085525
    },
    {
     "crescent_width_arcmin": 0.2800408958226873,
@@ -2273,15 +2273,15 @@
     "moon_altitude_deg": 8.544039270484898
    },
    {
-    "crescent_width_arcmin": 0.7313572571785212,
-    "date": "2022-02-02",
-    "elongation_deg": 17.307351499901493,
+    "crescent_width_arcmin": 0.08375625894602629,
+    "date": "2022-02-01",
+    "elongation_deg": 5.805831958126645,
     "hijri_month": 7,
     "hijri_year": 1443,
-    "illumination_fraction": 0.022639436231657428,
-    "lag_time_minutes": 70.078125,
-    "moon_age_hours": 29.501329209999998,
-    "moon_altitude_deg": 15.415310892208604
+    "illumination_fraction": 0.0025655381092178353,
+    "lag_time_minutes": 16.953125,
+    "moon_age_hours": 5.501654730833334,
+    "moon_altitude_deg": 2.956279621914885
    },
    {
     "crescent_width_arcmin": 0.25936636136582963,
@@ -2295,15 +2295,15 @@
     "moon_altitude_deg": 8.587891498505266
    },
    {
-    "crescent_width_arcmin": 0.47856175538904083,
-    "date": "2022-04-02",
-    "elongation_deg": 14.375114982740328,
+    "crescent_width_arcmin": 0.03722675051959653,
+    "date": "2022-04-01",
+    "elongation_deg": 3.9795357048003837,
     "hijri_month": 9,
     "hijri_year": 1443,
-    "illumination_fraction": 0.01565434618432543,
-    "lag_time_minutes": 52.64648436666666,
-    "moon_age_hours": 28.540571831666668,
-    "moon_altitude_deg": 11.758795676147255
+    "illumination_fraction": 0.001205400766378928,
+    "lag_time_minutes": 10.8984375,
+    "moon_age_hours": 4.548384331666667,
+    "moon_altitude_deg": 1.8056389354028242
    },
    {
     "crescent_width_arcmin": 0.10495112603028887,
@@ -2328,15 +2328,15 @@
     "moon_altitude_deg": 7.865428505942331
    },
    {
-    "crescent_width_arcmin": 0.5123889936708578,
-    "date": "2022-06-30",
-    "elongation_deg": 15.165719572190948,
+    "crescent_width_arcmin": 0.06306951283449863,
+    "date": "2022-06-29",
+    "elongation_deg": 5.310237195857202,
     "hijri_month": 12,
     "hijri_year": 1443,
-    "illumination_fraction": 0.0174145196593804,
-    "lag_time_minutes": 62.27539063333334,
-    "moon_age_hours": 31.94930230027778,
-    "moon_altitude_deg": 12.510692900674252
+    "illumination_fraction": 0.0021468799757836665,
+    "lag_time_minutes": 11.5234375,
+    "moon_age_hours": 7.945396050277778,
+    "moon_altitude_deg": 1.6481280657277495
    },
    {
     "crescent_width_arcmin": 0.1941058009468689,
@@ -2350,15 +2350,15 @@
     "moon_altitude_deg": 6.711326093605842
    },
    {
-    "crescent_width_arcmin": 0.4166682920086028,
-    "date": "2022-08-28",
-    "elongation_deg": 13.46464194500709,
+    "crescent_width_arcmin": 0.05487851601261703,
+    "date": "2022-08-27",
+    "elongation_deg": 4.896144203287606,
     "hijri_month": 2,
     "hijri_year": 1444,
-    "illumination_fraction": 0.01374357915538399,
-    "lag_time_minutes": 52.62695311666666,
-    "moon_age_hours": 26.594972873333333,
-    "moon_altitude_deg": 11.701721807740984
+    "illumination_fraction": 0.0018250283317569616,
+    "lag_time_minutes": 6.40625,
+    "moon_age_hours": 2.5974142794444446,
+    "moon_altitude_deg": 0.6785315778734873
    },
    {
     "crescent_width_arcmin": 0.11878744825691959,
@@ -2394,15 +2394,15 @@
     "moon_altitude_deg": 4.6835465485230126
    },
    {
-    "crescent_width_arcmin": 0.5943221716591013,
-    "date": "2022-12-24",
-    "elongation_deg": 15.34285898365907,
+    "crescent_width_arcmin": 0.039124233521881775,
+    "date": "2022-12-23",
+    "elongation_deg": 3.9296641328908724,
     "hijri_month": 6,
     "hijri_year": 1444,
-    "illumination_fraction": 0.01782148568825276,
-    "lag_time_minutes": 66.38671875,
-    "moon_age_hours": 24.802388237777777,
-    "moon_altitude_deg": 13.30272147575371
+    "illumination_fraction": 0.0011766876012976324,
+    "lag_time_minutes": -0.05859375,
+    "moon_age_hours": 0.7942502169444444,
+    "moon_altitude_deg": -0.857180553903626
    },
    {
     "crescent_width_arcmin": 0.25070278303087173,
@@ -2416,15 +2416,15 @@
     "moon_altitude_deg": 7.91589970749668
    },
    {
-    "crescent_width_arcmin": 0.7051077736415762,
-    "date": "2023-02-21",
-    "elongation_deg": 16.815784316210642,
+    "crescent_width_arcmin": 0.06530832522669577,
+    "date": "2023-02-20",
+    "elongation_deg": 5.08035917694937,
     "hijri_month": 8,
     "hijri_year": 1444,
-    "illumination_fraction": 0.021380609861799182,
-    "lag_time_minutes": 63.93554686666666,
-    "moon_age_hours": 28.117195095555555,
-    "moon_altitude_deg": 14.449135074648828
+    "illumination_fraction": 0.001964917305789071,
+    "lag_time_minutes": 13.740234366666666,
+    "moon_age_hours": 4.121752387222222,
+    "moon_altitude_deg": 2.352905201501483
    },
    {
     "crescent_width_arcmin": 0.25014455344494624,
@@ -2438,15 +2438,15 @@
     "moon_altitude_deg": 7.766534196069476
    },
    {
-    "crescent_width_arcmin": 0.614486452706288,
-    "date": "2023-04-21",
-    "elongation_deg": 16.100629392146327,
+    "crescent_width_arcmin": 0.029718886256575375,
+    "date": "2023-04-20",
+    "elongation_deg": 3.509438770081822,
     "hijri_month": 10,
     "hijri_year": 1444,
-    "illumination_fraction": 0.01961214570297265,
-    "lag_time_minutes": 56.40625,
-    "moon_age_hours": 30.601800130277777,
-    "moon_altitude_deg": 12.011456509258355
+    "illumination_fraction": 0.0009376300110266467,
+    "lag_time_minutes": 9.287109383333334,
+    "moon_age_hours": 6.607822265555556,
+    "moon_altitude_deg": 1.3492753639849224
    },
    {
     "crescent_width_arcmin": 0.22533928161852776,
@@ -2460,15 +2460,15 @@
     "moon_altitude_deg": 6.138474542759461
    },
    {
-    "crescent_width_arcmin": 0.5103325878807388,
-    "date": "2023-06-19",
-    "elongation_deg": 15.030216588949353,
+    "crescent_width_arcmin": 0.0613594763634778,
+    "date": "2023-06-18",
+    "elongation_deg": 5.180204936529276,
     "hijri_month": 12,
     "hijri_year": 1444,
-    "illumination_fraction": 0.01710698553485346,
-    "lag_time_minutes": 59.83398436666666,
-    "moon_age_hours": 30.15413954,
-    "moon_altitude_deg": 11.764607901587333
+    "illumination_fraction": 0.0020435946421410445,
+    "lag_time_minutes": 6.58203125,
+    "moon_age_hours": 6.150721571111111,
+    "moon_altitude_deg": 0.5758665189809974
    },
    {
     "crescent_width_arcmin": 0.18192163582405194,
@@ -2482,26 +2482,26 @@
     "moon_altitude_deg": 6.1119222942831035
    },
    {
-    "crescent_width_arcmin": 0.3267380140102273,
-    "date": "2023-08-17",
-    "elongation_deg": 12.101137340384424,
+    "crescent_width_arcmin": 0.0459379949128581,
+    "date": "2023-08-16",
+    "elongation_deg": 4.531946685568083,
     "hijri_month": 2,
     "hijri_year": 1445,
-    "illumination_fraction": 0.011111250519593052,
-    "lag_time_minutes": 47.4609375,
-    "moon_age_hours": 25.26075846361111,
-    "moon_altitude_deg": 10.31919946787064
+    "illumination_fraction": 0.0015642060310798178,
+    "lag_time_minutes": 2.83203125,
+    "moon_age_hours": 1.261897786388889,
+    "moon_altitude_deg": -0.16348358795893492
    },
    {
-    "crescent_width_arcmin": 0.5283354863564512,
-    "date": "2023-09-16",
-    "elongation_deg": 15.312152024548974,
+    "crescent_width_arcmin": 0.05354606662994963,
+    "date": "2023-09-15",
+    "elongation_deg": 4.874436522671055,
     "hijri_month": 3,
     "hijri_year": 1445,
-    "illumination_fraction": 0.017749344506539755,
-    "lag_time_minutes": 58.29101563333334,
-    "moon_age_hours": 33.15494032111111,
-    "moon_altitude_deg": 13.277902390576326
+    "illumination_fraction": 0.0018084619228866394,
+    "lag_time_minutes": 15.8203125,
+    "moon_age_hours": 9.158032769166667,
+    "moon_altitude_deg": 2.998898209926772
    },
    {
     "crescent_width_arcmin": 0.14806302113492484,
@@ -2515,15 +2515,15 @@
     "moon_altitude_deg": 5.837166232599021
    },
    {
-    "crescent_width_arcmin": 0.41769696841232834,
-    "date": "2023-11-14",
-    "elongation_deg": 13.284213735397552,
+    "crescent_width_arcmin": 0.014019145663121459,
+    "date": "2023-11-13",
+    "elongation_deg": 2.4399382914811394,
     "hijri_month": 5,
     "hijri_year": 1445,
-    "illumination_fraction": 0.013379831968447942,
-    "lag_time_minutes": 51.53320311666666,
-    "moon_age_hours": 25.336921658055555,
-    "moon_altitude_deg": 10.447374423310803
+    "illumination_fraction": 0.0004539515977427522,
+    "lag_time_minutes": -2.8515625,
+    "moon_age_hours": 1.3322016058333332,
+    "moon_altitude_deg": -1.4647899867317975
    },
    {
     "crescent_width_arcmin": 0.14359068562660396,
@@ -2559,15 +2559,15 @@
     "moon_altitude_deg": 6.333968959295131
    },
    {
-    "crescent_width_arcmin": 0.6038103519670889,
-    "date": "2024-03-11",
-    "elongation_deg": 15.464906239393665,
+    "crescent_width_arcmin": 0.01568655089915485,
+    "date": "2024-03-10",
+    "elongation_deg": 2.4806724744731574,
     "hijri_month": 9,
     "hijri_year": 1445,
-    "illumination_fraction": 0.018103067242958293,
-    "lag_time_minutes": 53.33007813333334,
-    "moon_age_hours": 26.095083550277778,
-    "moon_altitude_deg": 11.990499078592165
+    "illumination_fraction": 0.0004686941217575402,
+    "lag_time_minutes": 4.716796883333333,
+    "moon_age_hours": 2.1022450086111113,
+    "moon_altitude_deg": 0.2833866514494761
    },
    {
     "crescent_width_arcmin": 0.23592102092670933,
@@ -2581,15 +2581,15 @@
     "moon_altitude_deg": 5.997031367061315
    },
    {
-    "crescent_width_arcmin": 0.7761297779573708,
-    "date": "2024-05-09",
-    "elongation_deg": 17.88330008244984,
+    "crescent_width_arcmin": 0.06665126668853981,
+    "date": "2024-05-08",
+    "elongation_deg": 5.191948270316839,
     "hijri_month": 11,
     "hijri_year": 1445,
-    "illumination_fraction": 0.024159191593776497,
-    "lag_time_minutes": 63.3984375,
-    "moon_age_hours": 31.35775716138889,
-    "moon_altitude_deg": 12.723295267629803
+    "illumination_fraction": 0.0020523255427328246,
+    "lag_time_minutes": 7.353515616666667,
+    "moon_age_hours": 7.36052408861111,
+    "moon_altitude_deg": 0.7996771686749718
    },
    {
     "crescent_width_arcmin": 0.38372140464286364,
@@ -2625,15 +2625,15 @@
     "moon_altitude_deg": 9.91504754812235
    },
    {
-    "crescent_width_arcmin": 0.5012189388638721,
-    "date": "2024-09-04",
-    "elongation_deg": 14.991108745594678,
+    "crescent_width_arcmin": 0.04540858765644865,
+    "date": "2024-09-03",
+    "elongation_deg": 4.4938830652517545,
     "hijri_month": 3,
     "hijri_year": 1446,
-    "illumination_fraction": 0.017017109861642343,
-    "lag_time_minutes": 56.66992186666666,
-    "moon_age_hours": 32.91849717888889,
-    "moon_altitude_deg": 12.886822320625352
+    "illumination_fraction": 0.0015373810429133994,
+    "lag_time_minutes": 14.697265616666666,
+    "moon_age_hours": 8.921426866388888,
+    "moon_altitude_deg": 2.7041878202187335
    },
    {
     "crescent_width_arcmin": 0.11734022809584074,
@@ -2658,15 +2658,15 @@
     "moon_altitude_deg": 7.394551438530066
    },
    {
-    "crescent_width_arcmin": 0.4943702812226276,
-    "date": "2024-12-02",
-    "elongation_deg": 14.642488244133531,
+    "crescent_width_arcmin": 0.06068760943137873,
+    "date": "2024-12-01",
+    "elongation_deg": 5.138787810582846,
     "hijri_month": 6,
     "hijri_year": 1446,
-    "illumination_fraction": 0.01624083244705815,
-    "lag_time_minutes": 60.08789061666666,
-    "moon_age_hours": 28.551157769166668,
-    "moon_altitude_deg": 11.89894425812258
+    "illumination_fraction": 0.002011370540060342,
+    "lag_time_minutes": 5.1953125,
+    "moon_age_hours": 4.543345269166666,
+    "moon_altitude_deg": 0.2910768705787303
    },
    {
     "crescent_width_arcmin": 0.15399779725904195,
@@ -2691,15 +2691,15 @@
     "moon_altitude_deg": 10.70403860161474
    },
    {
-    "crescent_width_arcmin": 0.9646827481274404,
-    "date": "2025-03-01",
-    "elongation_deg": 19.68943944986462,
+    "crescent_width_arcmin": 0.09065608420985478,
+    "date": "2025-02-28",
+    "elongation_deg": 6.0210986730248495,
     "hijri_month": 9,
     "hijri_year": 1446,
-    "illumination_fraction": 0.029233629827660756,
-    "lag_time_minutes": 66.6796875,
-    "moon_age_hours": 34.416919487777776,
-    "moon_altitude_deg": 15.240850887021246
+    "illumination_fraction": 0.0027584696109391738,
+    "lag_time_minutes": 19.677734366666666,
+    "moon_age_hours": 10.422941623333333,
+    "moon_altitude_deg": 3.8707701003609096
    },
    {
     "crescent_width_arcmin": 0.5189199718544253,
@@ -2724,15 +2724,15 @@
     "moon_altitude_deg": 4.653629314215663
    },
    {
-    "crescent_width_arcmin": 0.9030240171737747,
-    "date": "2025-05-28",
-    "elongation_deg": 19.094626998332004,
+    "crescent_width_arcmin": 0.11108243760288292,
+    "date": "2025-05-27",
+    "elongation_deg": 6.639734679286108,
     "hijri_month": 12,
     "hijri_year": 1446,
-    "illumination_fraction": 0.027511999374990603,
-    "lag_time_minutes": 74.00390625,
-    "moon_age_hours": 31.662199435833333,
-    "moon_altitude_deg": 14.432015860991358
+    "illumination_fraction": 0.00335532530677346,
+    "lag_time_minutes": 9.1796875,
+    "moon_age_hours": 7.661548394166666,
+    "moon_altitude_deg": 1.1005720564928572
    }
   ]
  },

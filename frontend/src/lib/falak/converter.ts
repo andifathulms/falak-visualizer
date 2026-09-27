@@ -244,12 +244,10 @@ export function monthStartDate(
 }
 
 /**
- * The reference "29th evening" observation for `hijriMonth` - one data point per
- * month regardless of which criterion is later evaluated against it. Anchored to
- * the evening before the MABIMS-2021-resolved month start rather than to the raw
- * conjunction date: the conjunction date itself is always too early for any
- * criterion to call visible, so it would make every month in a calendar view
- * look like "not visible" regardless of the selected method.
+ * The deciding ("29th") evening for `hijriMonth`: the first local sunset after
+ * that month's conjunction - the evening every criterion is judged on and the
+ * one sidang isbat convenes for. Mirrors converter.py; see its docstring for
+ * why this is no longer the evening before the MABIMS start.
  */
 export function observationForMonth(
   hijriYear: number,
@@ -257,8 +255,12 @@ export function observationForMonth(
   latDeg: number = JAKARTA_LATITUDE_DEG,
   lonDeg: number = JAKARTA_LONGITUDE_DEG,
 ): HilalObservation {
-  const start = monthStartDateForMethod(hijriYear, hijriMonth, "mabims_2021", latDeg, lonDeg);
-  return computeHilalObservation(addDays(start, -1), latDeg, lonDeg);
+  const conjunction = conjunctionForIndex(absoluteMonthIndex(hijriYear, hijriMonth));
+  for (const offset of [0, 1, 2]) {
+    const observation = computeHilalObservation(addDays(plainDateOf(conjunction), offset), latDeg, lonDeg);
+    if (observation.sunsetTime > conjunction) return observation;
+  }
+  throw new Error("no sunset found after conjunction within 3 evenings");
 }
 
 export interface HijriDate {

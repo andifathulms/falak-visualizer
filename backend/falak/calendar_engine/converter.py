@@ -150,18 +150,25 @@ def observation_for_month(
     lon_deg: float = JAKARTA_LONGITUDE_DEG,
 ) -> "visibility.HilalObservation":
     """
-    The reference "29th evening" observation for `hijri_month` - one data
-    point per month regardless of which criterion is later evaluated
-    against it. Anchored to the evening before the MABIMS-2021-resolved
-    month start (the MVP baseline method - see month_start_date), not to
-    the raw conjunction date: the conjunction date itself is always too
-    early for any criterion to call visible (the Moon is still essentially
-    co-located with the Sun), so it would make every month in a calendar
-    view look like "not visible" regardless of which method is selected.
+    The deciding ("29th") evening for `hijri_month`: the first local sunset
+    after that month's conjunction. It is the evening every criterion is
+    judged on and the one sidang isbat convenes for, so it is where the
+    criteria can disagree - one data point per month regardless of which
+    criterion is later evaluated against it.
+
+    This used to return the evening before the MABIMS-resolved month start
+    instead. That evening is, by construction, the one on which MABIMS was
+    already satisfied, so a calendar view built on it said "met" for all
+    twelve months under MABIMS and could never show a month that needed a
+    second evening.
     """
-    start = month_start_date_for_method(hijri_year, hijri_month, "mabims_2021", lat_deg, lon_deg)
-    evening = start - _dt.timedelta(days=1)
-    return visibility.compute_hilal_observation(evening, lat_deg, lon_deg)
+    conj = _conjunction_for_index(_absolute_month_index(hijri_year, hijri_month))
+    for offset in (0, 1, 2):
+        evening = conj.date() + _dt.timedelta(days=offset)
+        obs = visibility.compute_hilal_observation(evening, lat_deg, lon_deg)
+        if obs.sunset_time > conj:
+            return obs
+    raise ValueError(f"no sunset found after conjunction {conj} within 3 evenings")
 
 
 @dataclass(frozen=True)
