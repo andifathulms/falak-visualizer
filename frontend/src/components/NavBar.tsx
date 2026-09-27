@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Clock3, Compass, FileCode2, MoonStar, Sunrise, type LucideIcon } from "lucide-react";
+import { BookOpen, CalendarDays, Clock3, Compass, FileCode2, MoonStar, Sunrise, type LucideIcon } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { PlaceChip } from "@/components/PlaceChip";
 import { ThemeControl } from "@/components/ThemeControl";
@@ -64,6 +64,19 @@ export function NavBar() {
 
           <div className="ml-auto flex min-w-0 items-center gap-1">
             <PlaceChip />
+            <Link
+              href="/belajar"
+              aria-current={isActive(pathname, "/belajar") ? "page" : undefined}
+              className={cn(
+                "flex h-10 items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold transition-colors duration-fast hover:bg-surface-raised hover:text-ink",
+                isActive(pathname, "/belajar") ? "text-accent" : "text-ink-muted",
+              )}
+              title="Belajar ilmu falak"
+            >
+              <BookOpen className="size-[18px]" aria-hidden="true" />
+              <span className="hidden lg:inline">Belajar</span>
+              <span className="sr-only lg:hidden">Belajar</span>
+            </Link>
             {API_DOCS_URL !== null && (
               <a
                 href={API_DOCS_URL}
