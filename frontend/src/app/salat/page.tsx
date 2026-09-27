@@ -12,10 +12,10 @@ import { useNow } from "@/components/useNow";
 import { CONVENTION_OPTIONS, ConventionNote, DEFAULT_CONVENTION } from "@/components/ConventionNote";
 import { buildDayArcInput } from "@/lib/dayArcData";
 import type { DayArcInput } from "@/lib/dayArcGeometry";
-import { gregorianToHijri, monthStartDate } from "@/lib/falak/converter";
+import { hijriDaysFor } from "@/lib/hijriCalendar";
 import { CONVENTIONS, dailyPrayerTimes, type DailyPrayerTimes } from "@/lib/falak/prayerTimes";
 import { qiblaDirection } from "@/lib/falak/qibla";
-import { addDays, daysBetween, MINUTE_US, parsePlainDate, type PlainDate } from "@/lib/falak/time";
+import { addDays, MINUTE_US, parsePlainDate, type PlainDate } from "@/lib/falak/time";
 import { hijriMonthName } from "@/lib/hijriNames";
 import { formatClock, formatLongDate, todayIsoIn, zoneAbbreviation } from "@/lib/localDate";
 import { formatCountdown, nextPrayer, PRAYER_LABEL, PRAYER_ORDER } from "@/lib/prayerSchedule";
@@ -31,27 +31,10 @@ function fmtDeg(value: number): string {
   return `${value.toFixed(value % 1 === 0 ? 0 : 2).replace(".", ",")}°`;
 }
 
-/** Hijri labels for a run of consecutive days: one conversion, then roll over at each month start. */
+/** Hijri labels for a run of consecutive days (lib/hijriCalendar), "—" when unresolvable. */
 function hijriLabels(first: PlainDate, count: number, lat: number, lon: number): string[] {
-  try {
-    const h = gregorianToHijri(first, lat, lon);
-    let [y, m, d] = [h.year, h.month, h.day];
-    let next = monthStartDate(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, lat, lon);
-    const out: string[] = [];
-    for (let i = 0; i < count; i += 1) {
-      const day = addDays(first, i);
-      if (daysBetween(next, day) >= 0) {
-        [y, m, d] = m === 12 ? [y + 1, 1, 1] : [y, m + 1, 1];
-        next = monthStartDate(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, lat, lon);
-      } else if (i > 0) {
-        d += 1;
-      }
-      out.push(`${d} ${hijriMonthName(m)}`);
-    }
-    return out;
-  } catch {
-    return Array.from({ length: count }, () => "—");
-  }
+  const days = hijriDaysFor(first, count, lat, lon);
+  return days ? days.map((h) => `${h.day} ${hijriMonthName(h.month)}`) : Array.from({ length: count }, () => "—");
 }
 
 /**

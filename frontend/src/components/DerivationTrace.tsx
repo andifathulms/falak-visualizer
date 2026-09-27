@@ -70,7 +70,7 @@ export function DerivationTrace({ derivation }: { derivation: ConversionDerivati
 
                 <dl className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-2xs text-ink-muted">
                   <div className="flex gap-1">
-                    <dt>Altitude</dt>
+                    <dt>Tinggi</dt>
                     <dd className="font-mono tabular-nums text-ink">{step.moon_altitude_deg.toFixed(2)}°</dd>
                   </div>
                   <div className="flex gap-1">
@@ -78,9 +78,9 @@ export function DerivationTrace({ derivation }: { derivation: ConversionDerivati
                     <dd className="font-mono tabular-nums text-ink">{step.elongation_deg.toFixed(2)}°</dd>
                   </div>
                   <div className="flex gap-1">
-                    <dt>Lag</dt>
+                    <dt>Selisih terbenam</dt>
                     <dd className="font-mono tabular-nums text-ink">
-                      {step.lag_time_minutes === null ? "—" : `${step.lag_time_minutes.toFixed(0)} min`}
+                      {step.lag_time_minutes === null ? "—" : `${step.lag_time_minutes.toFixed(0)} mnt`}
                     </dd>
                   </div>
                 </dl>
