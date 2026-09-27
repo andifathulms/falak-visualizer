@@ -326,6 +326,9 @@ def build_horizon():
                     "altitude_deg": _horizon.altitude_deg(
                         pos.apparent_right_ascension_deg, pos.apparent_declination_deg, lat, lon, jd
                     ),
+                    "azimuth_deg": _horizon.azimuth_deg(
+                        pos.apparent_right_ascension_deg, pos.apparent_declination_deg, lat, lon, jd
+                    ),
                 }
             )
 

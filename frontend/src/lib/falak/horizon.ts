@@ -54,6 +54,26 @@ export function equatorialFromEcliptic(
 }
 
 /** Geocentric apparent altitude of a body above the astronomical horizon. */
+/**
+ * Geocentric azimuth, degrees clockwise from true north (0-360). Mirrors
+ * _horizon.py's azimuth_deg (Meeus eq. 13.5 + 180 deg), which is cross-checked
+ * against JPL DE440.
+ */
+export function azimuthDeg(
+  raDeg: number,
+  decDeg: number,
+  latDeg: number,
+  lonEastDeg: number,
+  jd: number,
+): number {
+  const lst = mod(apparentSiderealTimeDeg(jd) + lonEastDeg, 360);
+  const h = mod(lst - raDeg, 360) * DEG;
+  const lat = latDeg * DEG;
+  const dec = decDeg * DEG;
+  const azFromSouth = Math.atan2(Math.sin(h), Math.cos(h) * Math.sin(lat) - Math.tan(dec) * Math.cos(lat));
+  return mod(azFromSouth / DEG + 180, 360);
+}
+
 export function altitudeDeg(
   raDeg: number,
   decDeg: number,

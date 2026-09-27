@@ -53,6 +53,7 @@ import {
 } from "../grid";
 import {
   altitudeDeg,
+  azimuthDeg,
   apparentSiderealTimeDeg,
   equatorialFromEcliptic,
 } from "../horizon";
@@ -241,6 +242,17 @@ describe("horizon", () => {
       const [ra, dec] = equatorialFromEcliptic(c.lon_deg, c.lat_deg, c.obliquity_deg);
       expectClose(ra, c.ra_deg, `RA ${c.lon_deg}/${c.lat_deg}`);
       expectClose(dec, c.dec_deg, `Dec ${c.lon_deg}/${c.lat_deg}`);
+    }
+  });
+
+  it("matches azimuth", () => {
+    for (const c of vectors.horizon.altitudes) {
+      expectClose(
+        azimuthDeg(c.ra_deg, c.dec_deg, c.lat_deg, c.lon_deg, julianDay(parseInstant(c.datetime))),
+        c.azimuth_deg,
+        `az ${c.location} ${c.datetime}`,
+        1e-8,
+      );
     }
   });
 

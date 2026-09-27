@@ -65,6 +65,25 @@ def altitude_deg(ra_deg: float, dec_deg: float, lat_deg: float, lon_east_deg: fl
     return math.asin(max(-1.0, min(1.0, sin_alt))) / _DEG
 
 
+def azimuth_deg(ra_deg: float, dec_deg: float, lat_deg: float, lon_east_deg: float, jd: float) -> float:
+    """
+    Geocentric azimuth of a body, degrees clockwise from true north (0-360).
+
+    Meeus eq. 13.5 gives the azimuth from the south; adding 180 deg turns it
+    into the compass convention qibla_direction() already uses, so the two can
+    be compared directly (e.g. "face the Sun, then turn N deg"). Same hour
+    angle and sidereal time as altitude_deg, so the two always describe one
+    consistent position. Cross-checked against JPL DE440 via Skyfield in
+    tests/test_azimuth_skyfield_crosscheck.py.
+    """
+    lst = (apparent_sidereal_time_deg(jd) + lon_east_deg) % 360.0
+    h = ((lst - ra_deg) % 360.0) * _DEG
+    lat = lat_deg * _DEG
+    dec = dec_deg * _DEG
+    az_from_south = math.atan2(math.sin(h), math.cos(h) * math.sin(lat) - math.tan(dec) * math.cos(lat))
+    return (az_from_south / _DEG + 180.0) % 360.0
+
+
 def topocentric_altitude_deg(geocentric_altitude_deg: float, horizontal_parallax_deg: float) -> float:
     """
     Geocentric altitude -> topocentric altitude, i.e. what an observer on the
