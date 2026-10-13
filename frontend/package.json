@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/build-manifest.mjs",
+    "predev": "node scripts/copy-carousel-fonts.mjs",
+    "prebuild": "node scripts/build-manifest.mjs && node scripts/copy-carousel-fonts.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -13,6 +14,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
+    "carousel-core": "github:andifathulms/carousel-press#core-v1.0.0",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "framer-motion": "^12.42.2",

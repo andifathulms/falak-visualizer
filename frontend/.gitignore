@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# carousel-core fonts, copied by scripts/copy-carousel-fonts.mjs
+/public/carousel-core/
