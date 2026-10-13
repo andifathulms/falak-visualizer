@@ -59,9 +59,8 @@ export function outlooksFor(hijriYear: number, hijriMonth: number, cities: reado
 }
 
 export interface RashdulRow extends CityRef {
-  /** The Sun at the event instant, seen from this city. */
+  /** The Sun at the event instant, seen from this city - below the horizon means the moment is unusable there. */
   sun: Computed<BodyPosition>;
-  qibla: Computed<QiblaResult>;
 }
 
 export function rashdulEventsFor(year: number): Computed<RashdulQiblaEvent[]> {
@@ -72,7 +71,6 @@ export function rashdulRows(event: RashdulQiblaEvent, cities: readonly CityLocat
   return cities.map((city) => ({
     ...cityRef(city),
     sun: compute(() => computeSkyNow(event.utcTime, city.lat, city.lon).sun),
-    qibla: compute(() => qiblaDirection(city.lat, city.lon)),
   }));
 }
 

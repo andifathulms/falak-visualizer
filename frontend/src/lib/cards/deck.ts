@@ -65,6 +65,14 @@ function quoteAttr(value: string): string {
   return `"${plain(value).replace(/"/g, '\\"')}"`;
 }
 
+/**
+ * carousel-core v1.0.0 clamps a verdict stamp's frame to the content width but
+ * never shrinks or warns about its label, so a long label is clipped at the
+ * canvas edge with no layout warning. "TERLALU TIPIS" (13) is the longest
+ * label checked to fit at the stamp's 88 px serif; nothing longer is written.
+ */
+export const VERDICT_LABEL_MAX = 13;
+
 function slideText(s: SlideSpec): string {
   switch (s.type) {
     case "cover": {
@@ -72,8 +80,12 @@ function slideText(s: SlideSpec): string {
       return [tag, s.headline, s.subtitle].filter(Boolean).join("\n");
     }
     case "card": {
-      const attrs = ["card", "icon=none"];
-      if (s.verdict) attrs.push(`verdict=${quoteAttr(s.verdict.label)}`, `tone=${s.verdict.tone}`);
+      // number=off: the auto step badge reads as a datum on a data card.
+      const attrs = ["card", "icon=none", "number=off"];
+      if (s.verdict) {
+        if (s.verdict.label.length > VERDICT_LABEL_MAX) throw new Error(`verdict label too long for carousel-core's stamp: ${s.verdict.label}`);
+        attrs.push(`verdict=${quoteAttr(s.verdict.label)}`, `tone=${s.verdict.tone}`);
+      }
       return [`[${attrs.join(" ")}]`, s.headline, ...(s.body ?? [])].join("\n");
     }
     case "table": {
@@ -123,6 +135,8 @@ export interface DeckOptions {
   slides: SlideSpec[];
   blocking?: string[];
   handle?: string;
+  /** Extra lines for the disclaimer card (month/criteria decks only). */
+  disclaimerNotes?: string[];
 }
 
 /**
@@ -141,13 +155,13 @@ export function assembleDeck(opts: DeckOptions): CardDeck {
       type: "card",
       headline: `Sebagian angka ${ENGINE_ERROR_TEXT}`,
       body: blocking.map((b) => plain(b)),
-      verdict: { label: "TIDAK DAPAT DIHITUNG", tone: "bad" },
+      verdict: { label: "GAGAL HITUNG", tone: "bad" },
     });
   }
 
   if (MONTH_OR_CRITERIA_SERIES.has(opts.series)) {
     const endAt = slides.findIndex((s) => s.type === "end");
-    const disclaimer: SlideSpec = { type: "card", headline: "Catatan", body: [HISAB_DISCLAIMER] };
+    const disclaimer: SlideSpec = { type: "card", headline: "Catatan", body: [HISAB_DISCLAIMER, ...(opts.disclaimerNotes ?? [])] };
     slides.splice(endAt === -1 ? slides.length : endAt, 0, disclaimer);
     if (!caption.includes(HISAB_DISCLAIMER)) caption = `${caption} ${HISAB_DISCLAIMER}`;
   }

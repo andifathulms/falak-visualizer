@@ -34,12 +34,25 @@ export function criterionAttribution(method: HilalMethod): string {
   return c.whoUnsourced ? `${c.who} (rujukan belum diverifikasi)` : c.who;
 }
 
-/** Short source line per criterion, from lib/falak/citations.ts. */
-export const CRITERION_SOURCE: Record<HilalMethod, string> = {
-  mabims_2021: "Sumber: Kemenag RI, kriteria baru MABIMS (berlaku sejak 2022)",
-  odeh: "Sumber: Odeh, Experimental Astronomy (2004)",
-  wujudul_hilal: "Sumber: rujukan primer Majelis Tarjih belum diverifikasi",
+/**
+ * Who uses each criterion and where it comes from, in card length - the same
+ * claims as criteria.ts / citations.ts (DESIGN.md §7.3), nothing stronger.
+ */
+export const CRITERION_CARD_SOURCE: Record<HilalMethod, string> = {
+  mabims_2021: "dipakai Kemenag RI dalam sidang isbat (sumber: Kemenag RI)",
+  odeh: "rujukan astronomi internasional (Odeh, Experimental Astronomy)",
+  wujudul_hilal: "dikenal sebagai kriteria Muhammadiyah (rujukan belum diverifikasi)",
 };
+
+/** Column headers where a 4-column table has no room for full names; the table note names them in full. */
+export const CRITERION_SHORT: Record<HilalMethod, string> = {
+  mabims_2021: "MABIMS",
+  odeh: "Odeh",
+  wujudul_hilal: "W. Hilal",
+};
+
+/** criteria.ts' KHGT note, in card length. */
+export const KHGT_NOTE = "Muhammadiyah telah mengumumkan peralihan ke KHGT, yang tidak dihitung Falak.";
 
 /** Phrases no deck may contain (case-insensitive, whole words). */
 export const FORBIDDEN_PATTERNS: ReadonlyArray<{ pattern: RegExp; why: string }> = [

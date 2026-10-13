@@ -21,8 +21,10 @@ export function take<T>(c: Computed<T>, what: string, blocking: string[]): T | n
 }
 
 export interface Verdict {
-  /** Short cell text for tables. */
+  /** Cell text for tables. */
   cell: string;
+  /** The same verdict in a word, for 4-column tables. */
+  short: string;
   /** Stamp label for verdict cards. */
   stamp: string;
   tone: Tone;
@@ -30,11 +32,12 @@ export interface Verdict {
   margin: CriterionMargin;
 }
 
-const ODEH_CELL: Record<OdehVerdict, [string, Tone]> = {
-  visible: ["Terlihat", "ok"],
-  visible_optical_aid: ["Alat optik", "ok"],
-  marginal: ["Marginal", "warn"],
-  not_visible: ["Tidak terlihat", "bad"],
+/** [table cell, 4-column cell, stamp, tone]. Stamps stay within VERDICT_LABEL_MAX (deck.ts). */
+const ODEH_CELL: Record<OdehVerdict, [string, string, string, Tone]> = {
+  visible: ["Terlihat", "Terlihat", "TERLIHAT", "ok"],
+  visible_optical_aid: ["Alat optik", "Optik", "ALAT OPTIK", "ok"],
+  marginal: ["Marginal", "Marginal", "MARGINAL", "warn"],
+  not_visible: ["Tidak terlihat", "Tidak", "TAK TERLIHAT", "bad"],
 };
 
 /**
@@ -49,21 +52,21 @@ export function verdictFor(
 ): Verdict {
   const margin = criterionMargin(observation, method);
   if (margin.verdict === "indeterminate") {
-    return { cell: "Terlalu tipis", stamp: "TERLALU TIPIS", tone: "warn", indeterminate: true, margin };
+    return { cell: "Terlalu tipis", short: "Tipis", stamp: "TERLALU TIPIS", tone: "warn", indeterminate: true, margin };
   }
   if (method === "odeh") {
-    const [cell, tone] = ODEH_CELL[criteria.odeh];
-    return { cell, stamp: cell.toUpperCase(), tone, indeterminate: false, margin };
+    const [cell, short, stamp, tone] = ODEH_CELL[criteria.odeh];
+    return { cell, short, stamp, tone, indeterminate: false, margin };
   }
   const met = method === "mabims_2021" ? criteria.mabims_2021 : criteria.wujudul_hilal;
   if (method === "wujudul_hilal") {
     return met
-      ? { cell: "Wujud", stamp: "HILAL WUJUD", tone: "ok", indeterminate: false, margin }
-      : { cell: "Belum wujud", stamp: "BELUM WUJUD", tone: "bad", indeterminate: false, margin };
+      ? { cell: "Wujud", short: "Wujud", stamp: "WUJUD", tone: "ok", indeterminate: false, margin }
+      : { cell: "Belum wujud", short: "Belum", stamp: "BELUM WUJUD", tone: "bad", indeterminate: false, margin };
   }
   return met
-    ? { cell: "Terpenuhi", stamp: "TERPENUHI", tone: "ok", indeterminate: false, margin }
-    : { cell: "Belum", stamp: "BELUM TERPENUHI", tone: "bad", indeterminate: false, margin };
+    ? { cell: "Terpenuhi", short: "Ya", stamp: "TERPENUHI", tone: "ok", indeterminate: false, margin }
+    : { cell: "Belum", short: "Belum", stamp: "BELUM", tone: "bad", indeterminate: false, margin };
 }
 
 export function criterionName(method: HilalMethod): string {

@@ -29,13 +29,12 @@ export function buildKiblatSoreIni(input: KiblatSoreIniInput): CardDeck {
     const name = r.city.name;
     const tz = take(r.timeZone, `Zona waktu ${name}`, blocking);
     const sun = take(r.sun, `Posisi matahari ${name}`, blocking);
-    const qibla = take(r.qibla, `Arah kiblat ${name}`, blocking);
-    if (!tz || !sun || !qibla) return [name, ENGINE_ERROR_TEXT, ENGINE_ERROR_TEXT];
+    if (!tz || !sun) return [name, ENGINE_ERROR_TEXT];
     if (sun.altitudeDeg <= 0) {
       sunDown.push(name);
-      return [name, SUN_DOWN_TEXT, fmtDeg(qibla.bearingDeg, 2)];
+      return [name, SUN_DOWN_TEXT];
     }
-    return [name, `${fmtClock(event.utcTime, tz)} ${zoneOf(tz)}`, fmtDeg(qibla.bearingDeg, 2)];
+    return [name, `${fmtClock(event.utcTime, tz)} ${zoneOf(tz)}`];
   });
 
   const slides: SlideSpec[] = [
@@ -45,8 +44,8 @@ export function buildKiblatSoreIni(input: KiblatSoreIniInput): CardDeck {
       headline: "Bayangan tiang | menunjuk kiblat",
       subtitle: `${fmtWeekdayDate(day)}: matahari tepat di atas Ka'bah.`,
     },
-    ...pagedTables("Jam cek bayangan", ["Kota", "Jam", "Arah kiblat"], rows,
-      sunDown.length ? `${sunDown.join(", ")}: ${SUN_DOWN_TEXT}, momen ini tidak bisa dipakai di sana.` : "Arah kiblat dalam derajat dari utara sejati."),
+    ...pagedTables("Jam cek bayangan", ["Kota", "Jam"], rows,
+      sunDown.length ? `Di ${sunDown.join(", ")} momen ini tidak bisa dipakai.` : "Waktu setempat. Langit harus cerah."),
     {
       type: "card",
       headline: "Cara cek",
@@ -65,7 +64,7 @@ export function buildKiblatSoreIni(input: KiblatSoreIniInput): CardDeck {
         "Langit harus cerah dan matahari terlihat dari tempatmu.",
       ],
     },
-    { type: "end", headline: "#BayanganKiblat", body: ["Foto bayangan tiang di kotamu, lalu bandingkan dengan sajadahmu.", FALAK_URL] },
+    { type: "end", headline: "Foto bayanganmu", body: ["Foto bayangan tiang di kotamu, bandingkan dengan sajadahmu, lalu pakai tagar #BayanganKiblat.", FALAK_URL] },
   ];
 
   const firstUsable = input.rows.find((r) => r.timeZone.ok && r.sun.ok && r.sun.value.altitudeDeg > 0 && r.timeZone.value === wib);

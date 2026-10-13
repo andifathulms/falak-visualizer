@@ -6,14 +6,13 @@
  * It never says when the month starts. It says what each criterion's hisab
  * gives at named coordinates, and that sidang isbat decides.
  */
-import { CRITERIA } from "../../criteria";
 import { comparePlainDates, type PlainDate } from "../../falak/time";
 import { hijriMonthName } from "../../hijriNames";
 import type { MonthOutlook } from "../../monthOutlook";
 import { assembleDeck, pagedTables, plain, type CardDeck, type SlideSpec } from "../deck";
-import { fmtClock, fmtCoordinates, fmtDate, fmtDateShort, fmtDeg, fmtMinutes, fmtWeekdayDate, localDateOf } from "../format";
+import { fmtClock, fmtCoordinates, fmtDate, fmtDeg, fmtMinutes, fmtWeekdayDate, localDateOf } from "../format";
 import type { CityOutlook } from "../inputs";
-import { CRITERION_SOURCE, ENGINE_ERROR_TEXT, NEUTRAL_CRITERIA_ORDER, criterionAttribution } from "../rules";
+import { CRITERION_CARD_SOURCE, CRITERION_SHORT, ENGINE_ERROR_TEXT, KHGT_NOTE, NEUTRAL_CRITERIA_ORDER } from "../rules";
 import { FALAK_URL, criterionName, take, verdictFor } from "./common";
 
 export interface PetangPenentuInput {
@@ -64,7 +63,7 @@ export function buildPetangPenentu(input: PetangPenentuInput): CardDeck {
   const deciding = first.deciding!;
 
   // --- ijtimak and the deciding evening(s) ------------------------------
-  const ijtimakLine = ZONES.map(([tz, abbr]) => `${fmtDateShort(localDateOf(conjunction, tz))} ${fmtClock(conjunction, tz)} ${abbr}`).join(" · ");
+  const ijtimakLines = ZONES.map(([tz, abbr]) => `${fmtWeekdayDate(localDateOf(conjunction, tz))}, ${fmtClock(conjunction, tz)} ${abbr}`);
   const evenings = new Map<string, { date: PlainDate; cities: string[] }>();
   for (const r of resolved) {
     if (!r.outlook?.deciding) continue;
@@ -97,7 +96,7 @@ export function buildPetangPenentu(input: PetangPenentuInput): CardDeck {
   const verdictRows = resolved.map((r) => {
     const o = r.outlook;
     if (!o?.deciding || !o.decidingCriteria) return [r.name, ...NEUTRAL_CRITERIA_ORDER.map(() => ENGINE_ERROR_TEXT)];
-    return [r.name, ...NEUTRAL_CRITERIA_ORDER.map((m) => verdictFor(m, o.deciding!, o.decidingCriteria!).cell)];
+    return [r.name, ...NEUTRAL_CRITERIA_ORDER.map((m) => verdictFor(m, o.deciding!, o.decidingCriteria!).short)];
   });
   const anyIndeterminate = resolved.some(
     (r) => r.outlook?.deciding && r.outlook.decidingCriteria &&
@@ -106,28 +105,14 @@ export function buildPetangPenentu(input: PetangPenentuInput): CardDeck {
 
   // --- day 1, per criterion, at named coordinates -------------------------
   const ref = resolved.find((r) => r.name === input.referenceCity && r.outlook) ?? resolved.find((r) => r.outlook)!;
-  const coords = `${ref.name} (${fmtCoordinates(ref.row.city.lat, ref.row.city.lon)})`;
   const startLines = NEUTRAL_CRITERIA_ORDER.map((m) => {
     const start = ref.outlook!.starts[m];
-    const value = start ? fmtWeekdayDate(start) : ENGINE_ERROR_TEXT;
     if (!start) blocking.push(`Hari pertama ${criterionName(m)} di ${ref.name}: ${ENGINE_ERROR_TEXT}`);
-    return `Menurut hisab kriteria ${criterionName(m)} di koordinat ${coords}: ${value}.`;
+    return `Menurut hisab kriteria ${criterionName(m)} di koordinat ${ref.name}: ${start ? fmtWeekdayDate(start) : ENGINE_ERROR_TEXT}.`;
   });
-  const shifted = resolved
-    .filter((r) => r !== ref && r.outlook)
-    .filter((r) =>
-      NEUTRAL_CRITERIA_ORDER.some((m) => {
-        const a = r.outlook!.starts[m];
-        const b = ref.outlook!.starts[m];
-        return !a || !b || comparePlainDates(a, b) !== 0;
-      }),
-    )
-    .map((r) => r.name);
-  if (shifted.length) startLines.push(`Di koordinat ${shifted.join(", ")} hasilnya bergeser; cek kotamu di Falak.`);
 
   // --- who uses what -----------------------------------------------------
-  const sourceLines = NEUTRAL_CRITERIA_ORDER.map((m) => `${criterionName(m)}: ${criterionAttribution(m)}. ${CRITERION_SOURCE[m]}.`);
-  if (CRITERIA.wujudul_hilal.note) sourceLines.push(CRITERIA.wujudul_hilal.note);
+  const sourceLines = NEUTRAL_CRITERIA_ORDER.map((m) => `${criterionName(m)}: ${CRITERION_CARD_SOURCE[m]}.`);
 
   const slides: SlideSpec[] = [
     {
@@ -136,13 +121,13 @@ export function buildPetangPenentu(input: PetangPenentuInput): CardDeck {
       headline: `Hilal ${label} | petang ${fmtDate(deciding.date)}`,
       subtitle: "Angka hisab per kota, tiga kriteria berdampingan.",
     },
-    { type: "card", headline: "Ijtimak", body: [ijtimakLine, "Saat bulan dan matahari sejajar bujur ekliptika. Hilal dinilai saat matahari terbenam sesudahnya.", ...eveningLines] },
+    { type: "card", headline: "Ijtimak", body: [...ijtimakLines, "Saat bulan dan matahari sejajar bujur ekliptika. Hilal dinilai saat matahari terbenam sesudahnya.", ...eveningLines] },
     ...pagedTables("Bulan saat matahari terbenam", ["Kota", "Tinggi", "Elongasi", "Lag"], moonRows,
       "Tinggi toposentris, elongasi geosentris. Lag: bulan terbenam sesudah matahari."),
-    ...pagedTables("Tiga kriteria, kota per kota", ["Kota", ...NEUTRAL_CRITERIA_ORDER.map(criterionName)], verdictRows,
-      anyIndeterminate ? "Kolom urut abjad. Terlalu tipis: selisih di dalam toleransi mesin." : "Kolom urut abjad, bukan peringkat."),
-    { type: "card", headline: "Hari pertama bulan baru menurut hisab", body: startLines },
-    { type: "card", headline: "Siapa memakai, apa sumbernya", body: sourceLines },
+    ...pagedTables("Tiga kriteria, kota per kota", ["Kota", ...NEUTRAL_CRITERIA_ORDER.map((m) => CRITERION_SHORT[m])], verdictRows,
+      `Kolom urut abjad, bukan peringkat: ${NEUTRAL_CRITERIA_ORDER.map(criterionName).join(", ")}.${anyIndeterminate ? " Tipis: di dalam toleransi mesin." : ""}`),
+    { type: "card", headline: `Hari pertama | ${ref.name}, ${fmtCoordinates(ref.row.city.lat, ref.row.city.lon)}`, body: startLines },
+    { type: "card", headline: "Siapa memakai apa", body: sourceLines },
     { type: "end", headline: "Cek kotamu di Falak", body: [FALAK_URL, "Kotamu belum ada? Tulis di komentar."] },
   ];
 
@@ -153,5 +138,6 @@ export function buildPetangPenentu(input: PetangPenentuInput): CardDeck {
     slides,
     blocking,
     handle: input.handle,
+    disclaimerNotes: [KHGT_NOTE],
   });
 }

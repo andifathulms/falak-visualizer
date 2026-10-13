@@ -9,7 +9,7 @@ import { INDONESIAN_CITIES } from "../../locations";
 import { MONTH_OR_CRITERIA_SERIES, TABLE_MAX_ROWS, type CardDeck } from "../deck";
 import { fmtClock, fmtNum, localDateOf } from "../format";
 import { outlooksFor, prayerYearRows, qiblaRows, rashdulEventsFor, rashdulRows, type CityOutlook } from "../inputs";
-import { HISAB_DISCLAIMER, INDETERMINATE_TEXT, NEUTRAL_CRITERIA_ORDER, ruleViolations } from "../rules";
+import { CRITERION_SHORT, HISAB_DISCLAIMER, INDETERMINATE_TEXT, NEUTRAL_CRITERIA_ORDER, ruleViolations } from "../rules";
 import { buildAngkaDiBalikHilal } from "../series/angkaDiBalikHilal";
 import { buildJamLangit } from "../series/jamLangit";
 import { buildKamusFalak } from "../series/kamusFalak";
@@ -176,14 +176,16 @@ describe("petang-penentu", () => {
 
   it("states every criterion's day 1 as a hisab result at named coordinates, never a date that falls", () => {
     for (const m of NEUTRAL_CRITERIA_ORDER) {
-      expect(deck.text).toContain(`Menurut hisab kriteria ${CRITERIA[m].name} di koordinat Jakarta (`);
+      expect(deck.text).toContain(`Menurut hisab kriteria ${CRITERIA[m].name} di koordinat Jakarta: `);
     }
   });
 
   it("puts the criteria side by side in alphabetical order", () => {
     const header = deck.text.split("\n").find((l) => l.startsWith("| Kota | ") && l.includes("MABIMS"))!;
-    expect(header).toBe(`| Kota | ${NEUTRAL_CRITERIA_ORDER.map((m) => CRITERIA[m].name).join(" | ")} |`);
+    expect(header).toBe(`| Kota | ${NEUTRAL_CRITERIA_ORDER.map((m) => CRITERION_SHORT[m]).join(" | ")} |`);
     expect(NEUTRAL_CRITERIA_ORDER.map((m) => CRITERIA[m].name)).toEqual(["MABIMS 2021", "Odeh 2004", "Wujudul Hilal"]);
+    // The short headers are named in full under the table.
+    expect(deck.text).toContain("Kolom urut abjad, bukan peringkat: MABIMS 2021, Odeh 2004, Wujudul Hilal.");
   });
 
   it("blocks export and says so when the engine fails for a city", () => {
